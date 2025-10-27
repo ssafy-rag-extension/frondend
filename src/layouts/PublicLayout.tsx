@@ -1,6 +1,13 @@
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useLocation } from 'react-router-dom';
 
 export default function PublicLayout() {
+  const { pathname } = useLocation();
+
+  // 로그인/회원가입 페이지는 레이아웃 제외
+  if (pathname === '/login' || pathname === '/signup') {
+    return <Outlet />;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800">
       <header className="border-b bg-white">
@@ -18,9 +25,11 @@ export default function PublicLayout() {
           </nav>
         </div>
       </header>
+
       <main className="mx-auto max-w-5xl px-4 py-10">
         <Outlet />
       </main>
+
       <footer className="mt-10 border-t bg-white">
         <div className="mx-auto max-w-5xl px-4 py-6 text-sm text-gray-500">
           © {new Date().getFullYear()} RAG Extension
