@@ -1,4 +1,4 @@
-export default function Documents() {
+export default function VecProcess() {
   return (
     <section className="space-y-2">
       <h1 className="text-xl font-semibold">문서 관리</h1>
