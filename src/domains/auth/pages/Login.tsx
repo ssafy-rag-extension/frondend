@@ -2,15 +2,13 @@ import { useState } from 'react';
 import { useNavigate, useLocation, NavLink } from 'react-router-dom';
 import HebeesGif from '@/assets/images/hebees-main.gif';
 import Hebees from '@/assets/hebees-logo.webp';
-import { Eye, EyeOff } from 'lucide-react';
+import FormInput from '@/domains/auth/components/FormInput';
 
 export default function Login() {
   const nav = useNavigate();
   const location = useLocation() as any;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const from = location.state?.from?.pathname || '/user/documents';
 
@@ -18,13 +16,6 @@ export default function Login() {
     e.preventDefault();
     console.log('login', { email, password });
     nav(from, { replace: true });
-  };
-
-  const togglePasswordVisibility = (
-    setter: React.Dispatch<React.SetStateAction<boolean>>,
-    current: boolean
-  ) => {
-    setter(!current);
   };
 
   return (
@@ -55,34 +46,20 @@ export default function Login() {
         </div>
 
         <form className="space-y-4 w-[60%]" onSubmit={onSubmit}>
-          <div>
-            <input
-              className="w-full rounded-md border border-gray-300 p-3 text-sm outline-none focus:border-[var(--color-hebees-blue)] focus:bg-[var(--color-hebees-blue-bg)]"
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="이메일"
-              required
-            />
-          </div>
-          <div className="relative">
-            <input
-              className="w-full rounded-md border border-gray-300 p-3 text-sm outline-none focus:border-[var(--color-hebees-blue)] focus:bg-[var(--color-hebees-blue-bg)]"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="비밀번호"
-              required
-            />
-            <button
-              type="button"
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400"
-              onClick={() => togglePasswordVisibility(setShowConfirmPassword, showConfirmPassword)}
-              aria-label={showConfirmPassword ? '비밀번호 숨기기' : '비밀번호 보기'}
-            >
-              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
+          <FormInput
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            placeholder="이메일"
+            required
+          />
+          <FormInput
+            type="password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            placeholder="비밀번호"
+            required
+          />
 
           <button
             type="submit"
