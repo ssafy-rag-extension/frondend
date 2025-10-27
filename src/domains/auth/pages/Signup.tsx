@@ -3,6 +3,7 @@ import { useNavigate, NavLink } from 'react-router-dom';
 import HebeesGif from '@/assets/images/hebees-main.gif';
 import Hebees from '@/assets/hebees-logo.webp';
 import FormInput from '@/domains/auth/components/FormInput';
+import UserTypeSelector from '@/domains/auth/components/UserTypeSelector';
 import TermsModal from '@/domains/auth/components/TermsModal';
 
 export default function Signup() {
@@ -104,41 +105,7 @@ export default function Signup() {
             onChange={e => setServiceName(e.target.value)}
             placeholder="서비스 사용 이름을 입력하세요."
           />
-          <div className="flex justify-between space-x-2 text-sm">
-            <button
-              type="button"
-              className={`w-1/3 py-2 rounded-md transition-all ${
-                userType === 'personal'
-                  ? 'bg-[var(--color-hebees-blue)] text-white font-medium'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-              onClick={() => setUserType('personal')}
-            >
-              개인 안경원
-            </button>
-            <button
-              type="button"
-              className={`w-1/3 py-2 rounded-md transition-all ${
-                userType === 'foundation'
-                  ? 'bg-[var(--color-hebees-blue)] text-white font-medium'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-              onClick={() => setUserType('foundation')}
-            >
-              체인 안경원
-            </button>
-            <button
-              type="button"
-              className={`w-1/3 py-2 rounded-md transition-all ${
-                userType === 'manufacturer'
-                  ? 'bg-[var(--color-hebees-blue)] text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-              onClick={() => setUserType('manufacturer')}
-            >
-              제조 유통사
-            </button>
-          </div>
+          <UserTypeSelector userType={userType} setUserType={setUserType} />
           <div className="flex items-center text-sm">
             <input
               type="checkbox"
