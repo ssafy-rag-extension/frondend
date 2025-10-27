@@ -27,12 +27,12 @@ export default function Login() {
         />
       </div>
 
-      <div className="flex flex-col w-1/2 items-center justify-center bg-white space-y-32">
+      <div className="flex flex-col w-1/2 items-center justify-center bg-white space-y-20">
         <div className="flex flex-col items-center mb-6">
           <img src={Hebees} alt="logo" className="h-24 w-24 mb-3" />
           <p className="text-2xl text-gray-600 text-center leading-relaxed">
             <span
-              className="font-semibold 
+              className="font-bold
              bg-[linear-gradient(90deg,#BE7DB1_10%,#81BAFF_100%)] 
              bg-clip-text 
              text-transparent"
@@ -76,7 +76,7 @@ export default function Login() {
 
         <div className="mt-6 text-center text-base text-gray-600">
           아직 가입된 계정이 없으신가요?{' '}
-          <NavLink to="/signup" className="text-[var(--color-hebees)] font-medium hover:underline">
+          <NavLink to="/signup" className="text-[var(--color-hebees)] font-bold hover:underline">
             회원가입
           </NavLink>
         </div>
