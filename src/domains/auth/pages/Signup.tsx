@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import HebeesGif from '@/assets/images/hebees-main.gif';
 import Hebees from '@/assets/hebees-logo.webp';
+import TermsModal from '@/domains/auth/components/TermsModal';
 import { Eye, EyeOff } from 'lucide-react';
 
 export default function Signup() {
@@ -15,6 +16,7 @@ export default function Signup() {
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +37,19 @@ export default function Signup() {
     current: boolean
   ) => {
     setter(!current);
+  };
+
+  const handleTermsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked && !agreeToTerms) {
+      setIsModalOpen(true); // 체크 시 모달 띄우기
+    } else {
+      setAgreeToTerms(e.target.checked); // 체크 해제 시 바로 상태 변경
+    }
+  };
+
+  const handleAgree = () => {
+    setAgreeToTerms(true);
+    setIsModalOpen(false);
   };
 
   return (
@@ -169,12 +184,17 @@ export default function Signup() {
             <input
               type="checkbox"
               id="agreeTerms"
-              className="h-4 w-4 rounded text-[var(--color-hebees-blue)] border-gray-300 focus:ring-[var(--color-hebees-blue)]"
+              className="h-4 w-4 text-[var(--color-hebees-blue)] rounded-sm focus:ring-[var(--color-hebees-blue)] border-gray-300"
               checked={agreeToTerms}
-              onChange={e => setAgreeToTerms(e.target.checked)}
+              onChange={handleTermsChange}
             />
-            <label htmlFor="agreeTerms" className="ml-2 text-gray-600">
-              레티나 서비스 이용약관에 동의
+            <label
+              htmlFor="agreeTerms"
+              className="ml-2 text-gray-600 cursor-pointer"
+              onClick={() => setIsModalOpen(true)}
+            >
+              레티나 서비스 이용약관에 동의{' '}
+              <span className="text-[var(--color-hebees-blue)] font-medium">(필수)</span>
             </label>
           </div>
           <button
@@ -193,6 +213,11 @@ export default function Signup() {
           </NavLink>
         </div>
       </div>
+      <TermsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onAgree={handleAgree}
+      />
     </div>
   );
 }
