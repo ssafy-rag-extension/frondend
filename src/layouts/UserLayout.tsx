@@ -4,8 +4,14 @@ import { Menu, MessageSquare, Image, FolderCog, LogOut, Bell } from 'lucide-reac
 import Tooltip from '@/shared/components/Tooltip';
 import RetinaLogo from '@/assets/retina-logo.png';
 
+const labelCls = (isOpen: boolean) =>
+  'ml-2 overflow-hidden whitespace-nowrap transition-[max-width,opacity,transform] duration-300 ' +
+  (isOpen
+    ? 'max-w-[8rem] opacity-100 translate-x-0'
+    : 'max-w-0 opacity-0 -translate-x-2 pointer-events-none');
+
 const linkCls = ({ isActive }: { isActive: boolean }) =>
-  'flex items-center gap-2 rounded-md px-4 py-3 text-base transition-colors ' +
+  'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ' +
   (isActive
     ? 'bg-[var(--color-retina-bg)] text-[var(--color-retina)]'
     : 'text-gray-700 hover:bg-[var(--color-retina)] hover:text-white');
@@ -17,13 +23,13 @@ export default function UserLayout() {
     <div className="flex min-h-screen">
       <aside
         className={`flex flex-col bg-white transition-all duration-300 shadow-sm h-screen ${
-          isOpen ? 'w-72 border-r' : 'w-[72px] border-r'
+          isOpen ? 'w-64 border-r' : 'w-[64px] border-r'
         }`}
       >
-        <div className="flex items-center justify-between px-4 py-6">
+        <div className="flex items-center justify-between px-4 py-5">
           {isOpen ? (
-            <div className="text-lg font-semibold">
-              <img src={RetinaLogo} alt="Retina" className="w-30 h-10 object-contain" />
+            <div className="text-base font-semibold">
+              <img src={RetinaLogo} alt="Retina" className="w-28 h-9 object-contain" />
             </div>
           ) : (
             <div className="w-full flex justify-center">
@@ -32,7 +38,7 @@ export default function UserLayout() {
                   onClick={() => setIsOpen(prev => !prev)}
                   className="text-[var(--color-retina)] hover:text-[var(--color-retina-dark)]"
                 >
-                  <Menu size={24} />
+                  <Menu size={22} />
                 </button>
               </Tooltip>
             </div>
@@ -44,68 +50,57 @@ export default function UserLayout() {
                 onClick={() => setIsOpen(false)}
                 className="text-[var(--color-retina)] hover:text-[var(--color-retina-dark)]"
               >
-                <Menu size={24} />
+                <Menu size={22} />
               </button>
             </Tooltip>
           )}
         </div>
 
-        <nav className="flex flex-col gap-1 px-2 mt-2 overflow-hidden whitespace-nowrap">
+        <nav className="flex flex-col gap-1 px-2 mt-1 overflow-hidden">
           <NavLink to="/user/chat/text" className={linkCls}>
-            <MessageSquare size={20} className="flex-shrink-0" />
-            <div
-              className={`transition-[width] duration-300 overflow-hidden ${
-                isOpen ? 'w-32' : 'w-0'
-              }`}
-            >
-              <span className="pl-2 inline-block">텍스트 채팅</span>
+            <MessageSquare size={18} className="flex-shrink-0" />
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">텍스트 채팅</span>
             </div>
           </NavLink>
+
           <NavLink to="/user/chat/image" className={linkCls}>
-            <Image size={20} className="flex-shrink-0" />
-            <div
-              className={`transition-[width] duration-300 overflow-hidden ${
-                isOpen ? 'w-32' : 'w-0'
-              }`}
-            >
-              <span className="pl-2 inline-block">이미지 채팅</span>
+            <Image size={18} className="flex-shrink-0" />
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">이미지 채팅</span>
             </div>
           </NavLink>
+
           <NavLink to="/user/documents" className={linkCls}>
-            <FolderCog size={20} className="flex-shrink-0" />
-            <div
-              className={`transition-[width] duration-300 overflow-hidden ${
-                isOpen ? 'w-32' : 'w-0'
-              }`}
-            >
-              <span className="pl-2 inline-block">내 문서 관리</span>
+            <FolderCog size={18} className="flex-shrink-0" />
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">내 문서 관리</span>
             </div>
           </NavLink>
         </nav>
+
         <div className="mt-auto px-2 pb-4">
           <NavLink
             to="/logout"
-            className="flex items-center gap-2 rounded-md px-4 py-3 text-base transition-colors text-gray-700 hover:bg-[var(--color-retina-bg)] hover:text-[var(--color-retina)]"
+            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors text-gray-700 hover:bg-[var(--color-retina-bg)] hover:text-[var(--color-retina)]"
           >
-            <LogOut size={20} className="flex-shrink-0" />
-            <div
-              className={`transition-[width] duration-300 overflow-hidden ${
-                isOpen ? 'w-32' : 'w-0'
-              }`}
-            >
-              <span className="pl-2 inline-block">로그아웃</span>
+            <LogOut size={18} className="flex-shrink-0" />
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">로그아웃</span>
             </div>
           </NavLink>
         </div>
       </aside>
 
-      <main className="flex-1 transition-all duration-300">
-        <div className="flex flex-col gap-4 px-10 py-6">
+      <main className="flex-1 flex flex-col h-screen overflow-hidden transition-all duration-300">
+        <div className="flex flex-col gap-3 px-8 py-5">
           <Bell
-            size={24}
+            size={22}
             className="self-end text-gray-600 hover:text-gray-800 cursor-pointer transition-colors shake-hover"
           />
-          <Outlet />
+          <div className="flex-1 min-h-0">
+            <Outlet />
+          </div>
         </div>
       </main>
     </div>
