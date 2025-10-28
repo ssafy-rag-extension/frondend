@@ -13,7 +13,7 @@ pipeline {
         FE_TEST_CONTAINER = "rag-extension-fe-test"
         FE_PROD_CONTAINER = "rag-extension-fe-prod"
 
-        // --- Docker Swarm 네트워크 ---
+        // --- Docker 네트워크 ---
         APP_NETWORK_TEST = "app-network-test"
         APP_NETWORK_PROD = "app-network-prod"
     }
@@ -22,55 +22,45 @@ pipeline {
 
         /********************  변경 파일 확인  ********************/
         stage('Check for Changes') {
-            when { expression { (env.MR_STATE ?: '') == 'merged' } }
-            steps {
-                script {
-                    echo "=== 환경 변수 확인 ==="
-                    echo "MR_STATE: ${env.MR_STATE}"
-                    echo "TARGET_BRANCH: ${env.TARGET_BRANCH}"
-                    echo "SOURCE_BRANCH: ${env.SOURCE_BRANCH}"
-                    echo "======================"
-                    
-                    env.DO_FRONTEND_BUILD = 'false'
-
-                    sh "git fetch --all >/dev/null 2>&1 || true"
-                    def changed = sh(script: "git diff --name-only origin/${env.TARGET_BRANCH}...origin/${env.SOURCE_BRANCH}",returnStdout: true).trim()
-
-                    echo "=== 변경된 파일 목록 ==="
-                    echo changed
-                    echo "========================"
-
-                    if (changed.contains('frontend-repo/')) env.DO_FRONTEND_BUILD = 'true'
-
-                    echo "=== 빌드 결정 사항 ==="
-                    echo "DO_FRONTEND_BUILD: ${env.DO_FRONTEND_BUILD}"
-                    echo "====================="
-                }
-            }
-        }
-
-        /********************  Docker Swarm 초기화 및 네트워크 준비  ********************/
-        stage('Initialize Docker Swarm and Networks') {
-            when {
+            when { 
                 anyOf {
-                    expression { (env.MR_STATE ?: '') == 'merged' }
+                    expression { env.GITLAB_OBJECT_KIND == 'push' }
                     expression { params.BUILD_FRONTEND == true }
                 }
             }
             steps {
                 script {
-                    // Docker Swarm 초기화
-                    sh "docker swarm init || true"
+                    echo "=== 환경 변수 확인 ==="
+                    echo "GITLAB_OBJECT_KIND: ${env.GITLAB_OBJECT_KIND}"
+                    echo "GIT_BRANCH: ${env.GIT_BRANCH}"
+                    echo "REF: ${env.REF}"
+                    echo "======================"
                     
-                    // Overlay 네트워크 생성
-                    // Test 환경 네트워크
-                    sh "docker network create --driver overlay --attachable ${APP_NETWORK_TEST} || true"
+                    if (env.GITLAB_OBJECT_KIND == 'push') {
+                        echo "📝 Push 이벤트 감지 - 현재 브랜치로 배포"
+                    } else if (params.BUILD_FRONTEND == true) {
+                        echo "📝 수동 빌드 실행"
+                    }
+                }
+            }
+        }
+
+        /********************  Docker 네트워크 준비  ********************/
+        stage('Prepare Docker Networks') {
+            when {
+                anyOf {
+                    expression { env.GITLAB_OBJECT_KIND == 'push' }
+                    expression { params.BUILD_FRONTEND == true }
+                }
+            }
+            steps {
+                script {
+                    // Docker 네트워크 생성
+                    sh "docker network create ${APP_NETWORK_TEST} || true"
+                    sh "docker network create ${APP_NETWORK_PROD} || true"
                     
-                    // Production 환경 네트워크
-                    sh "docker network create --driver overlay --attachable ${APP_NETWORK_PROD} || true"
-                    
-                    echo "✅ Docker Swarm 네트워크 준비 완료"
-                    echo "- Application Networks: ${APP_NETWORK_TEST}, ${APP_NETWORK_PROD}"
+                    echo "✅ Docker 네트워크 준비 완료"
+                    echo "- Networks: ${APP_NETWORK_TEST}, ${APP_NETWORK_PROD}"
                 }
             }
         }
@@ -79,17 +69,27 @@ pipeline {
         stage('Deploy Frontend') {
             when {
                 anyOf {
-                    expression { (env.MR_STATE ?: '') == 'merged' && env.DO_FRONTEND_BUILD == 'true' }
+                    expression { env.GITLAB_OBJECT_KIND == 'push' }
                     expression { params.BUILD_FRONTEND == true }
                 }
             }
             steps {
                 script {
-                    def branch = (env.MR_STATE == 'merged') ? (env.TARGET_BRANCH ?: '').trim() : (params.BRANCH_TO_BUILD ?: '').trim()
+                    def branch = ""
+                    
+                    if (env.GITLAB_OBJECT_KIND == 'push') {
+                        // Push 이벤트: REF에서 브랜치 추출
+                        branch = (env.REF ?: '').replaceAll('refs/heads/', '').trim()
+                    } else if (params.BUILD_FRONTEND == true) {
+                        // 수동 빌드: 파라미터 브랜치 사용
+                        branch = (params.BRANCH_TO_BUILD ?: '').trim()
+                    }
 
                     if (!branch) {
-                        error "[Deploy Frontend] 브랜치가 비어 있습니다. TARGET_BRANCH 또는 BRANCH_TO_BUILD를 확인하세요."
+                        error "[Deploy Frontend] 브랜치가 비어 있습니다. Push/수동 빌드 조건을 확인하세요."
                     }
+                    
+                    echo "📝 배포 대상 브랜치: ${branch}"
 
                     if (branch == 'develop') {
                         withCredentials([file(credentialsId: '.env.development', variable: 'ENV_FILE')]) {
@@ -107,24 +107,18 @@ pipeline {
                             docker build -t ${tag} --build-arg ENV=test _docker_ctx
                             """
                             
-                            // Test: 포트 17443
                             sh """
-                            if docker service inspect ${FE_TEST_CONTAINER} >/dev/null 2>&1; then
-                                docker service update \\
-                                    --image ${tag} \\
-                                    ${FE_TEST_CONTAINER}
-                                # 종료된 컨테이너 정리
-                                docker container prune -f || true
-                            else
-                                docker service create \\
-                                    --name ${FE_TEST_CONTAINER} \\
-                                    --network ${APP_NETWORK_TEST} \\
-                                    --publish 17443:80 \\
-                                    --replicas 1 \\
-                                    --constraint 'node.hostname==worker' \\
-                                    --update-failure-action rollback \\
-                                    ${tag}
-                            fi
+                            # 기존 컨테이너 중지 및 삭제
+                            docker stop ${FE_TEST_CONTAINER} || true
+                            docker rm ${FE_TEST_CONTAINER} || true
+                            
+                            # 새 컨테이너 실행
+                            docker run -d \\
+                                --name ${FE_TEST_CONTAINER} \\
+                                --restart unless-stopped \\
+                                --network ${APP_NETWORK_TEST} \\
+                                --publish 17443:80 \\
+                                ${tag}
                             """
                         }
                     } else if (branch == 'main') {
@@ -143,24 +137,18 @@ pipeline {
                             docker build -t ${tag} --build-arg ENV=prod _docker_ctx
                             """
                             
-                            // Prod: 포트 7443
                             sh """
-                            if docker service inspect ${FE_PROD_CONTAINER} >/dev/null 2>&1; then
-                                docker service update \\
-                                    --image ${tag} \\
-                                    ${FE_PROD_CONTAINER}
-                                # 종료된 컨테이너 정리
-                                docker container prune -f || true
-                            else
-                                docker service create \\
-                                    --name ${FE_PROD_CONTAINER} \\
-                                    --network ${APP_NETWORK_PROD} \\
-                                    --publish 7443:80 \\
-                                    --replicas 1 \\
-                                    --constraint 'node.hostname==worker' \\
-                                    --update-failure-action rollback \\
-                                    ${tag}
-                            fi
+                            # 기존 컨테이너 중지 및 삭제
+                            docker stop ${FE_PROD_CONTAINER} || true
+                            docker rm ${FE_PROD_CONTAINER} || true
+                            
+                            # 새 컨테이너 실행
+                            docker run -d \\
+                                --name ${FE_PROD_CONTAINER} \\
+                                --restart unless-stopped \\
+                                --network ${APP_NETWORK_PROD} \\
+                                --publish 7443:80 \\
+                                ${tag}
                             """
                         }
                     } else {
