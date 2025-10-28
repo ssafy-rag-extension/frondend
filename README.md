@@ -40,15 +40,15 @@ export default defineConfig([
       // other options...
     },
   },
-])
+]);
 ```
 
 You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
 ```js
 // eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+import reactX from 'eslint-plugin-react-x';
+import reactDom from 'eslint-plugin-react-dom';
 
 export default defineConfig([
   globalIgnores(['dist']),
@@ -69,6 +69,82 @@ export default defineConfig([
       // other options...
     },
   },
-])
+]);
 ```
 
+```
+frontend-repo
+├─ .prettierrc
+├─ eslint.config.js
+├─ index.html
+├─ package.json
+├─ pnpm-lock.yaml
+├─ postcss.config.js
+├─ public
+│  ├─ fonts
+│  │  ├─ Pretendard-Bold.woff2
+│  │  ├─ Pretendard-ExtraBold.woff2
+│  │  ├─ Pretendard-Light.woff2
+│  │  ├─ Pretendard-Medium.woff2
+│  │  └─ Pretendard-Regular.woff2
+│  └─ vite.svg
+├─ README.md
+├─ src
+│  ├─ app
+│  │  ├─ index.tsx
+│  │  ├─ providers
+│  │  └─ styles
+│  │     ├─ colors.css
+│  │     ├─ fonts.css
+│  │     └─ index.css
+│  ├─ App.tsx
+│  ├─ assets
+│  │  ├─ icons
+│  │  ├─ images
+│  │  └─ react.svg
+│  ├─ domains
+│  │  ├─ admin
+│  │  │  ├─ api
+│  │  │  ├─ components
+│  │  │  ├─ hooks
+│  │  │  └─ pages
+│  │  │     ├─ Dashboard.tsx
+│  │  │     ├─ Documents.tsx
+│  │  │     ├─ RagSettings.tsx
+│  │  │     └─ RagTest.tsx
+│  │  ├─ auth
+│  │  │  ├─ api
+│  │  │  ├─ components
+│  │  │  ├─ hooks
+│  │  │  ├─ pages
+│  │  │  │  ├─ Login.tsx
+│  │  │  │  └─ Signup.tsx
+│  │  │  └─ store
+│  │  │     └─ auth.store.ts
+│  │  └─ user
+│  │     ├─ api
+│  │     ├─ components
+│  │     ├─ hooks
+│  │     └─ pages
+│  │        ├─ Documents.tsx
+│  │        ├─ ImageChat.tsx
+│  │        └─ TextChat.tsx
+│  ├─ guards
+│  │  ├─ RequireAdmin.tsx
+│  │  └─ RequireAuth.tsx
+│  ├─ main.tsx
+│  └─ shared
+│     ├─ components
+│     ├─ hooks
+│     ├─ lib
+│     │  └─ apiInstance.ts
+│     ├─ pages
+│     │  └─ NotFound.tsx
+│     └─ types
+├─ tailwind.config.js
+├─ tsconfig.app.json
+├─ tsconfig.json
+├─ tsconfig.node.json
+└─ vite.config.ts
+
+```
