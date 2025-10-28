@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { Menu, MessageSquare, Image, FolderCog } from 'lucide-react';
+import { Menu, MessageSquare, Image, FolderCog, LogOut, Bell } from 'lucide-react';
 import Tooltip from '@/shared/components/Tooltip';
 import RetinaLogo from '@/assets/retina-logo.png';
 
 const linkCls = ({ isActive }: { isActive: boolean }) =>
-  'flex items-center gap-2 rounded-md px-3 py-3 text-base transition-colors ' +
+  'flex items-center gap-2 rounded-md px-4 py-3 text-base transition-colors ' +
   (isActive
     ? 'bg-[var(--color-retina-bg)] text-[var(--color-retina)]'
     : 'text-gray-700 hover:bg-[var(--color-retina)] hover:text-white');
@@ -82,12 +82,29 @@ export default function UserLayout() {
             </div>
           </NavLink>
         </nav>
+        <div className="mt-auto px-2 pb-4">
+          <NavLink
+            to="/logout"
+            className="flex items-center gap-2 rounded-md px-4 py-3 text-base transition-colors text-gray-700 hover:bg-[var(--color-retina-bg)] hover:text-[var(--color-retina)]"
+          >
+            <LogOut size={20} className="flex-shrink-0" />
+            <div
+              className={`transition-[width] duration-300 overflow-hidden ${
+                isOpen ? 'w-32' : 'w-0'
+              }`}
+            >
+              <span className="pl-2 inline-block">로그아웃</span>
+            </div>
+          </NavLink>
+        </div>
       </aside>
-      <main className="flex-1 bg-gray-50 transition-all duration-300">
-        <header className="sticky top-0 z-30 border-b bg-white px-6 py-4 text-sm text-gray-600">
-          사용자 페이지
-        </header>
-        <div className="p-6">
+
+      <main className="flex-1 transition-all duration-300">
+        <div className="flex flex-col gap-4 px-10 py-6">
+          <Bell
+            size={24}
+            className="self-end text-gray-600 hover:text-gray-800 cursor-pointer transition-colors shake-hover"
+          />
           <Outlet />
         </div>
       </main>

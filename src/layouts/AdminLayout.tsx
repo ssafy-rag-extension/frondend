@@ -1,11 +1,20 @@
 import { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { Menu, Settings, Monitor, FolderCog, MessageCirclePlus, Bot, Bell } from 'lucide-react';
+import {
+  Menu,
+  Settings,
+  Monitor,
+  FolderCog,
+  MessageCirclePlus,
+  Bot,
+  Bell,
+  LogOut,
+} from 'lucide-react';
 import Tooltip from '@/shared/components/Tooltip';
 import HebeesLogo from '@/assets/hebees-logo.png';
 
 const linkCls = ({ isActive }: { isActive: boolean }) =>
-  'flex items-center gap-2 rounded-md px-3 py-3 text-base transition-colors ' +
+  'flex items-center gap-2 rounded-md px-4 py-3 text-base transition-colors ' +
   (isActive
     ? 'bg-[var(--color-hebees-bg)] text-[var(--color-hebees)]'
     : 'text-gray-700 hover:bg-[var(--color-hebees)] hover:text-white');
@@ -106,13 +115,28 @@ export default function AdminLayout() {
             </div>
           </NavLink>
         </nav>
+        <div className="mt-auto px-2 pb-4">
+          <NavLink
+            to="/logout"
+            className="flex items-center gap-2 rounded-md px-4 py-3 text-base transition-colors text-gray-700 hover:bg-[var(--color-hebees-bg)] hover:text-[var(--color-hebees)]"
+          >
+            <LogOut size={20} className="flex-shrink-0" />
+            <div
+              className={`transition-[width] duration-300 overflow-hidden ${
+                isOpen ? 'w-32' : 'w-0'
+              }`}
+            >
+              <span className="pl-2 inline-block">로그아웃</span>
+            </div>
+          </NavLink>
+        </div>
       </aside>
 
       <main className="flex-1 transition-all duration-300">
-        <div className="flex flex-col gap-4 px-32">
+        <div className="flex flex-col gap-4 px-10 py-6">
           <Bell
             size={24}
-            className="self-end text-gray-600 hover:text-gray-800 cursor-pointer transition-colors shake-hover mt-10"
+            className="self-end text-gray-600 hover:text-gray-800 cursor-pointer transition-colors shake-hover"
           />
           <Outlet />
         </div>
