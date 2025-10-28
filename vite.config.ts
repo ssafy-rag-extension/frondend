@@ -5,6 +5,11 @@ import path from 'path';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, 'src'),
+    },
+  },
   build: {
     // 해시값을 포함한 파일명 생성으로 캐싱 최적화
     rollupOptions: {
@@ -31,10 +36,5 @@ export default defineConfig({
   server: {
     port: 5173,
     host: true,
-  },
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, 'src'),
-    },
   },
 });

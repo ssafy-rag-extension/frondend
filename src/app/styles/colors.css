@@ -1,10 +1,13 @@
 :root {
+  --color-main:             #e8eaf5;
+
   --color-retina:           #135D9C;
   --color-retina-bg:        #E8EFF6;
 
   --color-hebees:           #96257A;
   --color-hebees-bg:        #F5EAF2;
   --color-hebees-blue:      #81BAFF;
+  --color-hebees-blue-bg:   #DFF4FB;
 
   --color-hebees-gradient:  linear-gradient(90deg, #BE7DB1 10%, #81BAFF 100%);
 

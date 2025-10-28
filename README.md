@@ -72,3 +72,79 @@ export default defineConfig([
 ]);
 ```
 
+```
+frontend-repo
+├─ .prettierrc
+├─ eslint.config.js
+├─ index.html
+├─ package.json
+├─ pnpm-lock.yaml
+├─ postcss.config.js
+├─ public
+│  ├─ fonts
+│  │  ├─ Pretendard-Bold.woff2
+│  │  ├─ Pretendard-ExtraBold.woff2
+│  │  ├─ Pretendard-Light.woff2
+│  │  ├─ Pretendard-Medium.woff2
+│  │  └─ Pretendard-Regular.woff2
+│  └─ vite.svg
+├─ README.md
+├─ src
+│  ├─ app
+│  │  ├─ index.tsx
+│  │  ├─ providers
+│  │  └─ styles
+│  │     ├─ colors.css
+│  │     ├─ fonts.css
+│  │     └─ index.css
+│  ├─ App.tsx
+│  ├─ assets
+│  │  ├─ icons
+│  │  ├─ images
+│  │  └─ react.svg
+│  ├─ domains
+│  │  ├─ admin
+│  │  │  ├─ api
+│  │  │  ├─ components
+│  │  │  ├─ hooks
+│  │  │  └─ pages
+│  │  │     ├─ Dashboard.tsx
+│  │  │     ├─ Documents.tsx
+│  │  │     ├─ RagSettings.tsx
+│  │  │     └─ RagTest.tsx
+│  │  ├─ auth
+│  │  │  ├─ api
+│  │  │  ├─ components
+│  │  │  ├─ hooks
+│  │  │  ├─ pages
+│  │  │  │  ├─ Login.tsx
+│  │  │  │  └─ Signup.tsx
+│  │  │  └─ store
+│  │  │     └─ auth.store.ts
+│  │  └─ user
+│  │     ├─ api
+│  │     ├─ components
+│  │     ├─ hooks
+│  │     └─ pages
+│  │        ├─ Documents.tsx
+│  │        ├─ ImageChat.tsx
+│  │        └─ TextChat.tsx
+│  ├─ guards
+│  │  ├─ RequireAdmin.tsx
+│  │  └─ RequireAuth.tsx
+│  ├─ main.tsx
+│  └─ shared
+│     ├─ components
+│     ├─ hooks
+│     ├─ lib
+│     │  └─ apiInstance.ts
+│     ├─ pages
+│     │  └─ NotFound.tsx
+│     └─ types
+├─ tailwind.config.js
+├─ tsconfig.app.json
+├─ tsconfig.json
+├─ tsconfig.node.json
+└─ vite.config.ts
+
+```

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
 import { Menu, MessageSquare, Image, FileText } from 'lucide-react';
+import Tooltip from '../shared/components/Tooltip';
 
 const linkCls = ({ isActive }: { isActive: boolean }) =>
   'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ' +
@@ -21,19 +22,26 @@ export default function UserLayout() {
             <div className="text-lg font-semibold">User</div>
           ) : (
             <div className="w-full flex justify-center">
-              <button
-                onClick={() => setIsOpen(prev => !prev)}
-                className="text-gray-600 hover:text-gray-800"
-              >
-                <Menu size={20} />
-              </button>
+              <Tooltip content="사이드바 열기" side="bottom" shiftX={15}>
+                <button
+                  onClick={() => setIsOpen(prev => !prev)}
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  <Menu size={20} />
+                </button>
+              </Tooltip>
             </div>
           )}
 
           {isOpen && (
-            <button onClick={() => setIsOpen(false)} className="text-gray-600 hover:text-gray-800">
-              <Menu size={20} />
-            </button>
+            <Tooltip content="사이드바 닫기" side="bottom" shiftX={15}>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                <Menu size={20} />
+              </button>
+            </Tooltip>
           )}
         </div>
 
