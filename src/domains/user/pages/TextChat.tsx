@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import ChatInput from '@/shared/components/ChatInput';
 import { Pencil, ThumbsUp, ThumbsDown, Copy } from 'lucide-react';
 import Tooltip from '@/shared/components/Tooltip';
+import { toast } from 'react-toastify';
 
 type Msg = { role: 'user' | 'assistant'; content: string; model: string };
 
@@ -93,9 +94,11 @@ export default function TextChat() {
 
                             <Tooltip content="복사하기" side="bottom">
                               <button
-                                onClick={() => navigator.clipboard.writeText(m.content)}
+                                onClick={() => {
+                                  navigator.clipboard.writeText(m.content);
+                                  toast.success('클립보드에 복사되었습니다.');
+                                }}
                                 className="p-1 rounded hover:bg-gray-100"
-                                title="복사하기"
                               >
                                 <Copy size={14} className="text-gray-500" />
                               </button>
