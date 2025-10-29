@@ -29,9 +29,9 @@ export default function AdminLayout() {
   const [isOpen, setIsOpen] = useState(true);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex">
       <aside
-        className={`flex flex-col bg-white transition-all duration-300 shadow-sm h-screen ${
+        className={`sticky top-0 self-start shrink-0 h-dvh flex flex-col bg-white transition-all duration-300 shadow-sm ${
           isOpen ? 'w-64 border-r' : 'w-[64px] border-r'
         }`}
       >
@@ -115,12 +115,14 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      <main className="flex-1 transition-all duration-300">
-        <div className="flex flex-col gap-3 px-8 py-5">
+      <main className="flex-1 min-w-0">
+        <div className="sticky top-0 bg-transparent flex justify-end px-8 py-5">
           <Bell
             size={22}
-            className="self-end text-gray-600 hover:text-gray-800 cursor-pointer transition-colors shake-hover"
+            className="text-gray-600 hover:text-gray-800 cursor-pointer transition-colors shake-hover"
           />
+        </div>
+        <div className="flex w-full flex-col gap-3 px-8">
           <Outlet />
         </div>
       </main>

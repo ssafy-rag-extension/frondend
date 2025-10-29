@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { SendHorizonal } from 'lucide-react';
 
-type Props = {
-  onSend: (msg: string) => void;
-};
+type Props = { onSend: (msg: string) => void };
 
 export default function ChatInput({ onSend }: Props) {
   const [text, setText] = useState('');
@@ -21,29 +19,25 @@ export default function ChatInput({ onSend }: Props) {
 
   return (
     <div className="flex flex-col items-center w-full gap-4">
-      <div className="w-full max-w-[75%]">
-        <div className="rounded-full p-[1px] bg-gradient-to-r from-[#BE7DB1] to-[#81BAFF] shadow-sm">
-          <div className="flex items-center rounded-full bg-white px-3 py-2">
-            <input
-              className="flex-1 text-base border-none text-black placeholder-gray-400 
-                   focus:outline-none focus:ring-0 focus:border-none"
-              placeholder="레티나 챗봇에게 무엇이든 물어보세요."
-              value={text}
-              onChange={e => setText(e.target.value)}
-              onKeyDown={onKeyDown}
-            />
-            <button
-              className="w-9 h-9 flex items-center justify-center rounded-full 
-                   bg-gradient-to-br from-[#BE7DB1] to-[#81BAFF]"
-              onClick={send}
-            >
-              <SendHorizonal size={18} className="text-white" />
-            </button>
-          </div>
+      <div className="w-full">
+        <div className="flex items-center rounded-full border border-gray-300 bg-white px-4 py-2 shadow-sm">
+          <input
+            className="flex-1 text-base bg-transparent border-none text-black placeholder-gray-400 focus:outline-none focus:ring-0 focus:border-none"
+            placeholder="레티나 챗봇에게 무엇이든 물어보세요."
+            value={text}
+            onChange={e => setText(e.target.value)}
+            onKeyDown={onKeyDown}
+          />
+          <button
+            className="w-9 h-9 flex items-center justify-center rounded-full bg-[var(--color-retina)] hover:bg-[var(--color-retina-dark)] transition-colors"
+            onClick={send}
+          >
+            <SendHorizonal size={18} className="text-white" />
+          </button>
         </div>
       </div>
 
-      <p className="text-sm text-gray-500">레티나 챗봇은 업로드 된 문서를 기반으로 답변합니다.</p>
+      <p className="text-sm text-gray-500">레티나 챗봇은 업로드된 문서를 기반으로 답변합니다.</p>
     </div>
   );
 }
