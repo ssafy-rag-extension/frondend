@@ -1,9 +1,10 @@
+import type { FileType } from '@/domains/admin/types';
 export default function DuplicatedModal({
   duplicates,
   onConfirm,
   onCancel,
 }: {
-  duplicates: File[];
+  duplicates: FileType[];
   onConfirm: () => void;
   onCancel: () => void;
 }) {

@@ -1,10 +1,10 @@
 import { CloudUpload } from 'lucide-react';
 import { useRef } from 'react';
-
+import type { FileType } from '@/domains/admin/types';
 interface UploadFileProps {
-  onFilesSelected: (mergedFiles: File[]) => void; // 최종 병합 결과
-  onDuplicateDetected?: (duplicates: File[]) => void; // 중복 파일 모달 띄우기 용
-  existingFiles: File[]; // 부모가 가진 기존 파일 목록
+  onFilesSelected: (mergedFiles: FileType[]) => void; // 최종 병합 결과
+  onDuplicateDetected?: (duplicates: FileType[]) => void; // 중복 파일 모달 띄우기 용
+  existingFiles: FileType[]; // 부모가 가진 기존 파일 목록
 }
 
 export default function UploadFile({
@@ -22,7 +22,16 @@ export default function UploadFile({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const newFiles = Array.from(files);
+    const newFiles: FileType[] = Array.from(files).map((f) => ({
+      name: f.name,
+      size: f.size,
+      category: null,
+      collection: null,
+      currentProgress: null,
+      currentPercent: null,
+      totalProgress: null,
+    }));
+
     const existingNames = new Set(existingFiles.map((f) => f.name));
 
     // ✅ 중복 감지

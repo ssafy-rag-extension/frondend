@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { FolderOpen, FileText, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
-export default function StorageLocation() {
+import type { ColSectionProps } from '@/domains/admin/types';
+
+export default function ColSection({ selectedCollection, onCollectionSelect }: ColSectionProps) {
   const dummyFiles = [
     {
       id: 1,
@@ -75,12 +77,17 @@ export default function StorageLocation() {
     public: true,
     hebees: true,
   });
-
+  const [page, setPage] = useState<Record<string, number>>({ public: 1, hebees: 1 });
   const FILES_PER_PAGE = 5;
-  const [currentPage, setCurrentPage] = useState(1);
 
   const toggleOpen = (name: string) => {
     setOpenCollections((prev) => ({ ...prev, [name]: !prev[name] }));
+  };
+
+  const handleSelectCollection = (name: 'public' | 'hebees') => {
+    // 이미 선택된 컬렉션이면 해제
+    const newSelection = selectedCollection === name ? null : name;
+    onCollectionSelect(newSelection);
   };
 
   return (
@@ -92,13 +99,18 @@ export default function StorageLocation() {
       <div className="space-y-4">
         {collections.map((col) => {
           const totalPages = Math.ceil(col.files.length / FILES_PER_PAGE);
+          const currentPage = page[col.name] || 1;
           const startIndex = (currentPage - 1) * FILES_PER_PAGE;
           const visibleFiles = col.files.slice(startIndex, startIndex + FILES_PER_PAGE);
 
           return (
             <div
               key={col.id}
-              className="border rounded-lg p-3 hover:bg-[var(--color-hebees-bg)]/40 transition"
+              className={`border rounded-lg p-3 transition ${
+                selectedCollection === col.name
+                  ? 'bg-[var(--color-hebees-bg)]/40'
+                  : 'hover:bg-[var(--color-hebees-bg)]/20'
+              }`}
             >
               {/* 헤더 */}
               <div className="flex items-center justify-between">
@@ -109,19 +121,24 @@ export default function StorageLocation() {
                   {col.name}
                 </div>
                 <div className="flex items-center gap-3">
-                  <input type="checkbox" className="accent-[var(--color-hebees)]" />
+                  <input
+                    type="checkbox"
+                    className="accent-[var(--color-hebees)] cursor-pointer"
+                    checked={selectedCollection === col.name}
+                    onChange={() => handleSelectCollection(col.name as 'public' | 'hebees')}
+                  />
                   <button
                     onClick={() => toggleOpen(col.name)}
                     className="flex items-center text-sm text-gray-500 hover:text-[var(--color-hebees)] transition"
                   >
                     {openCollections[col.name] ? (
                       <>
-                        <ChevronDown size={15} className="" />
+                        <ChevronDown size={15} />
                         접기
                       </>
                     ) : (
                       <>
-                        <ChevronRight size={15} className="" />
+                        <ChevronRight size={15} />
                         보기
                       </>
                     )}
@@ -152,11 +169,16 @@ export default function StorageLocation() {
 
                   {/* 페이지네이션 */}
                   {totalPages >= 1 && (
-                    <div className="flex justify-center gap-2 items-center">
+                    <div className="flex justify-center gap-2 items-center mt-2">
                       <button
-                        onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+                        onClick={() =>
+                          setPage((prev) => ({
+                            ...prev,
+                            [col.name]: Math.max((prev[col.name] || 1) - 1, 1),
+                          }))
+                        }
                         disabled={currentPage === 1}
-                        className="flex items-center gap-1 px-2 py-1 text-gray-600 text-xs hover:text-[var(--color-hebees)] disabled:opacity-40 disabled:hover:text-gray-600"
+                        className="flex items-center gap-1 px-2 py-1 text-gray-600 text-xs hover:text-[var(--color-hebees)] disabled:opacity-40"
                       >
                         <ChevronLeft size={10} />
                         <span>이전</span>
@@ -167,9 +189,14 @@ export default function StorageLocation() {
                       </span>
 
                       <button
-                        onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+                        onClick={() =>
+                          setPage((prev) => ({
+                            ...prev,
+                            [col.name]: Math.min((prev[col.name] || 1) + 1, totalPages),
+                          }))
+                        }
                         disabled={currentPage === totalPages}
-                        className="flex items-center gap-1 px-2 py-1 text-gray-600 text-xs hover:text-[var(--color-hebees)] disabled:opacity-30 disabled:hover:text-gray-600"
+                        className="flex items-center gap-1 px-2 py-1 text-gray-600 text-xs hover:text-[var(--color-hebees)] disabled:opacity-40"
                       >
                         <span>다음</span>
                         <ChevronRight size={10} />

@@ -1,77 +1,56 @@
 import { Trash2, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import type { FileType } from '@/domains/admin/types';
-
-interface UploadedDocumentsProps {
-  files: File[];
-  onFilesChange?: (updatedFiles: File[]) => void; // 부모에 반영하고 싶을 때 사용
-  onSelectFiles: (selectedFiles: File[]) => void; // 컬렉션 선택으로 넘길 파일을 부모로 전달
-}
+import type { FileType, UploadedDocumentsProps } from '@/domains/admin/types';
 
 export default function UploadedDocuments({
   files,
   onFilesChange,
   onSelectFiles,
+  selectedFiles,
 }: UploadedDocumentsProps) {
-  const [checkedFiles, setCheckedFiles] = useState<string[]>([]);
-  const allSelected = checkedFiles.length === files.length && files.length > 0;
-  const [currentPage, setCurrentPage] = useState(1);
-
   // 벡터화 목록으로 보낼 파일 배열
-  const [selectedFilesForVector, setSelectedFilesForVector] = useState<File[]>([]);
 
   // 페이지네이션
   const FILES_PER_PAGE = 8;
+  const [currentPage, setCurrentPage] = useState(1);
   const totalPages = Math.ceil(files.length / FILES_PER_PAGE);
   const startIndex = (currentPage - 1) * FILES_PER_PAGE;
   const visibleFiles = files.slice(startIndex, startIndex + FILES_PER_PAGE);
+
+  // 전체 선택 여부 계산
+  const allSelected = selectedFiles.length === files.length && files.length > 0;
+
+  // 전체 선택 / 해제
+  const handleToggleAll = () => {
+    if (allSelected) {
+      onSelectFiles([]); // 모두 해제
+    } else {
+      onSelectFiles(files); // 모두 선택
+    }
+  };
+
+  // 개별 파일 선택 / 해제
+  const handleToggleFile = (file: FileType) => {
+    const isSelected = selectedFiles.some((f) => f.name === file.name);
+    if (isSelected) {
+      onSelectFiles(selectedFiles.filter((f) => f.name !== file.name));
+    } else {
+      onSelectFiles([...selectedFiles, file]);
+    }
+  };
+
+  // 파일 삭제
+  const handleDelete = () => {
+    const selectedNames = new Set(selectedFiles.map((f) => f.name));
+    const remaining = files.filter((f) => !selectedNames.has(f.name));
+    onFilesChange?.(remaining);
+    onSelectFiles([]); // 삭제 후 선택 초기화
+  };
 
   // 페이지 이동
   const goToPage = (page: number) => {
     setCurrentPage(page);
   };
-
-  // 개별 파일 선택 토글
-  const toggleFile = (fileName: string) => {
-    setCheckedFiles((prev) =>
-      prev.includes(fileName) ? prev.filter((name) => name !== fileName) : [...prev, fileName]
-    );
-  };
-
-  // 선택 목록으로 보낼 파일(개별) 업데이트
-  const handleCheckFile = (file: File) => {
-    setSelectedFilesForVector((prev) => {
-      // 이미 선택된 경우 → 해제
-      if (prev.includes(file)) {
-        return prev.filter((f) => f !== file);
-      }
-      // 새로 선택된 경우 → 추가
-      return [...prev, file];
-    });
-  };
-
-  // 모두 선택 / 해제
-  const toggleAll = () => {
-    if (allSelected) {
-      setCheckedFiles([]);
-      setSelectedFilesForVector([]);
-    } else {
-      setCheckedFiles(files.map((f) => f.name));
-      setSelectedFilesForVector(files);
-    }
-  };
-
-  // 선택된 파일 삭제
-  const handleDelete = () => {
-    const remaining = files.filter((f) => !checkedFiles.includes(f.name));
-    setCheckedFiles([]);
-    onFilesChange?.(remaining);
-  };
-
-  // 선택된 파일이 변경될 때마다 부모 컴포넌트로 전달
-  useEffect(() => {
-    onSelectFiles(selectedFilesForVector);
-  }, [selectedFilesForVector]);
 
   return (
     <section className="flex flex-col w-1/2 p-4 border border-gray-200 rounded-xl">
@@ -88,7 +67,7 @@ export default function UploadedDocuments({
           <input
             type="checkbox"
             checked={allSelected}
-            onChange={toggleAll}
+            onChange={handleToggleAll}
             className="
             accent-[var(--color-hebees)]
             border-2 border-[var(--color-hebees)]
@@ -100,7 +79,7 @@ export default function UploadedDocuments({
           <p>삭제</p>
           <button
             onClick={handleDelete}
-            disabled={checkedFiles.length === 0}
+            disabled={selectedFiles.length === 0}
             className="text-[var(--color-hebees)] transition"
           >
             <Trash2 className="w-5 h-5" />
@@ -126,11 +105,8 @@ export default function UploadedDocuments({
               </div>
               <input
                 type="checkbox"
-                checked={checkedFiles.includes(file.name)}
-                onChange={() => {
-                  toggleFile(file.name);
-                  handleCheckFile(file);
-                }}
+                checked={selectedFiles.some((f) => f.name === file.name)}
+                onChange={() => handleToggleFile(file)}
                 className="accent-[var(--color-hebees)] border-2 border-[var(--color-hebees)] rounded-sm cursor-pointer scale-110"
               />
             </li>
