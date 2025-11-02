@@ -8,7 +8,7 @@ export default function KeywordMap() {
   const chartRef = useRef<Highcharts.Chart | null>(null);
   const [keywords, setKeywords] = useState<WordData[]>([]);
   const [isLoading, _setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, _setError] = useState<string | null>(null);
 
   // ✅ API 연결 시도 (현재 주석처리)
   // useEffect(() => {
