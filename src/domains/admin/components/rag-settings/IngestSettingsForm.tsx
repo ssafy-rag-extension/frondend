@@ -21,6 +21,7 @@ type SavePayload = {
   embedModel: string;
   embedBackup: string;
 };
+
 export function IngestSettingsForm({
   template,
   onTemplateChange,
