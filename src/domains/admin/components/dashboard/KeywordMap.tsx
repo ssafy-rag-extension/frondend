@@ -7,7 +7,7 @@ type WordData = { name: string; weight: number };
 export default function KeywordMap() {
   const chartRef = useRef<Highcharts.Chart | null>(null);
   const [keywords, setKeywords] = useState<WordData[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, _setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // ✅ API 연결 시도 (현재 주석처리)
@@ -100,16 +100,19 @@ export default function KeywordMap() {
           },
 
           events: {
-            mouseOver: function (e) {
-              const el = e?.target?.graphic?.element as SVGElement | undefined;
+            mouseOver: function (e: unknown) {
+              const event = e as { target?: { graphic?: { element?: SVGElement } } };
+              const el = event.target?.graphic?.element;
               if (el) el.style.transform = 'scale(1.25)';
             },
-            mouseOut: function (e) {
-              const el = e?.target?.graphic?.element as SVGElement | undefined;
+            mouseOut: function (e: unknown) {
+              const event = e as { target?: { graphic?: { element?: SVGElement } } };
+              const el = event.target?.graphic?.element;
               if (el) el.style.transform = 'scale(1.0)';
             },
-            click: function (e) {
-              console.log(`🟣 클릭된 키워드: ${e.point.name}`);
+            click: function (e: unknown) {
+              const event = e as { point?: { name?: string } };
+              console.log(`🟣 클릭된 키워드: ${event.point?.name}`);
             },
           },
         } as Highcharts.SeriesWordcloudOptions,
@@ -119,7 +122,7 @@ export default function KeywordMap() {
     return () => chartRef.current?.destroy();
   }, [keywords, isLoading]);
 
-  // ✅ 로딩 / 에러 상태 표시
+  // 로딩 / 에러 상태 표시
   if (isLoading) {
     return (
       <div className="flex items-center justify-center w-full h-[320px] rounded-xl border">
