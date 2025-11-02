@@ -76,7 +76,7 @@ export function RagStrategyCompare({ initialIngest, initialQueries, onRunCompare
   };
 
   const run = async () => {
-    if (!question.trim()) return; // 간단 가드
+    if (!question.trim()) return;
     setIsRunning(true);
     setLeftResult(null);
     setRightResult(null);

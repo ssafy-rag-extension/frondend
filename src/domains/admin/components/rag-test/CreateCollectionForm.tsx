@@ -1,10 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 import Card from '@/shared/components/Card';
 import Select from '@/shared/components/Select';
 import { ingestTemplateOptions } from '@/domains/admin/components/rag-settings/options';
 import FileDropzone from '@/shared/components/FileUploader';
+import UploadedFileList from '@/shared/components/UploadedFileList';
+import type { UploadedDoc as UDoc } from '@/shared/components/UploadedFileList';
 import type { Collection } from '@/domains/admin/components/rag-test/types';
 
 type Props = {
@@ -12,35 +14,55 @@ type Props = {
   onCreate: (c: Collection) => void;
 };
 
-export function CreateCollectionForm({ onCancel, onCreate }: Props) {
+export function CreateCollectionForm({}: Props) {
   const navigate = useNavigate();
 
   const defaultTemplate = (ingestTemplateOptions as any)?.[0]?.value ?? '';
-
   const [name, setName] = useState('');
   const [template, setTemplate] = useState<string>(defaultTemplate);
+  const [uploadedDocs, setUploadedDocs] = useState<UDoc[]>([]);
 
-  const canCreate = useMemo(() => Boolean(name.trim() && template), [name, template]);
-
-  const handleUpload = async (files: File[]) => {
-    // 업로드 API 연동
-    console.log(
-      '업로드 파일:',
-      files.map(f => `${f.name} (${(f.size / 1024 / 1024).toFixed(1)}MB)`)
-    );
+  const detectType = (f: File): UDoc['type'] => {
+    const t = f.type;
+    if (t.includes('pdf')) return 'pdf';
+    if (t.includes('presentation') || /\.pptx?$/i.test(f.name)) return 'pptx';
+    if (t.includes('sheet') || /\.xlsx?$/i.test(f.name)) return 'xlsx';
+    if (t.includes('word') || /\.docx?$/i.test(f.name)) return 'docx';
+    if (t.startsWith('image/')) return 'image';
+    return 'txt';
   };
 
-  const genId = () => globalThis.crypto?.randomUUID?.() ?? `col_${Date.now()}`;
+  const handleUpload = async (files: File[]) => {
+    const now = new Date().toLocaleString();
+    const mapped: UDoc[] = files.map(f => ({
+      id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}_${f.name}`,
+      name: f.name,
+      sizeKB: f.size / 1024,
+      uploadedAt: now,
+      category: '없음',
+      type: detectType(f),
+      file: f,
+    }));
+    setUploadedDocs(prev => [...mapped, ...prev]);
+  };
 
-  const handleCreate = () => {
-    if (!canCreate) return;
-    const newCol = {
-      id: genId(),
-      name: name.trim(),
-      templateId: template,
-    } as unknown as Collection;
+  const handleDownload = (id: string) => {
+    const doc = uploadedDocs.find(d => d.id === id);
+    if (!doc?.file) return;
+    const url = URL.createObjectURL(doc.file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = doc.name;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
-    onCreate(newCol);
+  const handleDelete = (ids: string[]) => {
+    setUploadedDocs(prev => prev.filter(d => !ids.includes(d.id)));
+  };
+
+  const handleCategoryChange = (id: string, category: string) => {
+    setUploadedDocs(prev => prev.map(d => (d.id === id ? { ...d, category } : d)));
   };
 
   return (
@@ -90,32 +112,20 @@ export function CreateCollectionForm({ onCancel, onCreate }: Props) {
       <Card title="테스트 문서 업로드">
         <FileDropzone
           onFiles={handleUpload}
-          accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt"
+          accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg"
           maxSizeMB={50}
           className="mt-4"
+          brand="hebees"
+        />
+
+        <UploadedFileList
+          docs={uploadedDocs}
+          onDownload={handleDownload}
+          onDelete={handleDelete}
+          onCategoryChange={handleCategoryChange}
+          brand="hebees"
         />
       </Card>
-
-      {/* 액션 영역 */}
-      <div className="flex items-center justify-end gap-2">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="inline-flex h-9 items-center rounded-lg border bg-white px-4 text-sm font-medium
-                     text-gray-700 hover:bg-gray-50"
-        >
-          취소
-        </button>
-        <button
-          type="button"
-          disabled={!canCreate}
-          onClick={handleCreate}
-          className="inline-flex h-9 items-center rounded-lg bg-gray-900 px-4 text-sm font-semibold text-white
-                     hover:bg-black disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          생성하기
-        </button>
-      </div>
     </div>
   );
 }

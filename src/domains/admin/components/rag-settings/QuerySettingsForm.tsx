@@ -129,7 +129,6 @@ export function QuerySettingsForm({
               className="w-full rounded-md border border-gray-200 px-3 py-2 text-base
                 focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-transparent
                 text-right"
-              placeholder="예: 5"
             />
           </div>
         </div>
