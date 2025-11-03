@@ -19,9 +19,9 @@ FROM base AS builder
 # 값이 비어있으면 Vite 기본값(production)으로 빌드
 ARG MODE
 RUN if [ -n "$MODE" ]; then \
-      echo "Vite build mode=$MODE" && pnpm run build -- --mode "$MODE"; \
+      echo "Vite build mode=$MODE" && pnpm exec tsc -b && pnpm exec vite build --mode "$MODE"; \
     else \
-      echo "Vite build default (production)" && pnpm run build; \
+      echo "Vite build default (production)" && pnpm exec tsc -b && pnpm exec vite build; \
     fi
 
 # Nginx를 사용한 정적 파일 서빙
