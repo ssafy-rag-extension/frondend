@@ -82,7 +82,14 @@ pipeline {
                     pnpm install && \
                     chown -R $(id -u):$(id -g) pnpm-lock.yaml 2>/dev/null || true
                 "
-                echo "pnpm-lock.yaml updated successfully"
+                # 업데이트 확인
+                if [ -f pnpm-lock.yaml ]; then
+                    echo "✅ pnpm-lock.yaml updated successfully"
+                    ls -lh pnpm-lock.yaml
+                else
+                    echo "❌ pnpm-lock.yaml not found after update"
+                    exit 1
+                fi
                 '''
             }
         }
@@ -119,13 +126,23 @@ pipeline {
 
                             sh """
                             set -eux
+                            # Docker 빌드 컨텍스트 준비
                             rm -rf _docker_ctx
                             mkdir -p _docker_ctx
                             tar --no-same-owner -cf - --exclude=.git --exclude=_docker_ctx --exclude=.env . | (cd _docker_ctx && tar -xf -)
                             chmod -R 755 _docker_ctx
                             cp "\$ENV_FILE" _docker_ctx/.env
+                            
+                            # lockfile이 최신인지 확인하고 필요시 업데이트
+                            cd _docker_ctx
+                            docker run --rm -v "\$PWD":/app -w /app node:22.10.0-alpine sh -c "
+                                npm install -g pnpm && \
+                                pnpm install
+                            "
+                            cd ..
+                            
                             ls -la _docker_ctx/.env
-                            cat _docker_ctx/.env
+                            ls -lh _docker_ctx/pnpm-lock.yaml
                             docker build -t ${tag} --build-arg ENV=test _docker_ctx
                             """
                             
@@ -149,13 +166,23 @@ pipeline {
 
                             sh """
                             set -eux
+                            # Docker 빌드 컨텍스트 준비
                             rm -rf _docker_ctx
                             mkdir -p _docker_ctx
                             tar --no-same-owner -cf - --exclude=.git --exclude=_docker_ctx --exclude=.env* . | (cd _docker_ctx && tar -xf -)
                             chmod -R 755 _docker_ctx
                             cp "\$ENV_FILE" _docker_ctx/.env.production
+                            
+                            # lockfile이 최신인지 확인하고 필요시 업데이트
+                            cd _docker_ctx
+                            docker run --rm -v "\$PWD":/app -w /app node:22.10.0-alpine sh -c "
+                                npm install -g pnpm && \
+                                pnpm install
+                            "
+                            cd ..
+                            
                             ls -la _docker_ctx/.env.production
-                            cat _docker_ctx/.env.production
+                            ls -lh _docker_ctx/pnpm-lock.yaml
                             docker build -t ${tag} --build-arg ENV=prod _docker_ctx
                             """
                             

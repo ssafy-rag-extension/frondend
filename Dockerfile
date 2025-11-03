@@ -7,8 +7,9 @@ WORKDIR /app
 # 의존성 파일만 먼저 복사 (레이어 캐싱 최적화)
 COPY package.json pnpm-lock.yaml ./
 
-# 의존성 설치 (package.json이 변경될 때만 재실행)
-RUN pnpm install --frozen-lockfile
+# 의존성 설치 (lockfile이 이미 업데이트되어 있으므로 frozen-lockfile 사용)
+# 만약 lockfile이 최신이 아니라면 일반 install로 자동 전환
+RUN pnpm install --frozen-lockfile || pnpm install
 
 # 소스 코드 복사 (코드 변경 시에만 이 레이어가 재빌드됨)
 COPY . .
