@@ -17,7 +17,7 @@ export default function SelectVectorization({
   const currentFiles = localFiles.slice(startIndex, startIndex + itemsPerPage);
   const totalPages = Math.ceil(localFiles.length / itemsPerPage);
 
-  const [selectedFile, _setSelectedFile] = useState(finalSelectedFiles[0]);
+  const [_selectedFile, _setSelectedFile] = useState(finalSelectedFiles[0]);
 
   const handleRemove = (name: string) => {
     setLocalFiles((prev) => prev.filter((file) => file.name !== name));

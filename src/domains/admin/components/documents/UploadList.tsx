@@ -1,5 +1,5 @@
 import { Trash2, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { FileType, UploadedDocumentsProps } from '@/domains/admin/types';
 
 export default function UploadedDocuments({
