@@ -19,6 +19,24 @@ pipeline {
     }
 
     stages {
+        /********************  서브모듈 체크아웃  ********************/
+        stage('Checkout Submodules') {
+            when {
+                anyOf {
+                    expression { env.GITLAB_OBJECT_KIND == 'push' }
+                    expression { params.BUILD_FRONTEND == true }
+                }
+            }
+            steps {
+                sh '''
+                set -eux
+                git submodule sync --recursive
+                git submodule update --init --recursive
+                git submodule status
+                ls -la frontend-repo || true
+                '''
+            }
+        }
 
         /********************  변경 파일 확인  ********************/
         stage('Check for Changes') {
@@ -65,6 +83,39 @@ pipeline {
             }
         }
 
+        /********************  pnpm-lock.yaml 업데이트  ********************/
+        stage('Update pnpm-lock.yaml') {
+            when {
+                anyOf {
+                    expression { env.GITLAB_OBJECT_KIND == 'push' }
+                    expression { params.BUILD_FRONTEND == true }
+                }
+            }
+            steps {
+                sh '''
+                set -eux
+                # package.json 존재 시에만 lockfile 업데이트 시도
+                if [ -f package.json ]; then
+                  docker run --rm -v "$PWD":/app -w /app node:22.10.0-alpine sh -c "
+                      npm install -g pnpm && \
+                      pnpm install && \
+                      chown -R $(id -u):$(id -g) pnpm-lock.yaml 2>/dev/null || true
+                  "
+                else
+                  echo "skip pnpm install: package.json not found in workspace"
+                fi
+                # 업데이트 확인 (존재만 확인)
+                if [ -f pnpm-lock.yaml ]; then
+                    echo "✅ pnpm-lock.yaml present"
+                    ls -lh pnpm-lock.yaml
+                else
+                    echo "❌ pnpm-lock.yaml missing"
+                    exit 1
+                fi
+                '''
+            }
+        }
+
         /******************** 프론트엔드 배포  ********************/
         stage('Deploy Frontend') {
             when {
@@ -95,20 +146,35 @@ pipeline {
                         withCredentials([file(credentialsId: '.env.development', variable: 'ENV_FILE')]) {
                             def tag = "${FE_IMAGE_NAME}:test-${BUILD_NUMBER}"
 
-                            sh """
+                            sh '''
                             set -eux
+                            # Docker 빌드 컨텍스트 준비
                             rm -rf _docker_ctx
                             mkdir -p _docker_ctx
-                            tar --no-same-owner -cf - --exclude=.git --exclude=_docker_ctx --exclude=.env . | (cd _docker_ctx && tar -xf -)
+                            SRC_DIR="."
+                            if [ -d frontend-repo ]; then SRC_DIR="frontend-repo"; fi
+                            TMP_ARCHIVE="$(mktemp -t ctx.XXXXXX.tar)"
+                            tar -C "$SRC_DIR" --no-same-owner -cf "$TMP_ARCHIVE" --exclude=.git --exclude=_docker_ctx --exclude=.env .
+                            tar -C _docker_ctx -xf "$TMP_ARCHIVE"
+                            rm -f "$TMP_ARCHIVE"
+                            # 컨텍스트 점검
+                            ls -la _docker_ctx | sed -n '1,120p'
+                            test -f _docker_ctx/package.json || { echo "missing package.json in _docker_ctx"; exit 1; }
                             chmod -R 755 _docker_ctx
-                            cp "\$ENV_FILE" _docker_ctx/.env
-                            ls -la _docker_ctx/.env
-                            cat _docker_ctx/.env
-                            docker build -t ${tag} --build-arg ENV=test _docker_ctx
-                            """
+                            # 개발 브랜치: Vite가 자동으로 읽는 파일명(.env.development)으로 복사
+                            cp "$ENV_FILE" _docker_ctx/.env.development
                             
-                            sh """
+                            # 사전 pnpm 설치는 생략 (Dockerfile에서 처리)
+                            ls -la _docker_ctx/.env.development || true
+                            ls -lh _docker_ctx/pnpm-lock.yaml
+                            TAG="${FE_IMAGE_NAME}:test-${BUILD_NUMBER}"
+                            # develop은 --mode development로 빌드되도록 build-arg 전달
+                            docker build -t "$TAG" --build-arg MODE=development _docker_ctx
+                            '''
+                            
+                            sh '''
                             # 기존 컨테이너 중지 및 삭제
+                            TAG="${FE_IMAGE_NAME}:test-${BUILD_NUMBER}"
                             docker stop ${FE_TEST_CONTAINER} || true
                             docker rm ${FE_TEST_CONTAINER} || true
                             
@@ -118,27 +184,42 @@ pipeline {
                                 --restart unless-stopped \\
                                 --network ${APP_NETWORK_TEST} \\
                                 --publish 17443:80 \\
-                                ${tag}
-                            """
+                                "$TAG"
+                            '''
                         }
                     } else if (branch == 'main') {
                         withCredentials([file(credentialsId: '.env.production', variable: 'ENV_FILE')]) {
                             def tag = "${FE_IMAGE_NAME}:prod-${BUILD_NUMBER}"
 
-                            sh """
+                            sh '''
                             set -eux
+                            # Docker 빌드 컨텍스트 준비
                             rm -rf _docker_ctx
                             mkdir -p _docker_ctx
-                            tar --no-same-owner -cf - --exclude=.git --exclude=_docker_ctx --exclude=.env* . | (cd _docker_ctx && tar -xf -)
+                            SRC_DIR="."
+                            if [ -d frontend-repo ]; then SRC_DIR="frontend-repo"; fi
+                            TMP_ARCHIVE="$(mktemp -t ctx.XXXXXX.tar)"
+                            tar -C "$SRC_DIR" --no-same-owner -cf "$TMP_ARCHIVE" --exclude=.git --exclude=_docker_ctx --exclude=.env* .
+                            tar -C _docker_ctx -xf "$TMP_ARCHIVE"
+                            rm -f "$TMP_ARCHIVE"
+                            # 컨텍스트 점검
+                            ls -la _docker_ctx | sed -n '1,120p'
+                            test -f _docker_ctx/package.json || { echo "missing package.json in _docker_ctx"; exit 1; }
                             chmod -R 755 _docker_ctx
-                            cp "\$ENV_FILE" _docker_ctx/.env.production
-                            ls -la _docker_ctx/.env.production
-                            cat _docker_ctx/.env.production
-                            docker build -t ${tag} --build-arg ENV=prod _docker_ctx
-                            """
+                            # 운영 브랜치: .env.production 파일명 유지
+                            cp "$ENV_FILE" _docker_ctx/.env.production
                             
-                            sh """
+                            # 사전 pnpm 설치는 생략 (Dockerfile에서 처리)
+                            ls -la _docker_ctx/.env.production || true
+                            ls -lh _docker_ctx/pnpm-lock.yaml
+                            TAG="${FE_IMAGE_NAME}:prod-${BUILD_NUMBER}"
+                            # main은 기본 production 모드지만 명시적으로 전달
+                            docker build -t "$TAG" --build-arg MODE=production _docker_ctx
+                            '''
+                            
+                            sh '''
                             # 기존 컨테이너 중지 및 삭제
+                            TAG="${FE_IMAGE_NAME}:prod-${BUILD_NUMBER}"
                             docker stop ${FE_PROD_CONTAINER} || true
                             docker rm ${FE_PROD_CONTAINER} || true
                             
@@ -148,8 +229,8 @@ pipeline {
                                 --restart unless-stopped \\
                                 --network ${APP_NETWORK_PROD} \\
                                 --publish 7443:80 \\
-                                ${tag}
-                            """
+                                "$TAG"
+                            '''
                         }
                     } else {
                         error "[Deploy Frontend] 지원하지 않는 브랜치='${branch}'. (develop/main 만 지원)"
@@ -234,13 +315,16 @@ def sendMMNotify(boolean success, Map info) {
         def commitLine = info.commit?.url ? "[${info.commit.msg}](${info.commit.url})" : info.commit.msg
         lines << "**커밋**: ${commitLine}"
     }
+    if (info.buildUrl) {
+        lines << "**빌드 상세**: [Details](${info.buildUrl})"
+    }
     if (!success && info.details) {
         lines << "**에러 로그**:\n${info.details}"
     }
     
     def text = "${titleLine}\n" + (lines ? ("\n" + lines.join("\n")) : "")
     
-    // 안전 전송(크리덴셜 경고 없음)
+    // 안전 전송
     writeFile file: 'payload.json', text: groovy.json.JsonOutput.toJson([
         text      : text,
         username  : "Jenkins",
@@ -255,4 +339,3 @@ def sendMMNotify(boolean success, Map info) {
         ''')
     }
 }
-
