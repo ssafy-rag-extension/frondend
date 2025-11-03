@@ -19,11 +19,15 @@ export default function SelectVectorization({
   const currentFiles = localFiles.slice(startIndex, startIndex + itemsPerPage);
   const totalPages = Math.ceil(localFiles.length / itemsPerPage);
 
-  const [_selectedFile, _setSelectedFile] = useState(finalSelectedFiles[0]);
+  const [selectedFile, setSelectedFile] = useState<FileType | null>(null);
 
   const handleRemove = (name: string) => {
     if (onRemove) onRemove(name);
     setLocalFiles((prev) => prev.filter((file) => file.name !== name));
+
+    if (selectedFile?.name === name) {
+      setSelectedFile(null);
+    }
   };
 
   useEffect(() => {
@@ -52,10 +56,16 @@ export default function SelectVectorization({
         {currentFiles.map((file) => (
           <div
             key={file.name}
-            className="grid grid-cols-8 items-center text-sm pt-2 border-b last:border-none"
+            onClick={() => setSelectedFile(file)}
+            className="grid grid-cols-8 items-center text-sm p-2 border-b last:border-none hover:bg-gray-200 cursor-pointer"
           >
             <div className="col-span-3 flex items-center gap-2 text-xs font-regular pl-2">
-              <button onClick={() => handleRemove(file.name)}>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRemove(file.name);
+                }}
+              >
                 <X size={17} className="text-[var(--color-hebees)]" />
               </button>
               <div className="w-7 h-7 bg-[var(--color-hebees)] rounded-md flex items-center justify-center">
@@ -74,10 +84,10 @@ export default function SelectVectorization({
             <span className="text-center text-xs font-regular">{file.collection}</span>
 
             {/* 현재 진행률 */}
-            <span className="text-center text-xs font-regular">{file.currentProgress}%</span>
+            <span className="text-center text-xs font-regular">{file.currentProgress}</span>
 
             {/* 전체 진행률 */}
-            <span className="text-center text-xs font-regular">{file.totalProgress}%</span>
+            <span className="text-center text-xs font-regular">{file.totalProgress}</span>
           </div>
         ))}
       </div>
@@ -124,7 +134,7 @@ export default function SelectVectorization({
           벡터화 실행
         </button>
       </div>
-      <VecProcess selectedFiles={localFiles} />
+      {selectedFile ? <VecProcess selectedFiles={localFiles} /> : <></>}
     </section>
   );
 }
