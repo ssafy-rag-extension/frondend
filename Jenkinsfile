@@ -146,7 +146,7 @@ pipeline {
                         withCredentials([file(credentialsId: '.env.development', variable: 'ENV_FILE')]) {
                             def tag = "${FE_IMAGE_NAME}:test-${BUILD_NUMBER}"
 
-                            sh """
+                            sh '''
                             set -eux
                             # Docker 빌드 컨텍스트 준비
                             rm -rf _docker_ctx
@@ -154,20 +154,20 @@ pipeline {
                             SRC_DIR="."
                             if [ -d frontend-repo ]; then SRC_DIR="frontend-repo"; fi
                             TMP_ARCHIVE="$(mktemp -t ctx.XXXXXX.tar)"
-                            tar -C "\$SRC_DIR" --no-same-owner -cf "\$TMP_ARCHIVE" --exclude=.git --exclude=_docker_ctx --exclude=.env .
-                            tar -C _docker_ctx -xf "\$TMP_ARCHIVE"
-                            rm -f "\$TMP_ARCHIVE"
+                            tar -C "$SRC_DIR" --no-same-owner -cf "$TMP_ARCHIVE" --exclude=.git --exclude=_docker_ctx --exclude=.env .
+                            tar -C _docker_ctx -xf "$TMP_ARCHIVE"
+                            rm -f "$TMP_ARCHIVE"
                             # 컨텍스트 점검
                             ls -la _docker_ctx | sed -n '1,120p'
                             test -f _docker_ctx/package.json || { echo "missing package.json in _docker_ctx"; exit 1; }
                             chmod -R 755 _docker_ctx
-                            cp "\$ENV_FILE" _docker_ctx/.env
+                            cp "$ENV_FILE" _docker_ctx/.env
                             
                             # 사전 pnpm 설치는 생략 (Dockerfile에서 처리)
                             ls -la _docker_ctx/.env
                             ls -lh _docker_ctx/pnpm-lock.yaml
                             docker build -t ${tag} --build-arg ENV=test _docker_ctx
-                            """
+                            '''
                             
                             sh """
                             # 기존 컨테이너 중지 및 삭제
@@ -187,7 +187,7 @@ pipeline {
                         withCredentials([file(credentialsId: '.env.production', variable: 'ENV_FILE')]) {
                             def tag = "${FE_IMAGE_NAME}:prod-${BUILD_NUMBER}"
 
-                            sh """
+                            sh '''
                             set -eux
                             # Docker 빌드 컨텍스트 준비
                             rm -rf _docker_ctx
@@ -195,20 +195,20 @@ pipeline {
                             SRC_DIR="."
                             if [ -d frontend-repo ]; then SRC_DIR="frontend-repo"; fi
                             TMP_ARCHIVE="$(mktemp -t ctx.XXXXXX.tar)"
-                            tar -C "\$SRC_DIR" --no-same-owner -cf "\$TMP_ARCHIVE" --exclude=.git --exclude=_docker_ctx --exclude=.env* .
-                            tar -C _docker_ctx -xf "\$TMP_ARCHIVE"
-                            rm -f "\$TMP_ARCHIVE"
+                            tar -C "$SRC_DIR" --no-same-owner -cf "$TMP_ARCHIVE" --exclude=.git --exclude=_docker_ctx --exclude=.env* .
+                            tar -C _docker_ctx -xf "$TMP_ARCHIVE"
+                            rm -f "$TMP_ARCHIVE"
                             # 컨텍스트 점검
                             ls -la _docker_ctx | sed -n '1,120p'
                             test -f _docker_ctx/package.json || { echo "missing package.json in _docker_ctx"; exit 1; }
                             chmod -R 755 _docker_ctx
-                            cp "\$ENV_FILE" _docker_ctx/.env.production
+                            cp "$ENV_FILE" _docker_ctx/.env.production
                             
                             # 사전 pnpm 설치는 생략 (Dockerfile에서 처리)
                             ls -la _docker_ctx/.env.production
                             ls -lh _docker_ctx/pnpm-lock.yaml
                             docker build -t ${tag} --build-arg ENV=prod _docker_ctx
-                            """
+                            '''
                             
                             sh """
                             # 기존 컨테이너 중지 및 삭제
