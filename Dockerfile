@@ -18,7 +18,6 @@ FROM base AS builder
 
 # 빌드 모드 전달 (default=production). Jenkins에서 --build-arg MODE=development 로 변경 가능
 ARG MODE=production
-ENV VITE_BUILD_MODE=$MODE
 RUN pnpm run build -- --mode $MODE
 
 # Nginx를 사용한 정적 파일 서빙
