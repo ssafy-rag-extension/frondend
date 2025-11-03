@@ -1,7 +1,8 @@
 import { CircleAlert } from 'lucide-react';
+import type { FileType } from '@/domains/admin/types';
 
 interface DuplicatedModalProps {
-  duplicates: File[];
+  duplicates: FileType[];
   onConfirm: () => void;
   onCancel: () => void;
 }
