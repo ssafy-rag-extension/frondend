@@ -230,10 +230,18 @@ pipeline {
                 } else if (currentBuild.result == 'FAILURE') {
                     echo "🚨 POST: 빌드 실패 – 로그 추출 후 Mattermost 알림 전송"
                     
-                    // Jenkins 내장 API로 로그 추출 (마지막 150줄)
+                    // Jenkins 로그 파일 직접 읽기 (마지막 150줄)
                     try {
-                        def rawBuild = currentBuild.rawBuild
-                        def logText = rawBuild.getLog(150).join('\n')
+                        def logText = sh(
+                            script: """
+                                if [ -f "\${JENKINS_HOME}/jobs/\${JOB_NAME}/builds/\${BUILD_NUMBER}/log" ]; then
+                                    tail -n 150 "\${JENKINS_HOME}/jobs/\${JOB_NAME}/builds/\${BUILD_NUMBER}/log"
+                                else
+                                    echo "로그 파일을 찾을 수 없습니다."
+                                fi
+                            """,
+                            returnStdout: true
+                        ).trim()
                         
                         // 민감정보 마스킹
                         logText = logText
