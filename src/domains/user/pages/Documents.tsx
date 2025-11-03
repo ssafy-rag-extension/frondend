@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import FileDropzone from '@/shared/components/FileUploader';
-import UploadedFileList from '@/shared/components/UploadedFileList';
-import type { UploadedDoc as UDoc } from '@/shared/components/UploadedFileList';
+import FileDropzone from '@/shared/components/file/FileUploader';
+import UploadedFileList from '@/shared/components/file/UploadedFileList';
+import type { UploadedDoc as UDoc } from '@/shared/components/file/UploadedFileList';
 
 type Category = '업무 매뉴얼' | '정책/규정' | '개발 문서' | '홍보자료' | '이미지' | '기타';
 

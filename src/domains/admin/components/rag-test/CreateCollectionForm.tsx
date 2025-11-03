@@ -4,9 +4,9 @@ import { Plus } from 'lucide-react';
 import Card from '@/shared/components/Card';
 import Select from '@/shared/components/Select';
 import { ingestTemplateOptions } from '@/domains/admin/components/rag-settings/options';
-import FileDropzone from '@/shared/components/FileUploader';
-import UploadedFileList from '@/shared/components/UploadedFileList';
-import type { UploadedDoc as UDoc } from '@/shared/components/UploadedFileList';
+import FileDropzone from '@/shared/components/file/FileUploader';
+import UploadedFileList from '@/shared/components/file/UploadedFileList';
+import type { UploadedDoc as UDoc } from '@/shared/components/file/UploadedFileList';
 import type { Collection } from '@/domains/admin/components/rag-test/types';
 
 type Props = {
