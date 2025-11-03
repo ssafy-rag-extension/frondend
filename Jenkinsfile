@@ -65,6 +65,28 @@ pipeline {
             }
         }
 
+        /********************  pnpm-lock.yaml 업데이트  ********************/
+        stage('Update pnpm-lock.yaml') {
+            when {
+                anyOf {
+                    expression { env.GITLAB_OBJECT_KIND == 'push' }
+                    expression { params.BUILD_FRONTEND == true }
+                }
+            }
+            steps {
+                sh '''
+                set -eux
+                # Docker 컨테이너에서 pnpm install 실행하여 lockfile 업데이트 (권한 문제 회피)
+                docker run --rm -v "$PWD":/app -w /app node:22.10.0-alpine sh -c "
+                    npm install -g pnpm && \
+                    pnpm install && \
+                    chown -R $(id -u):$(id -g) pnpm-lock.yaml 2>/dev/null || true
+                "
+                echo "pnpm-lock.yaml updated successfully"
+                '''
+            }
+        }
+
         /******************** 프론트엔드 배포  ********************/
         stage('Deploy Frontend') {
             when {
