@@ -53,10 +53,12 @@ export default function WeeklyTimeHeatmap() {
         data.push([h, d, level]); // X=시간, Y=요일 (순서 바꿈)
       }
     }
-
+    const container = document.getElementById('weekly-usage-chart') as HTMLElement;
+    if (!container) return;
     // 🔹 Highcharts Heatmap
-    chartRef.current = Highcharts.chart('weekly-usage-chart', {
+    chartRef.current = Highcharts.chart({
       chart: {
+        renderTo: container,
         type: 'heatmap',
         backgroundColor: 'transparent',
         height: 420,
@@ -76,7 +78,7 @@ export default function WeeklyTimeHeatmap() {
         reversed: true,
         labels: {
           align: 'right',
-          style: { color: '#6B7280', fontSize: '12px', fontWeight: 500 },
+          style: { color: '#6B7280', fontSize: '12px', fontWeight: '500' },
         },
       },
       colorAxis: {
@@ -93,7 +95,7 @@ export default function WeeklyTimeHeatmap() {
           style: {
             color: '#374151',
             fontSize: '12px',
-            fontWeight: 600,
+            fontWeight: '600',
           },
           // 색상바 아래쪽 텍스트 (왼쪽/오른쪽 끝)
           formatter: function (this: Highcharts.AxisLabelsFormatterContextObject) {
@@ -116,13 +118,13 @@ export default function WeeklyTimeHeatmap() {
           style: {
             color: '#374151', // 진한 회색
             fontSize: '12px',
-            fontWeight: 600,
+            fontWeight: '600',
           },
         },
         itemStyle: {
           color: '#374151',
           fontSize: '12px',
-          fontWeight: 600,
+          fontWeight: '600',
         },
       },
       tooltip: {
@@ -139,7 +141,7 @@ export default function WeeklyTimeHeatmap() {
         } as Highcharts.TooltipFormatterCallbackFunction,
       },
       plotOptions: {
-        series: {
+        heatmap: {
           borderWidth: 4,
           borderColor: '#fff',
           pointPadding: 0.3, // 셀 간 간격
