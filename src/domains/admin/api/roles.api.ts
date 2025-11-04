@@ -25,6 +25,7 @@ export const createRole = async (payload: { name: string; mode: number }) => {
   return data.result;
 };
 
+// 역할 수정
 export const updateRole = async (userRoleNo: string, payload: Partial<Role>) => {
   await springApi.put<ApiEnvelope<unknown>>(`/api/v1/user/roles/${userRoleNo}`, payload);
 };

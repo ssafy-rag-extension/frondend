@@ -4,8 +4,7 @@ import ImageResultPane from '@/domains/user/components/ImageResultPane';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { generateImages } from '@/domains/user/api/image.api';
-import type { GenerateImageRequest } from '@/domains/user/types/image.type';
-import type { StylePreset } from '@/domains/user/types/image.type';
+import type { GenerateImageRequest, StylePreset } from '@/domains/user/types/image.type';
 
 export default function ImageGenerator() {
   const [prompt, setPrompt] = useState('');
@@ -21,16 +20,14 @@ export default function ImageGenerator() {
     if (!prompt.trim()) return;
     setLoading(true);
     const body: GenerateImageRequest = { prompt, size, style, ..._override };
-
     try {
       const urls = await generateImages(body);
-      if (!urls.length) {
-        toast.error('이미지를 생성하지 못했어요. 프롬프트를 구체화해 보세요.');
-        return;
-      }
+      if (!urls.length)
+        return toast.error('이미지를 생성하지 못했어요. 프롬프트를 구체화해 보세요.');
       setImages(urls);
     } catch (err) {
       console.error('generateImages error:', err);
+      toast.error('이미지 생성 중 오류가 발생했어요.');
     } finally {
       setLoading(false);
     }
@@ -40,24 +37,60 @@ export default function ImageGenerator() {
     if (!prompt.trim()) return;
     setLoading(true);
     const body: GenerateImageRequest & { image_id: string } = { image_id, prompt, size, style };
-
     try {
       const urls = await generateImages(body);
-      if (!urls.length) {
-        toast.error('이미지를 다시 생성하지 못했어요.');
-        return;
-      }
+      if (!urls.length) return toast.error('이미지를 다시 생성하지 못했어요.');
       setImages(urls);
     } catch (err) {
       console.error('regenerateImages error:', err);
+      toast.error('재생성 중 오류가 발생했어요.');
     } finally {
       setLoading(false);
     }
   };
 
+  const handleDownload = async (src: string, idx?: number) => {
+    try {
+      const resp = await fetch(src, { mode: 'cors' });
+      const blob = await resp.blob();
+      const ext = (blob.type?.split('/')?.[1] || 'png').split('+')[0];
+      const filename = `image-${style}-${size}-${(idx ?? 0) + 1}-${Date.now()}.${ext}`.replace(
+        /\s+/g,
+        '_'
+      );
+
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = objectUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(objectUrl);
+    } catch {
+      window.open(src, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const handleCopy = async (src: string) => {
+    try {
+      if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+        const resp = await fetch(src, { mode: 'cors' });
+        const blob = await resp.blob();
+        const item = new ClipboardItem({ [blob.type]: blob });
+        await navigator.clipboard.write([item]);
+        toast.success('이미지가 복사되었습니다.');
+        return;
+      }
+      await navigator.clipboard.writeText(src);
+      toast.success('이미지 URL을 복사했습니다.');
+    } catch {
+      // toast.error('복사에 실패했어요.');
+    }
+  };
+
   return (
     <div className="space-y-8 px-4 mb-20">
-      {/* 헤더 */}
       <div className="flex items-center gap-3">
         <div className="p-3 rounded-xl bg-[var(--color-retina-bg)] flex items-center justify-center">
           <Image size={26} className="text-[var(--color-retina)]" />
@@ -70,7 +103,6 @@ export default function ImageGenerator() {
         </div>
       </div>
 
-      {/* 본문 */}
       <section className="h-full grid grid-cols-1 lg:grid-cols-[600px_1fr] gap-6">
         <ImageGeneratorForm
           prompt={prompt}
@@ -83,7 +115,7 @@ export default function ImageGenerator() {
           disabled={disabled}
           maxLen={MAX_LEN}
           onGenerate={onGenerate}
-          onReusePrompt={t => setPrompt(prev => prev + ' ' + t)}
+          onReusePrompt={(t) => setPrompt((prev) => prev + ' ' + t)}
         />
 
         <ImageResultPane
@@ -91,9 +123,9 @@ export default function ImageGenerator() {
           loading={loading}
           style={style}
           size={size}
-          onDownload={(src, idx) => console.log('download', src, idx)}
-          onCopy={src => console.log('copy', src)}
-          onRegenerate={id => onRegenerate(id)}
+          onDownload={handleDownload}
+          onCopy={handleCopy}
+          onRegenerate={(id) => onRegenerate(id)}
         />
       </section>
     </div>

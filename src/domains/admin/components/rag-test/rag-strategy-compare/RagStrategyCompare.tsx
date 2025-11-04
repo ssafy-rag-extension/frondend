@@ -1,4 +1,3 @@
-// RagStrategyCompare.tsx
 import { useMemo, useState } from 'react';
 import { CompareControls } from './CompareControls';
 import { CompareResults } from './CompareResults';
