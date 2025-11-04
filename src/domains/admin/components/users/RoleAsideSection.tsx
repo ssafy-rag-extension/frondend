@@ -6,11 +6,11 @@ import {
   updateRole,
   deleteRole,
 } from '@/domains/admin/api/roles.api';
-import { RotateCw } from 'lucide-react';
+import { RotateCw, Trash2 } from 'lucide-react';
 
 type Role = {
   uuid: string;
-  mode: number;
+  mode: number | null;
   name: string;
 };
 
@@ -100,8 +100,10 @@ export default function RoleAsideSection() {
               </button>
               <button
                 onClick={() => removeRole(r.uuid)}
-                className="text-xs text-gray-500 border px-2 py-1 rounded opacity-0 group-hover:opacity-100"
+                className="flex items-center gap-1 text-sm text-gray-500 px-2 py-1 rounded 
+             opacity-0 group-hover:opacity-100 hover:text-red-600 transition"
               >
+                <Trash2 size={16} strokeWidth={2} />
                 삭제
               </button>
             </div>
