@@ -5,12 +5,11 @@ import { useAuthStore } from '@/domains/auth/store/auth.store';
 
 // 환경변수 정리
 const SPRING_API_BASE_URL = import.meta.env.VITE_SPRING_BASE_URL;
-const GATEWAY_BASE_URL = import.meta.env.VITE_GATEWAY_BASE_URL;
 const RAG_API_BASE_URL = import.meta.env.VITE_RAG_BASE_URL;
 const FASTAPI_BASE_URL = import.meta.env.VITE_FASTAPI_BASE_URL;
 
 // 인스턴스 생성
-export const apiInstance = axios.create({
+export const springApi = axios.create({
   baseURL: SPRING_API_BASE_URL,
   withCredentials: true,
   timeout: 10000,
@@ -22,14 +21,8 @@ export const ragApi = axios.create({
   timeout: 10000,
 });
 
-export const beApi = axios.create({
+export const fastApi = axios.create({
   baseURL: FASTAPI_BASE_URL,
-  withCredentials: true,
-  timeout: 10000,
-});
-
-export const gatewayApi = axios.create({
-  baseURL: GATEWAY_BASE_URL,
   withCredentials: true,
   timeout: 10000,
 });
@@ -115,7 +108,7 @@ function canAttemptRefresh(http?: number, cfg?: AxiosRequestConfig, payload?: an
 let refreshPromise: Promise<string> | null = null;
 async function refreshAccessToken() {
   if (!refreshPromise) {
-    refreshPromise = apiInstance
+    refreshPromise = springApi
       .post('/api/v1/auth/refresh')
       .then(({ data }) => {
         const newAt = data?.result?.accessToken;
@@ -131,7 +124,7 @@ async function refreshAccessToken() {
 }
 
 // 공통 인터셉터 등록 함수
-function applyInterceptors(instance: typeof apiInstance) {
+function applyInterceptors(instance: typeof springApi) {
   instance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     const at = useAuthStore.getState().accessToken;
     if (at) setAuthHeader(config, at);
@@ -201,6 +194,6 @@ function applyInterceptors(instance: typeof apiInstance) {
 }
 
 // 모든 인스턴스에 공통 인터셉터 적용
-[apiInstance, ragApi, beApi, gatewayApi].forEach(applyInterceptors);
+[springApi, ragApi, fastApi].forEach(applyInterceptors);
 
-export default apiInstance;
+export default springApi;

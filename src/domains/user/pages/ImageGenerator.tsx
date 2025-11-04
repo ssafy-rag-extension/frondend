@@ -1,40 +1,64 @@
 import { useState } from 'react';
-import apiInstance from '@/shared/lib/apiInstance';
+import { generateImages, regenerateImages } from '@/domains/user/api/image.api';
+import type { GenerateImageRequest } from '@/domains/user/types/image.type';
 import { toast } from 'react-toastify';
-import type { GenSize, StylePreset } from '@/domains/user/types/image.type';
+import type { StylePreset } from '@/domains/user/types/image.type';
 import ImageGeneratorForm from '@/domains/user/components/ImageGeneratorForm';
 import ImageResultPane from '@/domains/user/components/ImageResultPane';
 
-type GenerateReq = { prompt: string; size: GenSize; style?: StylePreset };
-type GenerateRes = { images: string[] };
+type GeneratedImage = { image_id: string; url: string };
 
 export default function ImageGenerator() {
-  // 좌측 폼 상태
   const [prompt, setPrompt] = useState('');
-  const [size, setSize] = useState<GenSize>('768x768');
+  const [size, setSize] = useState<string>('1024x1024');
   const [style, setStyle] = useState<StylePreset>('poster');
-
-  // 우측 결과 상태
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<GeneratedImage[]>([]);
   const [loading, setLoading] = useState(false);
 
   const MAX_LEN = 300;
   const disabled = loading || !prompt.trim();
 
-  const onGenerate = async (_override?: Partial<GenerateReq>) => {
+  const onGenerate = async (_override?: Partial<GenerateImageRequest>) => {
     if (!prompt.trim()) return;
     setLoading(true);
 
-    const body: GenerateReq = { prompt, size, style, ..._override };
+    const body: GenerateImageRequest = { prompt, size, style, ..._override };
+
     try {
-      const { data } = await apiInstance.post<GenerateRes>('/api/images/generate', body);
-      if (!data?.images?.length) {
+      const newImages = await generateImages(body);
+      if (!newImages.length) {
         toast.error('이미지를 생성하지 못했어요. 프롬프트를 조금 더 구체화해 보세요.');
         return;
       }
-      setImages(data.images);
-    } catch {
-      toast.error('이미지 생성 중 오류가 발생했어요.');
+      setImages(newImages);
+    } catch (err) {
+      console.error('generateImages error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onRegenerate = async (image_id: string, _override?: Partial<GenerateImageRequest>) => {
+    if (!prompt.trim()) return;
+    setLoading(true);
+
+    const body: GenerateImageRequest & { image_id: string } = {
+      image_id,
+      prompt,
+      size,
+      style,
+      ..._override,
+    };
+
+    try {
+      const newImages = await regenerateImages(body);
+      if (!newImages.length) {
+        toast.error('이미지를 다시 생성하지 못했어요. 프롬프트를 구체화해 보세요.');
+        return;
+      }
+      setImages(newImages);
+    } catch (err) {
+      console.error('regenerateImages error:', err);
     } finally {
       setLoading(false);
     }
@@ -59,9 +83,8 @@ export default function ImageGenerator() {
   const onCopy = async (src: string) => {
     try {
       const res = await fetch(src);
-      let blob = await res.blob();
+      const blob = await res.blob();
 
-      // webp는 환경에 따라 ClipboardItem 실패 → 주소 복사로 폴백
       // @ts-ignore
       if (typeof ClipboardItem !== 'undefined' && blob.type !== 'image/webp') {
         // @ts-ignore
@@ -105,7 +128,7 @@ export default function ImageGenerator() {
         size={size}
         onDownload={onDownload}
         onCopy={onCopy}
-        onRegenerate={() => onGenerate()}
+        onRegenerate={id => onRegenerate(id)}
       />
     </section>
   );

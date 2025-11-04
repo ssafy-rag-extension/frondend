@@ -1,4 +1,4 @@
-import api from '@/shared/lib/apiInstance';
+import { springApi } from '@/shared/lib/apiInstance';
 import type { ApiEnvelope } from '@/shared/lib/api.types';
 
 export type User = {
@@ -32,7 +32,7 @@ export const getUsers = async (
     keyword?: string;
   }>
 ) => {
-  const { data } = await api.get<ApiEnvelope<UserListResponse>>('/api/v1/users', {
+  const { data } = await springApi.get<ApiEnvelope<UserListResponse>>('/api/v1/users', {
     params,
   });
   return data.result;
