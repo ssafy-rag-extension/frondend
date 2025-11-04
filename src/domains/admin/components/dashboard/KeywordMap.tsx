@@ -53,8 +53,8 @@ export default function KeywordMap() {
         borderWidth: 1,
         shadow: false,
         style: { color: '#111827', fontSize: '12px' },
-        pointFormatter: function (this: Highcharts.Point & { count: number }) {
-          return `<b></b><br/>등장 횟수: ${this.count}회`;
+        pointFormatter: function (this: Highcharts.Point & { options: { count?: number } }) {
+          return `<b>${this.name}</b><br/>등장 횟수: ${this.options.count ?? 0}회`;
         },
       },
       series: [

@@ -174,7 +174,6 @@ export default function ColList() {
                     onClick={(e) => {
                       e.stopPropagation();
                       toggleOpen(col.name);
-                      ㅎ;
                     }}
                     className="flex items-center text-sm text-gray-500 hover:text-[var(--color-hebees)] transition"
                   >
