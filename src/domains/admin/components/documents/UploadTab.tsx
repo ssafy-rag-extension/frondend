@@ -6,6 +6,7 @@ import DuplicatedModal from '@/domains/admin/components/documents/DuplicatedModa
 import type { FileType } from '@/domains/admin/types';
 
 import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 
 export default function UploadTab() {
   // 업로드된 파일 상태 관리
@@ -36,6 +37,14 @@ export default function UploadTab() {
     setIsModalOpen(false);
   };
 
+  // 업로드 목록 변경 처리: 업로드 목록 갱신 + 체크 초기화 + 최종 선택 목록 동기화
+  const handleFilesChange = (nextFiles: FileType[]) => {
+    setUploadedFiles(nextFiles);
+    setSelectedFiles([]);
+    const existingNames = new Set(nextFiles.map((f) => f.name));
+    setFinalSelectedFiles((prev) => prev.filter((f) => existingNames.has(f.name)));
+  };
+
   // 컬렉션 선택 (ColSection에서 온거)
   const handleCollectionSelect = (collectionName: 'public' | 'hebees' | null) => {
     setSelectedCollection(collectionName);
@@ -49,12 +58,39 @@ export default function UploadTab() {
       }));
 
       setFinalSelectedFiles((prev) => {
-        const existingNames = new Set(prev.map((f) => f.name));
-        return [...prev, ...combined.filter((f) => !existingNames.has(f.name))];
+        // 파일명+컬렉션 조합으로만 중복을 방지하여
+        // 동일 파일을 다른 컬렉션에 중복 햐추가할 수 있게 함
+        const existingComposite = new Set(prev.map((f) => `${f.name}::${f.collection}`));
+
+        // 배치 내부 중복까지 포함해서 한 번에 수집
+        const seen = new Set(existingComposite);
+        const toAdd: FileType[] = [];
+        const blockedNames: string[] = [];
+
+        for (const f of combined) {
+          const key = `${f.name}::${f.collection}`;
+          if (seen.has(key)) {
+            blockedNames.push(f.name);
+          } else {
+            seen.add(key);
+            toAdd.push(f);
+          }
+        }
+
+        if (blockedNames.length > 0) {
+          const uniques = Array.from(new Set(blockedNames));
+          const bulletList = uniques.map((n) => `- ${n}`).join('\n');
+          toast.warn(
+            <div
+              style={{ whiteSpace: 'pre-line' }}
+            >{`이미 같은 컬렉션에 선택된 문서가 있어요:\n${bulletList}`}</div>
+          );
+        }
+        return [...prev, ...toAdd];
       });
 
       setSelectedFiles([]);
-      setTimeout(() => setSelectedCollection(null), 0); // 2️⃣ 다음 렌더 프레임에서 컬렉션 초기화
+      setTimeout(() => setSelectedCollection(null), 0); // 다음 렌더 프레임에서 컬렉션 초기화
     }
   }, [selectedFiles, selectedCollection]);
 
@@ -75,7 +111,7 @@ export default function UploadTab() {
       <div className="flex gap-4">
         <UploadList
           files={uploadedFiles}
-          onFilesChange={setUploadedFiles}
+          onFilesChange={handleFilesChange}
           onSelectFiles={setSelectedFiles}
           selectedFiles={selectedFiles}
         />
@@ -84,7 +120,15 @@ export default function UploadTab() {
           onCollectionSelect={handleCollectionSelect}
         />
       </div>
-      <SelectVectorization finalSelectedFiles={finalSelectedFiles} />
+      <SelectVectorization
+        finalSelectedFiles={finalSelectedFiles}
+        onRemove={(file) => {
+          setFinalSelectedFiles((prev) =>
+            prev.filter((f) => !(f.name === file.name && f.collection === file.collection))
+          );
+          setSelectedFiles([]);
+        }}
+      />
     </>
   );
 }
