@@ -2,6 +2,7 @@ import { useState } from 'react';
 import FileDropzone from '@/shared/components/file/FileUploader';
 import UploadedFileList from '@/shared/components/file/UploadedFileList';
 import type { UploadedDoc as UDoc } from '@/shared/components/file/UploadedFileList';
+import { FileText } from 'lucide-react';
 
 type Category = '업무 매뉴얼' | '정책/규정' | '개발 문서' | '홍보자료' | '이미지' | '기타';
 
@@ -48,11 +49,16 @@ export default function Documents() {
 
   return (
     <div className="space-y-8 px-4 mb-20">
-      <div>
-        <h1 className="text-2xl font-semibold mb-2">내 문서</h1>
-        <p className="text-sm text-gray-600">
-          업로드한 문서를 확인하고 새 문서를 추가할 수 있습니다.
-        </p>
+      <div className="flex items-center gap-3">
+        <div className="p-3 rounded-xl bg-[var(--color-retina-bg)] flex items-center justify-center">
+          <FileText size={26} className="text-[var(--color-retina)]" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-semibold mb-1">내 문서</h1>
+          <p className="text-sm text-gray-600">
+            업로드한 문서를 확인하고 새 문서를 추가할 수 있습니다.
+          </p>
+        </div>
       </div>
 
       <FileDropzone

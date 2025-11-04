@@ -32,7 +32,7 @@ export const getUsers = async (
     keyword?: string;
   }>
 ) => {
-  const { data } = await springApi.get<ApiEnvelope<UserListResponse>>('/api/v1/users', {
+  const { data } = await springApi.get<ApiEnvelope<UserListResponse>>('/api/v1/user/users', {
     params,
   });
   return data.result;
