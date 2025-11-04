@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { springApi } from '@/shared/lib/apiInstance';
-import { Loader2, UserCog, Mail, Shield, Building2, Hash, UserSquare2 } from 'lucide-react';
+import { Loader2, UserCog, Mail, Shield, UserSquare2 } from 'lucide-react';
 import ProfileInfoCard from '@/shared/components/ProfileInfoCard';
 
 type UserInfo = {
@@ -32,9 +32,6 @@ export default function Profile() {
 
   const getRoleLabel = (role: number) =>
     role === 2 ? '관리자' : role === 1 ? '사용자' : '알 수 없음';
-
-  const getBusinessTypeLabel = (type?: number) =>
-    type === 0 ? '개인안경원' : type === 1 ? '체인안경원' : type === 2 ? '제조유통사' : '-';
 
   return (
     <div className="space-y-8 px-4 mb-20">
