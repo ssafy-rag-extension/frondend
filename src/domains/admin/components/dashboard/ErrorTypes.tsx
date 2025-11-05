@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, GaugeCircle, Cpu } from 'lucide-react';
 import Card from '@/shared/components/Card';
-import Pagination from '@/shared/components/Pagenation';
+import Pagination from '@/shared/components/Pagination';
 
 // 시간 경과 계산 함수
 function timeAgo(date: Date) {
@@ -116,7 +116,7 @@ const dummyResponse = {
 
 export default function ErrorTypes() {
   const [errors, _setErrors] = useState(dummyResponse.errors);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [pageNum, setPageNum] = useState(1);
   const pageSize = 5;
   const sortedErrors = useMemo(
     () =>
@@ -148,7 +148,7 @@ export default function ErrorTypes() {
     return 'bg-gray-100 text-gray-700 border border-gray-300';
   };
 
-  const startIndex = (currentPage - 1) * pageSize;
+  const startIndex = (pageNum - 1) * pageSize;
   const pageItems = sortedErrors.slice(startIndex, startIndex + pageSize);
 
   return (
@@ -179,14 +179,7 @@ export default function ErrorTypes() {
           </li>
         ))}
       </ul>
-      <Pagination
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={(p) => {
-          if (p < 1 || p > totalPages) return;
-          setCurrentPage(p);
-        }}
-      />
+      <Pagination page={pageNum} totalPages={totalPages} onPageChange={setPageNum} />
     </Card>
   );
 }

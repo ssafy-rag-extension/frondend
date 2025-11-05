@@ -40,7 +40,7 @@ export default function ConfirmModal({
   return (
     <div
       className="fixed inset-0 bg-black/70 flex justify-center items-center z-50"
-      onClick={e => e.target === e.currentTarget && onClose()}
+      onClick={(e) => e.target === e.currentTarget && onClose()}
       role="dialog"
       aria-labelledby={id}
       aria-modal="true"
