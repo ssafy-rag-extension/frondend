@@ -16,7 +16,6 @@ export default function KeywordMap() {
       setInfo(result);
       const resultKeywords = result.keywords;
       setKeyword(resultKeywords);
-      console.log('시동');
     };
     fetchKeywords();
   }, []);
