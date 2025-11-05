@@ -9,13 +9,19 @@ export default function KeywordMap() {
   const chartRef = useRef<Highcharts.Chart | null>(null);
   const [_info, setInfo] = useState<frequentKeywords>();
   const [keyword, setKeyword] = useState<keywordItem[]>([]);
+  const [starTime, setStartTime] = useState<string>('');
+  const [endTime, setEndTime] = useState<string>('');
 
   useEffect(() => {
     const fetchKeywords = async () => {
       const result = await getKeywords();
       setInfo(result);
       const resultKeywords = result.keywords;
+      const startTime = result.timeframe.start;
+      const endTime = result.timeframe.end;
       setKeyword(resultKeywords);
+      setStartTime(startTime);
+      setEndTime(endTime);
     };
     fetchKeywords();
   }, []);
@@ -84,7 +90,7 @@ export default function KeywordMap() {
   return (
     <Card
       title="최근 주요 키워드"
-      subtitle="가중치 기반 워드클라우드"
+      subtitle={`${starTime.slice(0, 10)} ~ ${endTime.slice(0, 10)}`}
       className="p-3 h-full flex flex-col"
     >
       <div id="keyword-cloud" className="w-full flex-1 min-h-[100px]" />
