@@ -81,17 +81,19 @@ export const getErrorChangeTrend = async () => {
 };
 
 // 챗봇 사용량 시계열 조회
-export const getChatbotUsageTimeSeries = async () => {
+export const getChatbotUsageTimeSeries = async (params: { granularity: string }) => {
   const { data } = await springApi.get<ApiEnvelope<chatbotUsageTime>>(
-    '/api/v1/analytics/metrics/chatbot/timeseries'
+    '/api/v1/analytics/metrics/chatbot/timeseries',
+    { params }
   );
   return data.result;
 };
 
 // 모델별 토큰 사용량 + 응답시간 시계열 조회
-export const getModelTokenUsageTimeSeries = async () => {
+export const getModelTokenUsageTimeSeries = async (params: { granularity: string }) => {
   const { data } = await springApi.get<ApiEnvelope<modelTokenTime>>(
-    '/api/v1/analytics/metrics/models/timeseries'
+    '/api/v1/analytics/metrics/models/timeseries',
+    { params }
   );
   return data.result;
 };

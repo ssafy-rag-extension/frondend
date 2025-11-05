@@ -8,20 +8,18 @@ import type { chatbotUsageTime } from '@/domains/admin/types/dashboard.types';
 export default function ChatbotUsage() {
   const chartRef = useRef<Highcharts.Chart | null>(null);
   const [data, setData] = useState<chatbotUsageTime | null>(null);
-  const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
-  // const [timeframe, setTimeframe] = useState<chatbotUsagetimeframe | null>(null);
-  // const [items, setItems] = useState<chatbotUsageItems[] | null>(null);
+  const [period, setPeriod] = useState<'day' | 'week' | 'month'>('day');
+  const [_timeframe, setTimeframe] = useState<chatbotUsageTime['timeframe'] | null>(null);
+  const [_items, setItems] = useState<chatbotUsageTime['items'] | null>(null);
 
   // 데이터 로드
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        const result = await getChatbotUsageTimeSeries();
-        setData(result);
-        console.log('✅ 챗봇 사용량 시계열 데이터:', result);
-      } catch (error) {
-        console.error('❌ 챗봇 사용량 데이터 로드 실패:', error);
-      }
+      const result = await getChatbotUsageTimeSeries({ granularity: period });
+      setTimeframe(result.timeframe);
+      setItems(result.items);
+      setData(result);
+      console.log('✅ 챗봇 사용량 시계열 데이터:', result);
     };
     fetchData();
   }, []);
@@ -40,7 +38,9 @@ export default function ChatbotUsage() {
       credits: { enabled: false },
       xAxis: {
         type: 'datetime',
-        tickPixelInterval: 150,
+        tickPixelInterval: 120, // ✅ 기존보다 약간 좁게 (기본 150 → 120)
+        minPadding: 0.05, // ✅ 왼쪽 여백 (5%)
+        maxPadding: 0.05, // ✅ 오른쪽 여백 (5%)
         labels: { style: { fontSize: '11px', color: '#6B7280' } },
       },
       yAxis: {
@@ -71,7 +71,7 @@ export default function ChatbotUsage() {
   }, []);
 
   // 기간별 데이터 반영 로직
-  const updateChart = (type: 'daily' | 'weekly' | 'monthly') => {
+  const updateChart = (type: 'day' | 'week' | 'month') => {
     setPeriod(type);
     const chart = chartRef.current;
     if (!chart || !data) return;
@@ -80,13 +80,13 @@ export default function ChatbotUsage() {
     const { items } = data;
 
     // x축 라벨 포맷 & 단위 변경
-    if (type === 'daily') {
+    if (type === 'day') {
       chart.xAxis[0].update({
         tickInterval: 24 * 3600 * 1000,
         labels: { format: '{value:%m/%d}', style: { fontSize: '11px', color: '#6B7280' } },
       });
       chart.yAxis[0].setTitle({ text: '일별 토큰 사용량' });
-    } else if (type === 'weekly') {
+    } else if (type === 'week') {
       chart.xAxis[0].update({
         tickInterval: 7 * 24 * 3600 * 1000,
         labels: { format: '{value:%m/%d}', style: { fontSize: '11px', color: '#6B7280' } },
@@ -95,7 +95,7 @@ export default function ChatbotUsage() {
     } else {
       chart.xAxis[0].update({
         tickInterval: 30 * 24 * 3600 * 1000,
-        labels: { format: '{value:%Y-%m}', style: { fontSize: '11px', color: '#6B7280' } },
+        labels: { format: '{value:%m}월', style: { fontSize: '11px', color: '#6B7280' } },
       });
       chart.yAxis[0].setTitle({ text: '월별 총 토큰 사용량' });
     }
@@ -108,8 +108,8 @@ export default function ChatbotUsage() {
   //  API 데이터 로드 이후 자동 반영
   useEffect(() => {
     if (data) {
-      // granularity를 기준으로 자동 반영 (예: daily / weekly / monthly)
-      updateChart(data.timeframe.granularity as 'daily' | 'weekly' | 'monthly');
+      // granularity를 기준으로 자동 반영 (예: day / week / month)
+      updateChart(data.timeframe.granularity as 'day' | 'week' | 'month');
     }
   }, [data]);
 
@@ -119,11 +119,11 @@ export default function ChatbotUsage() {
         <div className="ml-auto w-40">
           <Select
             value={period}
-            onChange={(v) => updateChart(v as 'daily' | 'weekly' | 'monthly')}
+            onChange={(v) => updateChart(v as 'day' | 'week' | 'month')}
             options={[
-              { label: '일별', value: 'daily' },
-              { label: '주별', value: 'weekly' },
-              { label: '월별', value: 'monthly' },
+              { label: '일별', value: 'day' },
+              { label: '주별', value: 'week' },
+              { label: '월별', value: 'month' },
             ]}
           />
         </div>

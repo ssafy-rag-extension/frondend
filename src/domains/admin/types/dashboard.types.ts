@@ -63,11 +63,10 @@ export type chatbotUsageItems = {
 };
 
 ////////////////////////////
-// 모델별 평균 응답 시간 타입
+// 모델별 평균 토큰, 응답 시간 타입
 export type modelTokenTime = {
   timeframe: modelTimeFrame;
   models: Array<modelData>;
-  averageResponseTimesMs: Array<modelResponseTimes>;
 };
 
 export type modelTimeFrame = {
@@ -78,8 +77,10 @@ export type modelTimeFrame = {
 export type modelData = {
   modelId: string;
   modelName: string;
+  usageTokens: Array<modelTokenResponse>;
+  averageResponseTimesMs: Array<modelTokenResponse>;
 };
-export type modelResponseTimes = {
+export type modelTokenResponse = {
   x: string;
   y: number;
 };
