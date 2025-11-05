@@ -15,14 +15,15 @@ function timeAgo(date: Date) {
 }
 
 export default function ChatRoom() {
-  const [data, setData] = useState<createdChatrooms | null>(null);
+  const [_data, setData] = useState<createdChatrooms | null>(null);
   const [chatrooms, setChatrooms] = useState<createdChatrooms['chatrooms']>([]);
-  const [timeframe, setTimeframe] = useState<chatroomTimeframe | null>(null);
+  const [_timeframe, setTimeframe] = useState<chatroomTimeframe | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       const result = await getChatRooms();
       setData(result);
+      console.log('✅ 생성된 채팅방 데이터:', result);
       setChatrooms(result.chatrooms);
       setTimeframe(result.timeframe);
     };
@@ -36,7 +37,7 @@ export default function ChatRoom() {
       [...chatrooms].sort(
         (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       ),
-    []
+    [chatrooms]
   );
   const totalPages = Math.max(1, Math.ceil(sortedRooms.length / pageSize));
   const startIndex = (currentPage - 1) * pageSize;
