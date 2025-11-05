@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import ChatInput from '@/shared/components/ChatInput';
+import ChatInput from '@/shared/components/chat/ChatInput';
 import { Pencil, ThumbsUp, ThumbsDown, Copy } from 'lucide-react';
 import Tooltip from '@/shared/components/Tooltip';
 import { toast } from 'react-toastify';
@@ -13,7 +13,7 @@ export default function TextChat() {
   const handleSend = async (msg: string) => {
     // 사용자 메시지 추가
     const userMsg: Msg = { role: 'user', content: msg, model: 'gpt-4.0' };
-    setList(prev => [...prev, userMsg]);
+    setList((prev) => [...prev, userMsg]);
 
     // 실제 API 호출
     const assistant: Msg = {
@@ -21,7 +21,7 @@ export default function TextChat() {
       content: `(${msg}) 에 대한 응답 예시`,
       model: 'gpt-4.0',
     };
-    setList(prev => [...prev, assistant]);
+    setList((prev) => [...prev, assistant]);
   };
 
   useEffect(() => {

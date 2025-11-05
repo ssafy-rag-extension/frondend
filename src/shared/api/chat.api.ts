@@ -64,8 +64,8 @@ export function createSession(body: SessionRequest = {}) {
 }
 
 // 세션 수정
-export function updateSession(sessionNo: string) {
-  return springApi.put<ApiEnvelope<unknown>>(`/api/v1/chat/sessions/${sessionNo}`);
+export function updateSession(sessionNo: string, body: Partial<Pick<SessionItem, 'title'>>) {
+  return springApi.put<ApiEnvelope<unknown>>(`/api/v1/chat/sessions/${sessionNo}`, body);
 }
 
 // 세션 삭제
