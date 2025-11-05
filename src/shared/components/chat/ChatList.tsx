@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getSessions, deleteSession, updateSession } from '@/shared/api/chat.api';
 import type { SessionItem, ListSessionsResult } from '@/shared/types/chat.types';
 import type { ApiEnvelope } from '@/shared/lib/api.types';
-import { PencilLine, Trash2, Check, X, Loader2, ChevronDown } from 'lucide-react';
+import { PencilLine, Trash2, Check, X, Loader2, ChevronDown, Clock } from 'lucide-react';
 import Tooltip from '@/shared/components/Tooltip';
 import ConfirmModal from '@/shared/components/ConfirmModal';
 import { toast } from 'react-toastify';
@@ -26,6 +26,7 @@ export default function ChatList({ activeSessionNo, onSelect, pageSize = 20 }: C
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<SessionItem | null>(null);
+  const [localActiveNo, setLocalActiveNo] = useState<string | null>(null);
 
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     const v = localStorage.getItem('chatlist:collapsed');
@@ -74,6 +75,12 @@ export default function ChatList({ activeSessionNo, onSelect, pageSize = 20 }: C
     setPageNum(0);
   }, []);
 
+  useEffect(() => {
+    if (!localActiveNo && activeSessionNo) {
+      document.querySelector(`[data-active="1"]`)?.scrollIntoView({ block: 'nearest' });
+    }
+  }, [activeSessionNo, localActiveNo]);
+
   const loadMore = async () => {
     if (!hasNext || isFetching) return;
     const nextPage = pageNum + 1;
@@ -96,31 +103,31 @@ export default function ChatList({ activeSessionNo, onSelect, pageSize = 20 }: C
       setHasNext(next);
       setPageNum(nextPage);
     } catch {
-      toast.error('목록을 불러오는 중 오류가 발생했어요.');
+      toast.error('목록을 불러오는 중 오류가 발생했습니다.');
     }
   };
 
   const { mutate: mutateDelete, isPending: deleting } = useMutation({
     mutationFn: async (sessionNo: string) => (await deleteSession(sessionNo)).data,
     onSuccess: (_data, sessionNo) => {
-      toast.success('삭제 완료!');
+      toast.success('삭제 완료했습니다.');
       setItems((prev) => prev.filter((s) => s.sessionNo !== sessionNo));
       if (pendingDelete?.sessionNo === sessionNo) {
         setPendingDelete(null);
       }
+      if (localActiveNo === sessionNo) setLocalActiveNo(null);
       setConfirmOpen(false);
       setPageNum(0);
       qc.invalidateQueries({ queryKey: ['sessions'] });
       refetch();
     },
-    onError: () => toast.error('삭제 중 오류가 발생했어요.'),
   });
 
   const { mutate: mutateRename, isPending: renaming } = useMutation({
     mutationFn: async ({ sessionNo, title }: { sessionNo: string; title: string }) =>
       (await updateSession(sessionNo, { title })).data,
     onSuccess: (_data, variables) => {
-      toast.success('제목을 변경했어요.');
+      toast.success('제목을 변경했습니다.');
       setItems((prev) =>
         prev.map((s) =>
           s.sessionNo === variables.sessionNo ? { ...s, title: variables.title } : s
@@ -130,7 +137,6 @@ export default function ChatList({ activeSessionNo, onSelect, pageSize = 20 }: C
       setEditingTitle('');
       qc.invalidateQueries({ queryKey: ['sessions'] });
     },
-    onError: () => toast.error('제목 변경에 실패했어요.'),
   });
 
   const startEdit = (session: SessionItem) => {
@@ -160,6 +166,10 @@ export default function ChatList({ activeSessionNo, onSelect, pageSize = 20 }: C
     if (!pendingDelete) return;
     mutateDelete(pendingDelete.sessionNo);
   };
+
+  useEffect(() => {
+    setLocalActiveNo(activeSessionNo ?? null);
+  }, [activeSessionNo]);
 
   const isLoadingInitial = isFetching && pageNum === 0;
 
@@ -202,18 +212,24 @@ export default function ChatList({ activeSessionNo, onSelect, pageSize = 20 }: C
             <ul>
               {items.map((session) => {
                 const isEditing = editingId === session.sessionNo;
-                const isActive = activeSessionNo === session.sessionNo;
+                const isActive = (no: string) => (activeSessionNo ?? localActiveNo) === no;
 
                 return (
                   <li
                     key={session.sessionNo}
+                    data-active={isActive(session.sessionNo) ? '1' : '0'}
                     className={clsx(
-                      'group flex items-center rounded-md gap-2 px-3 py-3',
-                      isActive ? 'bg-[var(--color-retina-bg)]' : 'hover:bg-gray-50'
+                      'group flex items-center rounded-md gap-2 px-3 py-2',
+                      isActive(session.sessionNo)
+                        ? 'bg-[var(--color-retina-bg)]'
+                        : 'hover:bg-gray-50'
                     )}
                   >
                     <button
-                      onClick={() => onSelect?.(session)}
+                      onClick={() => {
+                        setLocalActiveNo(session.sessionNo);
+                        onSelect?.(session);
+                      }}
                       className="flex-1 text-left"
                       disabled={isEditing}
                     >
@@ -235,7 +251,8 @@ export default function ChatList({ activeSessionNo, onSelect, pageSize = 20 }: C
                           <div className="line-clamp-1 mb-1 text-sm font-medium text-gray-800">
                             {session.title || '제목 없음'}
                           </div>
-                          <div className="line-clamp-1 text-xs text-gray-500">
+                          <div className="inline-flex items-center text-xs text-gray-500 gap-1">
+                            <Clock size={12} />
                             {formatIsoDatetime(session.updatedAt || session.createdAt)}
                           </div>
                         </>
@@ -319,6 +336,7 @@ export default function ChatList({ activeSessionNo, onSelect, pageSize = 20 }: C
         confirmText={deleting ? '삭제 중...' : '삭제'}
         cancelText="취소"
         variant="danger"
+        zIndex={10080}
       />
     </div>
   );
