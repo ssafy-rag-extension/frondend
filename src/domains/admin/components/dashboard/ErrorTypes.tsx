@@ -15,7 +15,7 @@ function timeAgo(date: Date) {
 }
 
 export default function ErrorTypes() {
-  const [data, setData] = useState<errorList | null>(null);
+  const [_data, setData] = useState<errorList | null>(null);
   const [errors, setErrors] = useState<errorItem[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
