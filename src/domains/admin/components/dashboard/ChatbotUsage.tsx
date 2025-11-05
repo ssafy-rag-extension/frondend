@@ -3,18 +3,14 @@ import Highcharts from 'highcharts';
 import Card from '@/shared/components/Card';
 import Select from '@/shared/components/Select';
 import { getChatbotUsageTimeSeries } from '@/domains/admin/api/dashboard.api';
-import type {
-  chatbotUsageTime,
-  chatbotUsagetimeframe,
-  chatbotUsageItems,
-} from '@/domains/admin/types/dashboard.types';
+import type { chatbotUsageTime } from '@/domains/admin/types/dashboard.types';
 
 export default function ChatbotUsage() {
   const chartRef = useRef<Highcharts.Chart | null>(null);
   const [data, setData] = useState<chatbotUsageTime | null>(null);
   const [period, setPeriod] = useState<'daily' | 'weekly' | 'monthly'>('daily');
-  const [timeframe, setTimeframe] = useState<chatbotUsagetimeframe | null>(null);
-  const [items, setItems] = useState<chatbotUsageItems[] | null>(null);
+  // const [timeframe, setTimeframe] = useState<chatbotUsagetimeframe | null>(null);
+  // const [items, setItems] = useState<chatbotUsageItems[] | null>(null);
 
   // 데이터 로드
   useEffect(() => {
@@ -81,7 +77,7 @@ export default function ChatbotUsage() {
     if (!chart || !data) return;
 
     // timeframe, items 추출
-    const { timeframe, items } = data;
+    const { items } = data;
 
     // x축 라벨 포맷 & 단위 변경
     if (type === 'daily') {
