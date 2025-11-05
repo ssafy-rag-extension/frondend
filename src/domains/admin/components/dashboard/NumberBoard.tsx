@@ -99,9 +99,10 @@ export default function NumberBoard() {
 
     // 모든 소스에 대해 init/update 이벤트 리스너 등록
     (Object.keys(sources) as (keyof typeof sources)[]).forEach((key) => {
-      const source = sources[key];
-      // source.addEventListener('init', handleEvent(key));
-      // source.addEventListener('update', handleEvent(key));
+      const source = sources[key] as EventSource;
+      const listener = handleEvent(key);
+      source.addEventListener('init', listener);
+      source.addEventListener('update', listener);
 
       // 연결 성공 로그
       source.onopen = () => console.log(`✅ ${key} SSE 연결 성공`);
