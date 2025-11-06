@@ -1,9 +1,9 @@
-// src/components/ui/ChatSearchModal.tsx
 import { useEffect, useRef, useState } from 'react';
 import { Search, X, Clock, ChevronRight, Loader2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { getSessions } from '@/shared/api/chat.api';
 import type { SessionItem, ListSessionsResult } from '@/shared/types/chat.types';
+import { formatIsoDatetime } from '@/shared/util/iso';
 
 export type ChatSearchModalProps = {
   open: boolean;
@@ -47,7 +47,7 @@ export default function ChatSearchModal({
 
   const fetchSessions = async (q?: string) => {
     const resp = await getSessions({ pageNum: 0, pageSize: 20, query: q || undefined });
-    const envelope = resp?.data; // { isSuccess, code, result }
+    const envelope = resp?.data;
     const result: ListSessionsResult | undefined = envelope?.result ?? envelope;
     return Array.isArray(result?.data) ? result!.data : [];
   };
@@ -98,7 +98,7 @@ export default function ChatSearchModal({
           <div className="truncate text-[13px] font-medium text-gray-800">{s.title}</div>
           <div className="mt-0.5 flex items-center gap-2 text-[11px] text-gray-500">
             <span className="inline-flex items-center gap-1">
-              <Clock size={12} /> {pickDate(s)}
+              <Clock size={12} /> {formatIsoDatetime(pickDate(s))}
             </span>
           </div>
         </div>

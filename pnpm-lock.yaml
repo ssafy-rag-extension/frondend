@@ -20,6 +20,9 @@ importers:
       axios:
         specifier: ^1.12.2
         version: 1.12.2
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
       highcharts:
         specifier: ^12.4.0
         version: 12.4.0
