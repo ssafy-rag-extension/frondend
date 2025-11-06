@@ -1,13 +1,3 @@
-export type FileType = {
-  name: string;
-  size: number | null;
-  category: string | null;
-  collection: 'public' | 'hebees' | null;
-  currentProgress: string | null;
-  currentPercent: number | null;
-  totalProgress: number | null;
-};
-
 export type data = {
   fileNo: string;
   name: string;
@@ -39,13 +29,25 @@ export type pagination = {
 };
 
 // 컬렉션 목록 조회 타입
-export type CollectionList = {
-  collections: Array<collectionType>;
+export type dataType = {
+  data: Array<collectionType>;
+  pagination: paginationType;
 };
 export type collectionType = {
-  collection: string;
+  collectionNo: string;
+  name: string;
+  version: number;
+  ingestGroupNo: string;
   createdAt: string;
 };
+export type paginationType = {
+  pageNum: number;
+  pageSize: number;
+  totalItems: number;
+  totalPages: number;
+  hasNext: boolean;
+};
+
 // export type getCollections = {
 //   data: Array<datatype>;
 //   pagination: pagination;
@@ -60,18 +62,29 @@ export type collectionType = {
 // 컬렉션 내 문서 목록 조회
 export type getDocumentsInCollection = {
   data: Array<documentDatatype>;
-  pagination: pagination;
+  pagination: paginationType;
 };
 export type documentDatatype = {
   fileNo: number;
   name: string;
   size: string;
   type: string;
-  uploadedAt: string;
-  category: string;
-  offerNo: string;
-  collection: string;
+  bucket: string;
+  path: string;
+  categoryNo: string;
+  collectionNo: string;
+  createdAt: string;
 };
 
 // 컬렉션 환경 타입
 export type CollectionEnv = 'all' | 'prod' | 'test' | 'prod';
+
+export type FileType = {
+  name: string;
+  size: number | null;
+  category: string | null;
+  collection: 'public' | 'hebees' | null;
+  currentProgress: string | null;
+  currentPercent: number | null;
+  totalProgress: number | null;
+};
