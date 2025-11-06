@@ -28,10 +28,9 @@ export function CreateCollectionForm(_: Props) {
     if (name.endsWith('.md')) return 'md';
     if (name.endsWith('.doc') || name.endsWith('.docx')) return 'docx';
     if (name.endsWith('.xlsx')) return 'xlsx';
-    return 'txt'; // fallback
+    return 'txt';
   };
 
-  // ✅ onUpload 타입에 맞게 동기 함수로 유지
   const handleUpload = ({ files, category }: { files: File[]; category: string }): void => {
     const now = new Date().toLocaleString();
 
@@ -118,8 +117,8 @@ export function CreateCollectionForm(_: Props) {
       <Card title="테스트 문서 업로드">
         <FileDropzone
           onUpload={handleUpload}
-          accept=".pdf,.md,.doc,.docx,.xlsx" // ✅ 정책 반영
-          maxSizeMB={100} // ✅ 100MB
+          accept=".pdf,.md,.doc,.docx,.xlsx"
+          maxSizeMB={100}
           className="mt-4"
           brand="hebees"
           defaultCategory="기타"

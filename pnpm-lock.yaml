@@ -20,12 +20,12 @@ importers:
       axios:
         specifier: ^1.12.2
         version: 1.12.2
-      event-source-polyfill:
-        specifier: ^1.0.31
-        version: 1.0.31
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      event-source-polyfill:
+        specifier: ^1.0.31
+        version: 1.0.31
       highcharts:
         specifier: ^12.4.0
         version: 12.4.0
@@ -630,7 +630,6 @@ packages:
 
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
-
 
   '@types/event-source-polyfill@1.0.5':
     resolution: {integrity: sha512-iaiDuDI2aIFft7XkcwMzDWLqo7LVDixd2sR6B4wxJut9xcp/Ev9bO4EFg4rm6S9QxATLBj5OPxdeocgmhjwKaw==}
@@ -3011,13 +3010,11 @@ snapshots:
 
   '@types/estree@1.0.8': {}
 
-<<<<<<<<< Temporary merge branch 1
   '@types/event-source-polyfill@1.0.5': {}
-=========
+
   '@types/hast@3.0.4':
     dependencies:
       '@types/unist': 3.0.3
->>>>>>>>> Temporary merge branch 2
 
   '@types/json-schema@7.0.15': {}
 
