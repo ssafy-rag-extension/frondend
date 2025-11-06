@@ -55,10 +55,7 @@ export default function TextChat() {
 
   const [currentSessionNo, setCurrentSessionNo] = useState<string | null>(derivedSessionNo);
   const [list, setList] = useState<UiMsg[]>([]);
-  const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-
-  // 사용자 메시지 인라인 편집(질문 재생성)
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editingDraft, setEditingDraft] = useState<string>('');
 
@@ -83,7 +80,6 @@ export default function TextChat() {
 
     (async () => {
       try {
-        setLoading(true);
         const res = await getMessages(derivedSessionNo);
         const page: MessagePage = res.data.result;
 
@@ -106,8 +102,6 @@ export default function TextChat() {
         requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: 'auto' }));
       } catch (e) {
         console.error(e);
-      } finally {
-        setLoading(false);
       }
     })();
   }, [derivedSessionNo]);
