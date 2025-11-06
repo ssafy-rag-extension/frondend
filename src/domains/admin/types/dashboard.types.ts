@@ -89,7 +89,7 @@ export type modelTokenResponse = {
 // 시간대별 챗봇 사용량 히트맵 조회
 export type chatbotUsageHeatmap = {
   timeframe: chatbotHeatmapTimeframe;
-  items: chatbotHeatmapLabels;
+  label: chatbotHeatmapLabels;
   cells: Array<Array<number>>;
 };
 export type chatbotHeatmapTimeframe = {
