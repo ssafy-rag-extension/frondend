@@ -25,7 +25,6 @@ export default function ChatList({ activeSessionNo, onSelect, pageSize = 20 }: C
   const [pendingDelete, setPendingDelete] = useState<SessionItem | null>(null);
   const [localActiveNo, setLocalActiveNo] = useState<string | null>(null);
 
-  // 접기 상태
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     const v = localStorage.getItem('chatlist:collapsed');
     return v === '1';

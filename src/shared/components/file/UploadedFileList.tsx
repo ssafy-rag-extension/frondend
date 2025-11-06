@@ -84,6 +84,7 @@ export default function UploadedFileList({
                   indeterminate={
                     pageItems.some((d) => selected[d.id]) && !pageItems.every((d) => selected[d.id])
                   }
+                  brand="retina"
                   onChange={(e) => toggleAll(e.target.checked)}
                 />
               </th>
@@ -109,6 +110,7 @@ export default function UploadedFileList({
                     <Checkbox
                       checked={!!selected[doc.id]}
                       onChange={(e) => setSelected((s) => ({ ...s, [doc.id]: e.target.checked }))}
+                      brand="retina"
                     />
                   </td>
 
@@ -125,7 +127,12 @@ export default function UploadedFileList({
                     </div>
                   </td>
 
-                  <td className="px-4 py-2 text-right text-gray-600">{doc.sizeKB.toFixed(1)} KB</td>
+                  <td className="px-4 py-2 text-right text-gray-600">
+                    {doc.sizeKB >= 1024
+                      ? `${(doc.sizeKB / 1024).toFixed(1)} MB`
+                      : `${doc.sizeKB.toFixed(1)} KB`}
+                  </td>
+
                   <td className="px-4 py-2 text-right text-gray-600">{doc.uploadedAt ?? '-'}</td>
 
                   <td className="px-4 py-2">

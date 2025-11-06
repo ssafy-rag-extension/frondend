@@ -139,7 +139,7 @@ export default function TextChat() {
   const hasMessages = list.length > 0;
 
   return (
-    <section className="flex flex-col z-0 h-full">
+    <section className="flex flex-col min-h-[calc(100vh-62px)] z-0 h-full">
       {hasMessages ? (
         <>
           <div
