@@ -1,5 +1,6 @@
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuthStore } from '@/domains/auth/store/auth.store';
+// import { Navigate, Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
+// import { useAuthStore } from '@/domains/auth/store/auth.store';
 
 export default function RequireAdmin() {
   const { role } = useAuthStore();
