@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { MessageSquare, Clock } from 'lucide-react';
 import Card from '@/shared/components/Card';
-import Pagination from '@/shared/components/Pagenation';
+import Pagination from '@/shared/components/Pagination';
 import { getChatRooms } from '@/domains/admin/api/dashboard.api';
 import type { createdChatrooms, chatroomTimeframe } from '@/domains/admin/types/dashboard.types';
 
@@ -90,7 +90,7 @@ export default function ChatRoom() {
       <Pagination
         page={currentPage}
         totalPages={totalPages}
-        onPageChange={(p) => {
+        onPageChange={(p: number) => {
           if (p < 1 || p > totalPages) return;
           setCurrentPage(p);
         }}

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, GaugeCircle, Cpu } from 'lucide-react';
 import Card from '@/shared/components/Card';
-import Pagination from '@/shared/components/Pagenation';
+import Pagination from '@/shared/components/Pagination';
 import type { errorList, errorItem } from '@/domains/admin/types/dashboard.types';
 import { getErrorLogs } from '@/domains/admin/api/dashboard.api';
 
@@ -17,7 +17,7 @@ function timeAgo(date: Date) {
 export default function ErrorTypes() {
   const [_data, setData] = useState<errorList | null>(null);
   const [errors, setErrors] = useState<errorItem[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [pageNum, setPageNum] = useState(1);
   const pageSize = 5;
 
   useEffect(() => {
