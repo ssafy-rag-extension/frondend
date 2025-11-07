@@ -7,7 +7,6 @@ import type {
   RawMyDoc,
   FilesResponse,
   FetchMyDocsNormalized,
-  PresignedUrl,
 } from '@/shared/types/file.types';
 
 // 업로드
