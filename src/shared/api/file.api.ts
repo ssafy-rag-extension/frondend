@@ -7,6 +7,7 @@ import type {
   RawMyDoc,
   FilesResponse,
   FetchMyDocsNormalized,
+  PresignedUrl,
 } from '@/shared/types/file.types';
 
 // 업로드
@@ -67,4 +68,30 @@ export async function fetchMyDocumentsNormalized(params?: {
     pageNum: pg.pageNum,
     pageSize: pg.pageSize,
   };
+}
+
+// 파일 Presigned URL 발급
+export async function getPresignedUrl(
+  fileNo: string,
+  opts?: {
+    days?: number;
+    inline?: boolean;
+    contentType?: string;
+    versionId?: string;
+  }
+): Promise<string> {
+  const { data } = await fastApi.get<ApiEnvelope<{ url: string }>>(
+    `/api/v1/files/${fileNo}/presigned`,
+    {
+      params: {
+        ...(opts?.days !== undefined ? { days: opts.days } : {}),
+        ...(opts?.inline !== undefined ? { inline: opts.inline } : {}),
+        ...(opts?.contentType ? { contentType: opts.contentType } : {}),
+        ...(opts?.versionId ? { versionId: opts.versionId } : {}),
+      },
+    }
+  );
+
+  // BaseResponse<PresignedUrl> 규격에 맞춰 url만 반환
+  return data.result.url;
 }

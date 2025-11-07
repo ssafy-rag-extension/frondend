@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
-import { fetchMyDocumentsNormalized } from '@/shared/api/file.api';
+import { fetchMyDocumentsNormalized, getPresignedUrl } from '@/shared/api/file.api';
 import type { MyDoc } from '@/shared/types/file.types';
 import UploadedFileList, { type UploadedDoc } from '@/shared/components/file/UploadedFileList';
 import Pagination from '@/shared/components/Pagination';
@@ -20,6 +20,7 @@ export default function MyDocsTab() {
   const [hasNext, setHasNext] = useState(false);
   const [loading, setLoading] = useState(false);
   const [refreshTick, setRefreshTick] = useState(0);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const reqSeq = useRef(0);
 
@@ -73,6 +74,57 @@ export default function MyDocsTab() {
     [myDocs]
   );
 
+  const handleDownload = async (fileNo: string) => {
+    setDownloadingId(fileNo);
+    const doc = myDocs.find((m) => m.fileNo === fileNo);
+    const fallbackName = doc?.name || `${fileNo}.bin`;
+
+    try {
+      const url = await getPresignedUrl(fileNo, { inline: false });
+
+      const res = await fetch(url);
+      const blob = await res.blob();
+
+      const q = new URL(url).searchParams;
+      const fromQuery = extractFileName(q.get('response-content-disposition'));
+      const fromHeader = extractFileName(res.headers.get('content-disposition'));
+      const fileName = fromQuery || fromHeader || fallbackName;
+
+      const blobUrl = URL.createObjectURL(blob);
+      triggerDownload(blobUrl, fileName);
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      const url = await getPresignedUrl(fileNo, { inline: false });
+      triggerDownload(url, fallbackName);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  function triggerDownload(href: string, name: string) {
+    const a = document.createElement('a');
+    a.href = href;
+    a.download = name;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  function extractFileName(dispo: string | null): string {
+    if (!dispo) return '';
+    const m = /filename\*?=(?:utf-8''|")?([^";]+)/i.exec(decodeSafe(dispo));
+    return m?.[1] ? decodeSafe(m[1]) : '';
+  }
+
+  function decodeSafe(str: string) {
+    try {
+      return decodeURIComponent(str);
+    } catch {
+      return str;
+    }
+  }
+
   return (
     <div className="mt-2">
       <div className="rounded-xl bg-white/95 p-4">
@@ -104,6 +156,7 @@ export default function MyDocsTab() {
             pageSize={Math.max(1, uploadedDocs.length || 1)}
             brand="retina"
             hideFooter
+            onDownload={handleDownload}
           />
         )}
 
