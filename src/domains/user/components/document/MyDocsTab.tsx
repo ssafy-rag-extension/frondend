@@ -20,7 +20,7 @@ export default function MyDocsTab() {
   const [hasNext, setHasNext] = useState(false);
   const [loading, setLoading] = useState(false);
   const [refreshTick, setRefreshTick] = useState(0);
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  // const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const reqSeq = useRef(0);
 
@@ -75,7 +75,7 @@ export default function MyDocsTab() {
   );
 
   const handleDownload = async (fileNo: string) => {
-    setDownloadingId(fileNo);
+    // setDownloadingId(fileNo);
     const doc = myDocs.find((m) => m.fileNo === fileNo);
     const fallbackName = doc?.name || `${fileNo}.bin`;
 
@@ -103,7 +103,7 @@ export default function MyDocsTab() {
       const signedUrl = await getPresignedUrl(fileNo, { inline: false });
       window.open(signedUrl, '_blank');
     } finally {
-      setDownloadingId(null);
+      // setDownloadingId(null);
     }
   };
 

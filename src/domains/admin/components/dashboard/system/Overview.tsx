@@ -1,4 +1,4 @@
-import { Cpu, Gauge, HardDrive, Wifi } from 'lucide-react';
+import { Cpu, HardDrive, Wifi } from 'lucide-react';
 import type { ReactNode } from 'react';
 import Card from '@/shared/components/Card';
 import { useMonitoringStreams } from '@/domains/admin/hooks/useMonitoringStreams';

@@ -1,4 +1,3 @@
-// src/domains/admin/components/dashboard/system/Storage.tsx
 import { useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { CheckCircle2, AlertTriangle, HardDrive, RefreshCw } from 'lucide-react';
@@ -7,7 +6,6 @@ import { getServicesStatus, getStorageUsage } from '@/domains/admin/api/system.d
 import type {
   ServicesStatusResult,
   StorageUsageResult,
-  RuntimeStatus,
 } from '@/domains/admin/types/system.dashboard.types';
 
 type UiStatus = 'healthy' | 'warning' | 'error';
