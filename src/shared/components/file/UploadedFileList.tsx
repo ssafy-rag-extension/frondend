@@ -5,15 +5,15 @@ import Tooltip from '@/shared/components/Tooltip';
 import Select from '@/shared/components/Select';
 import Pagination from '@/shared/components/Pagination';
 import { fileTypeOptions } from '@/domains/admin/components/rag-settings/options';
-import { useCategoryStore } from '@/shared/store/categoryMap'; // ✅ 전역 store에서 맵/리스트 사용
+import { useCategoryStore } from '@/shared/store/categoryMap';
 
 export type UploadedDoc = {
   id: string;
   name: string;
   sizeKB: number;
   uploadedAt?: string;
-  category?: string; // 서버가 준 이름(있으면 fallback으로 사용)
-  categoryId?: string; // ✅ 이 id로 store에서 이름 조회
+  category?: string;
+  categoryId?: string;
   type: string;
   file?: File;
   fileNo?: string;
@@ -43,7 +43,6 @@ export default function UploadedFileList({
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
 
-  // ✅ 전역 store에서 카테고리 맵을 가져와서 이름 매핑에 사용
   const categoryMap = useCategoryStore((s) => s.categoryMap);
 
   const filtered = useMemo(
@@ -151,7 +150,6 @@ export default function UploadedFileList({
               </tr>
             ) : (
               pageItems.map((doc) => {
-                // ✅ store 기반 매핑: id → name, 없으면 서버 제공명 → '기타'
                 const categoryName =
                   (doc.categoryId ? categoryMap[doc.categoryId] : undefined) ??
                   doc.category ??
