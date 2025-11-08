@@ -19,4 +19,3 @@ export const getDocInCollections = async (collectionNo: string) => {
   );
   return data.result;
 };
-// 문서 다운로드 링크

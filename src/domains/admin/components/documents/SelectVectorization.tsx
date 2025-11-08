@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import VecProcess from './VecProcess';
 import type { RawMyDoc } from '@/shared/types/file.types';
 import { useCategoryStore } from '@/shared/store/categoryMap';
+import type { UploadBucket } from '@/shared/types/file.types';
+import { uploadFiles } from '@/shared/api/file.api';
 // import {uploadFiles} from '@/shared/api/file.api';
 // import UploadedFileList from '@/shared/components/file/UploadedFileList';
 
@@ -22,6 +24,51 @@ export default function SelectVectorization({
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentFiles = localFiles.slice(startIndex, startIndex + itemsPerPage);
   const totalPages = Math.ceil(localFiles.length / itemsPerPage);
+
+  async function handleUpload(finalSelectedFiles: RawMyDoc[]) {
+    //  categoryNo로 그룹화
+    const groupedByCategory = finalSelectedFiles.reduce<Record<string, RawMyDoc[]>>((acc, file) => {
+      if (!acc[file.categoryNo]) acc[file.categoryNo] = [];
+      acc[file.categoryNo].push(file);
+      return acc;
+    }, {});
+
+    //  각 카테고리별 업로드 진행
+    for (const [categoryNo, files] of Object.entries(groupedByCategory)) {
+      const form = new FormData();
+
+      files.forEach((file) => {
+        if (file.originalFile) {
+          form.append('files', file.originalFile); // 실제 파일 객체
+        } else {
+          console.warn(`파일 ${file.name}에 originalFile이 없습니다.`);
+        }
+      });
+
+      // 카테고리 ID는 필수
+      form.append('category', categoryNo);
+
+      // bucket은 선택값 (있을 때만 추가)
+      const bucket = files.find((f) => f.bucket)?.bucket as UploadBucket | undefined;
+      if (bucket) {
+        form.append('bucket', bucket);
+      }
+
+      try {
+        //  업로드 요청
+        const bucket = files[0].bucket as UploadBucket; // undefined/null 가능
+
+        const res = await uploadFiles({
+          files: files.map((f) => f.originalFile as File),
+          categoryNo,
+          bucket, // 없으면 undefined/null 그대로 전달
+        });
+        console.log(`✅ [${categoryNo}] 업로드 성공`, res);
+      } catch (err) {
+        console.error(`❌ [${categoryNo}] 업로드 실패`, err);
+      }
+    }
+  }
 
   const categoryMap = useCategoryStore((s) => s.categoryMap);
   const handleRemove = (fileToRemove: RawMyDoc) => {
@@ -159,7 +206,7 @@ export default function SelectVectorization({
       {/* 벡터화 실행 버튼 */}
       <div className="flex justify-center">
         <button
-          onClick={() => console.log('벡터화 실행')}
+          onClick={() => handleUpload(localFiles)}
           className="
             mt-6 mb-4 px-10 py-2
             text-white font-semibold

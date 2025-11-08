@@ -33,6 +33,7 @@ export default function UploadTab() {
       categoryNo: category,
       collectionNo: '',
       createdAt: new Date().toISOString(),
+      originalFile: f,
     }));
 
     setUploadedFiles((prev) => [...prev, ...newFiles]);
