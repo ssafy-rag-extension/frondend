@@ -32,6 +32,8 @@ export type pagination = {
 export type dataType = {
   data: Array<collectionType>;
   pagination: paginationType;
+  hasNext: boolean;
+  nextCursor: cursorType;
 };
 export type collectionType = {
   collectionNo: string;
@@ -47,7 +49,10 @@ export type paginationType = {
   totalPages: number;
   hasNext: boolean;
 };
-
+export type cursorType = {
+  cursorCreatedAt: string;
+  cursorId: string;
+};
 // export type getCollections = {
 //   data: Array<datatype>;
 //   pagination: pagination;
@@ -63,6 +68,8 @@ export type paginationType = {
 export type getDocumentsInCollection = {
   data: Array<documentDatatype>;
   pagination: paginationType;
+  hasNext: boolean;
+  nextCursor: cursorType;
 };
 export type documentDatatype = {
   fileNo: number;

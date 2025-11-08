@@ -17,7 +17,7 @@ export default function ColList() {
     const fetchCollections = async () => {
       const result = await getCollections();
       console.log(result);
-      const list = result.data.data;
+      const list = result.data;
       console.log(list);
       setCollections(list);
     };
@@ -26,9 +26,10 @@ export default function ColList() {
 
   // 보기 버튼 클릭 시 문서 리스트 호출
   const handleViewClick = async (collectionNo: string) => {
+    console.log('View clicked for collectionNo:', collectionNo);
     const res = await getDocInCollections(collectionNo);
     console.log(res);
-    const docs = res.data.data;
+    const docs = res.data;
     console.log(docs);
     setCollections((prev) =>
       prev.map((c) => (c.collectionNo === collectionNo ? { ...c, files: docs } : c))
@@ -187,13 +188,27 @@ export default function ColList() {
                       }
                       className="flex items-center justify-between border-b border-gray-100 pb-2 last:border-none cursor-pointer hover:bg-[var(--color-hebees-bg)]/60"
                     >
-                      <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 bg-[var(--color-hebees)] rounded-md flex items-center justify-center">
-                          <FileText size={14} className="text-[var(--color-white)]" />
+                      {/* 파일 정보 */}
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:gap-3 text-[13px] w-full">
+                        <div className="flex items-center gap-2 w-[260px]">
+                          <div className="w-6 h-6 bg-[var(--color-hebees)] rounded-md flex items-center justify-center">
+                            <FileText size={14} className="text-[var(--color-white)]" />
+                          </div>
+                          <span className="truncate max-w-[200px] font-medium">{file.name}</span>
                         </div>
-                        <span className="truncate max-w-[260px]">{file.name}</span>
+
+                        {/* ➕ 추가 정보 (파일 용량, 저장 위치, 저장 일시) */}
+                        <div className="flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-1 text-gray-500">
+                          <span className="whitespace-nowrap"> {file.size} KB</span>
+                          <span className="whitespace-nowrap"> {file.bucket}</span>
+                          <span className="whitespace-nowrap">
+                            {new Date(file.createdAt).toLocaleString()}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
+
+                      {/* 선택 및 삭제 */}
+                      <div className="flex items-center gap-2 ml-4">
                         <input
                           type="checkbox"
                           className="accent-[var(--color-hebees)] cursor-pointer"

@@ -46,6 +46,7 @@ export default function SelectVectorization({
   //   const groupByCategory = UploadedFileList
   // }
   // 상위에서 finalSelectedFiles 변경 시 반영
+
   useEffect(() => {
     setLocalFiles(finalSelectedFiles);
   }, [finalSelectedFiles]);
