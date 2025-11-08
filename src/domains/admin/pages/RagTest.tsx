@@ -5,6 +5,7 @@ import { EmptyState } from '@/domains/admin/components/rag-test/EmptyState';
 import { CreateCollectionForm } from '@/domains/admin/components/rag-test/CreateCollectionForm';
 import { SelectedCollection } from '@/domains/admin/components/rag-test/SelectedCollection';
 import { RagStrategyCompare } from '@/domains/admin/components/rag-test/rag-strategy-compare/RagStrategyCompare';
+import { Bot } from 'lucide-react';
 
 const mockCollections: Collection[] = [
   { id: 'c1', name: 'HEBEES Test', ingestTemplate: 'ingest-기본' },
@@ -19,7 +20,7 @@ export default function RagTest() {
   const [query, setQuery] = useState('');
   const [answer, setAnswer] = useState<string | null>(null);
 
-  const selected = collections.find(c => c.id === selectedCollectionId) || null;
+  const selected = collections.find((c) => c.id === selectedCollectionId) || null;
 
   const run = async () => {
     if (!selected && !creatingNew) return;
@@ -28,18 +29,28 @@ export default function RagTest() {
 
   return (
     <div className="space-y-8 px-4 mb-20">
-      <h1 className="text-2xl">
-        <span className="font-bold bg-gradient-to-r from-[#BE7DB1] to-[#81BAFF] bg-clip-text text-transparent">
-          HEBEES RAG
-        </span>{' '}
-        <span className="font-semibold text-black">모델 테스트</span>
-      </h1>
+      <div className="flex items-center gap-3">
+        <div className="p-3 rounded-xl  bg-gradient-to-r from-[#EED8F3]/70 to-[#CBE1FF]/70  flex items-center justify-center">
+          <Bot size={28} className="text-[var(--color-hebees)]" />
+        </div>
+        <div>
+          <h1 className="text-2xl font-semibold">
+            <span className="font-bold bg-gradient-to-r from-[#BE7DB1] to-[#81BAFF] bg-clip-text text-transparent">
+              HEBEES RAG
+            </span>{' '}
+            <span className="font-semibold text-black">모델 테스트</span>
+          </h1>
+          <p className="text-sm text-gray-600">
+            RAG 모델을 테스트하고 응답 품질을 확인할 수 있습니다.
+          </p>
+        </div>
+      </div>
 
       <CollectionControls
         collections={collections}
         selectedId={selectedCollectionId}
         creatingNew={creatingNew}
-        onSelect={id => {
+        onSelect={(id) => {
           setSelectedCollectionId(id);
           setCreatingNew(false);
           setAnswer(null);
@@ -56,8 +67,8 @@ export default function RagTest() {
       {creatingNew && !selected && (
         <CreateCollectionForm
           onCancel={() => setCreatingNew(false)}
-          onCreate={newCol => {
-            setCollections(prev => [newCol, ...prev]);
+          onCreate={(newCol) => {
+            setCollections((prev) => [newCol, ...prev]);
             setSelectedCollectionId(newCol.id);
             setCreatingNew(false);
           }}

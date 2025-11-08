@@ -9,7 +9,7 @@ const AdminDocuments = lazy(() => import('@/domains/admin/pages/Documents'));
 const AdminChat = lazy(() => import('@/domains/admin/pages/TextChat'));
 const AdminRagTest = lazy(() => import('@/domains/admin/pages/RagTest'));
 const AdminRagSettings = lazy(() => import('@/domains/admin/pages/RagSettings'));
-const AdminUsers = lazy(() => import('@/domains/admin/pages/Users'));
+const AdminUsers = lazy(() => import('@/domains/admin/pages/UsersManagement'));
 const AdminProfile = lazy(() => import('@/domains/admin/pages/Profile'));
 
 const FallbackDiv = createElement(
