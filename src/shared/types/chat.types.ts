@@ -68,6 +68,7 @@ export interface CreateSessionResult {
 // 메세지 전송 관련
 export interface SendMessageRequest {
   content: string;
+  model?: string;
 }
 
 export interface SendMessageResult {
