@@ -106,6 +106,7 @@ export default function UserLayout() {
               activeSessionNo={activeSessionNo}
               onSelect={(s) => navigate(`/user/chat/text/${s.sessionNo}`)}
               pageSize={20}
+              brand="retina"
             />
           </div>
         )}

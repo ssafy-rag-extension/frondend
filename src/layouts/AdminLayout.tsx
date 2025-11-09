@@ -1,18 +1,22 @@
 import { useState } from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Menu,
   Settings,
   Monitor,
   FolderCog,
-  MessageCirclePlus,
+  MessageSquare,
   Bot,
   Bell,
   LogOut,
   UserCog,
   Users,
+  Search,
+  Image,
 } from 'lucide-react';
 import Tooltip from '@/shared/components/Tooltip';
+import ChatList from '@/shared/components/chat/list/ChatList';
+import ChatSearchModal from '@/shared/components/chat/ChatSearchModal';
 import HebeesLogo from '@/assets/hebees-logo.png';
 
 const labelCls = (isOpen: boolean) =>
@@ -29,6 +33,11 @@ const linkCls = ({ isActive }: { isActive: boolean }) =>
 
 export default function AdminLayout() {
   const [isOpen, setIsOpen] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState('');
+  const [sp] = useSearchParams();
+  const activeSessionNo = sp.get('session') || undefined;
+  const navigate = useNavigate();
 
   return (
     <div className="flex min-h-screen">
@@ -75,27 +84,6 @@ export default function AdminLayout() {
             </div>
           </NavLink>
 
-          <NavLink to="/admin/documents" className={linkCls}>
-            <FolderCog size={18} className="flex-shrink-0" />
-            <div className={labelCls(isOpen)}>
-              <span className="inline-block">문서 관리</span>
-            </div>
-          </NavLink>
-
-          <NavLink to="/admin/chat" className={linkCls}>
-            <MessageCirclePlus size={18} className="flex-shrink-0" />
-            <div className={labelCls(isOpen)}>
-              <span className="inline-block">RAG 채팅</span>
-            </div>
-          </NavLink>
-
-          {/* <NavLink to="/admin/chat/image" className={linkCls}>
-            <Image size={18} className="flex-shrink-0" />
-            <div className={labelCls(isOpen)}>
-              <span className="inline-block">이미지 생성하기</span>
-            </div>
-          </NavLink> */}
-
           <NavLink to="/admin/rag/settings" className={linkCls}>
             <Settings size={18} className="flex-shrink-0" />
             <div className={labelCls(isOpen)}>
@@ -109,7 +97,53 @@ export default function AdminLayout() {
               <span className="inline-block">RAG 모델 테스트</span>
             </div>
           </NavLink>
+
+          <NavLink to="/admin/chat/text" className={linkCls}>
+            <MessageSquare size={18} className="flex-shrink-0" />
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">RAG 채팅</span>
+            </div>
+          </NavLink>
+
+          <NavLink to="/admin/chat/image" className={linkCls}>
+            <Image size={18} className="flex-shrink-0" />
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">이미지 생성</span>
+            </div>
+          </NavLink>
+
+          <NavLink to="/admin/documents" className={linkCls}>
+            <FolderCog size={18} className="flex-shrink-0" />
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">문서 관리</span>
+            </div>
+          </NavLink>
+
+          <button
+            type="button"
+            className={
+              'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ' +
+              'text-gray-700 hover:bg-[var(--color-hebees)] hover:text-white'
+            }
+            onClick={() => setOpen(true)}
+          >
+            <Search size={18} className="flex-shrink-0" />
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">채팅 검색</span>
+            </div>
+          </button>
         </nav>
+
+        {isOpen && (
+          <div className="mt-3 px-2">
+            <ChatList
+              activeSessionNo={activeSessionNo}
+              onSelect={(s) => navigate(`/admin/chat/text/${s.sessionNo}`)}
+              pageSize={20}
+              brand="hebees"
+            />
+          </div>
+        )}
 
         <div className="mt-auto px-2 pb-4">
           <NavLink
@@ -155,6 +189,14 @@ export default function AdminLayout() {
           </div>
         </div>
       </main>
+
+      <ChatSearchModal
+        open={open}
+        value={q}
+        onValueChange={setQ}
+        onClose={() => setOpen(false)}
+        onSelect={(s) => navigate(`/user/chat/text?session=${s.sessionNo}`)}
+      />
     </div>
   );
 }

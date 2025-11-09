@@ -10,13 +10,21 @@ import { toast } from 'react-toastify';
 import clsx from 'clsx';
 import ChatListItem from '@/shared/components/chat/list/ChatListItem';
 
+type Brand = 'retina' | 'hebees';
+
 type ChatListProps = {
   activeSessionNo?: string;
   onSelect?: (session: SessionItem) => void;
   pageSize?: number;
+  brand?: Brand;
 };
 
-export default function ChatList({ activeSessionNo, onSelect, pageSize = 20 }: ChatListProps) {
+export default function ChatList({
+  activeSessionNo,
+  onSelect,
+  pageSize = 20,
+  brand = 'retina',
+}: ChatListProps) {
   const qc = useQueryClient();
   const [pageNum, setPageNum] = useState(0);
   const [items, setItems] = useState<SessionItem[]>([]);
@@ -37,7 +45,6 @@ export default function ChatList({ activeSessionNo, onSelect, pageSize = 20 }: C
     });
   };
 
-  // 목록 조회
   const { data, isFetching, isError, refetch } = useQuery<ApiEnvelope<ListSessionsResult>>({
     queryKey: ['sessions', pageNum, pageSize],
     queryFn: async () => {
@@ -205,6 +212,7 @@ export default function ChatList({ activeSessionNo, onSelect, pageSize = 20 }: C
                   onRequestDelete={() => requestDelete(session)}
                   renaming={renaming}
                   deleting={deleting && pendingDelete?.sessionNo === session.sessionNo}
+                  brand={brand}
                 />
               ))}
             </ul>
