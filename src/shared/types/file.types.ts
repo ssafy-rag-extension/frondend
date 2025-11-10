@@ -74,3 +74,9 @@ export interface FetchMyDocsNormalized {
 }
 
 export type PresignedUrl = { url: string };
+
+export type DeleteFileData = {
+  fileNo: string;
+  name: string;
+  deleted: boolean;
+};

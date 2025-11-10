@@ -33,13 +33,13 @@ const MODEL_OPTIONS: Option[] = [
     desc: '전반적인 품질·안정성 균형',
   },
   {
-    value: 'gemini-1.5 flash',
-    label: 'Gemini 1.5 Flash',
+    value: 'gemini-2.5 flash',
+    label: 'Gemini 2 .5 Flash',
     desc: '대용량 문서·검색 작업에 최적',
   },
   {
-    value: 'claude-sonnet 3.5',
-    label: 'Claude Sonnet 3.5',
+    value: 'claude-sonnet 4',
+    label: 'Claude Sonnet 4',
     desc: '복잡한 분석·글쓰기·요약에 강점',
   },
 ];
@@ -174,7 +174,7 @@ export default function UserLayout() {
               value={model}
               onChange={setModel}
               options={MODEL_OPTIONS}
-              className="w-[240px]"
+              className="w-[200px]"
               placeholder="모델 선택"
             />
           )}

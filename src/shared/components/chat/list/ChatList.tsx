@@ -238,7 +238,7 @@ export default function ChatList({
         onClose={handleCloseConfirm}
         onConfirm={handleConfirmDelete}
         title="채팅 삭제"
-        message={`정말 삭제할까요?\n"${pendingDelete?.title || '제목 없음'}"\n[SessionNo] ${pendingDelete?.sessionNo ?? ''}`}
+        message={`정말 삭제할까요?\n"${pendingDelete?.title || '제목 없음'}"\n`}
         confirmText={deleting ? '삭제 중...' : '삭제'}
         cancelText="취소"
         variant="danger"

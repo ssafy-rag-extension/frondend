@@ -5,6 +5,7 @@ import FileNameConflictModal from '@/shared/components/file/FileNameConflictModa
 import type { ConflictDecision } from '@/shared/components/file/FileNameConflictModal';
 import type { UploadedDoc as UDoc } from '@/shared/components/file/UploadedFileList';
 import { uploadFiles } from '@/shared/api/file.api';
+import { toast } from 'react-toastify';
 
 type UploadPayload = { files: File[]; category: string; categoryName?: string };
 
@@ -119,15 +120,25 @@ export default function UploadTab() {
     });
   };
 
+  const [uploading, setUploading] = useState(false);
+
   const ingestSelected = async () => {
+    if (uploading) return;
+    setUploading(true);
+
     const targets = uploadedDocs.filter((d) => selectedIds.includes(d.id) && d.file);
-    if (targets.length === 0) return;
+    if (targets.length === 0) {
+      setUploading(false);
+      return;
+    }
 
     setUploadedDocs((prev) =>
       prev.map((doc) =>
         selectedIds.includes(doc.id) ? ({ ...doc, status: 'pending' } as UDoc) : doc
       )
     );
+
+    let successCount = 0;
 
     const grouped = targets.reduce<Record<string, UDoc[]>>((acc, doc) => {
       const key = doc.categoryId ?? doc.category ?? '기타';
@@ -138,29 +149,36 @@ export default function UploadTab() {
     for (const [categoryNo, docs] of Object.entries(grouped)) {
       try {
         const files = docs.map((d) => d.file!).filter(Boolean);
-        const { data } = await uploadFiles({ files, categoryNo });
-        const fileNos: string[] = (data?.data?.fileNos ?? []).map((v: unknown) => String(v));
+        const res = await uploadFiles({ files, categoryNo });
+
+        const isOk = res?.data?.isSuccess === true || res?.status === 201;
+        const fileNos: string[] = (res?.data?.result?.data?.fileNos ?? []).map(String);
+
+        if (isOk) successCount += docs.length;
 
         setUploadedDocs((prev) => {
           const idxById = new Map(docs.map((d, i) => [d.id, i]));
           return prev.map((doc) => {
             const idx = idxById.get(doc.id);
             if (idx === undefined) return doc;
-            const next: UDoc = {
-              ...doc,
-              status: 'uploaded',
-              fileNo: fileNos[idx],
-            };
-            return next;
+            return { ...doc, status: 'uploaded', fileNo: fileNos[idx] } as UDoc;
           });
         });
-      } catch (err) {
-        console.error('uploadFiles error (category:', categoryNo, ')', err);
+      } catch {
         const idSet = new Set(docs.map((d) => d.id));
         setUploadedDocs((prev) =>
           prev.map((doc) => (idSet.has(doc.id) ? ({ ...doc, status: 'failed' } as UDoc) : doc))
         );
       }
+    }
+
+    setUploading(false);
+
+    if (successCount > 0) {
+      toast.success(`문서 ${successCount}개 업로드 완료!`);
+      setTimeout(() => {
+        window.location.reload();
+      }, 500); // 토스트 약간 보이도록 딜레이
     }
   };
 
@@ -222,23 +240,14 @@ export default function UploadTab() {
               <p className="text-sm text-gray-700">
                 선택 {selectedIds.length}개 · {selectedStr}
               </p>
-
               <button
                 type="button"
                 onClick={ingestSelected}
-                disabled={!canIngest}
-                className={`px-4 py-2 text-sm font-semibold rounded text-white ${
-                  canIngest
-                    ? 'bg-[var(--color-retina)] hover:bg-[var(--color-retina)]/90'
-                    : 'bg-gray-300 cursor-not-allowed'
+                disabled={!canIngest || uploading}
+                className={`px-4 py-2 text-sm font-semibold rounded text-white bg-[var(--color-retina)] hover:bg-[var(--color-retina)]/90 
                 }`}
-                title={
-                  !canIngest
-                    ? '업로드할 파일을 선택하거나 진행 중 업로드가 끝날 때까지 기다려주세요.'
-                    : undefined
-                }
               >
-                문서 업로드
+                {uploading ? '문서 업로드 중...' : '문서 업로드'}
               </button>
             </div>
           </div>

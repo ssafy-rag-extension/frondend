@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FileText, List as ListIcon, QrCodeIcon, Upload as UploadIcon } from 'lucide-react';
+import { FileText, List as ListIcon, Upload as UploadIcon } from 'lucide-react';
 import SegmentedTabs from '@/shared/components/SegmentedTabs';
 import UploadTab from '@/domains/admin/components/documents/UploadTab';
 import CollectionTab from '@/domains/admin/components/documents/CollectionTab';
