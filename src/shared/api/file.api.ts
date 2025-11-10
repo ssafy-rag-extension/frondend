@@ -22,6 +22,7 @@ export function uploadFiles({
   if (bucket !== undefined && bucket !== null) form.append('bucket', bucket);
 
   return fastApi.post<UploadFilesResult>('/api/v1/files', form, { params: { onNameConflict } });
+  // return fastApi.post<UploadFilesResult>('/api/v1/files', form);
 }
 
 // 카테고리
@@ -69,8 +70,29 @@ export async function fetchMyDocumentsNormalized(params?: {
   };
 }
 
-// 문서 삭제
-export const deleteDocument = async (fileNo: string) => {
-  const { data } = await fastApi.delete(`/api/v1/files/${fileNo}`);
-  return data.result;
-};
+// 파일 Presigned URL 발급
+export async function getPresignedUrl(
+  fileNo: string,
+  opts?: {
+    days?: number;
+    inline?: boolean;
+    contentType?: string;
+    versionId?: string;
+  }
+): Promise<string> {
+  type PresignedUrlResponse = ApiEnvelope<{
+    data: { url: string };
+  }>;
+
+  const res = await fastApi.get<PresignedUrlResponse>(`/api/v1/files/${fileNo}/presigned`, {
+    params: {
+      ...(opts?.days !== undefined ? { days: opts.days } : {}),
+      ...(opts?.inline !== undefined ? { inline: opts.inline } : {}),
+      ...(opts?.contentType ? { contentType: opts.contentType } : {}),
+      ...(opts?.versionId ? { versionId: opts.versionId } : {}),
+    },
+  });
+
+  const url = res.data?.result?.data?.url;
+  return url;
+}
