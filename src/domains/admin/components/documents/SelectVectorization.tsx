@@ -105,88 +105,89 @@ export default function SelectVectorization({
   }, [finalSelectedFiles]);
 
   return (
-    <section className="flex flex-col w-full mt-3 p-4 mb-10 border rounded-xl bg-white">
+    <section className="flex flex-col w-full p-4 border rounded-xl bg-white min-h-[475px]">
       <h3
         className="text-xl font-bold bg-[linear-gradient(90deg,#BE7DB1_10%,#81BAFF_100%)] 
-             bg-clip-text text-transparent w-fit"
+           bg-clip-text text-transparent w-fit mb-3"
       >
-        선택 목록
+        벡터화 대상 파일 목록
       </h3>
 
-      {/* 테이블 헤더 */}
-      <div className="grid grid-cols-8 mt-2 text-sm font-semibold text-gray-800 border-b pb-2">
-        <span className="col-span-3 text-center">파일명</span>
-        <span className="text-center">크기</span>
-        <span className="text-center">카테고리</span>
-        <span className="text-center">저장위치</span>
-        <span className="text-center">현재 진행률</span>
-        <span className="text-center">전체 진행률</span>
-      </div>
+      {/* 테이블 + 파일 목록 영역 */}
+      <div className="flex flex-col flex-1">
+        {/* 테이블 헤더 */}
+        <div className="grid grid-cols-8 mt-2 h-[40px] text-sm font-semibold text-gray-800 border-b">
+          <span className="col-span-3 text-center">파일명</span>
+          <span className="text-center col-span-2">크기</span>
+          <span className="text-center col-span-2">카테고리</span>
+          <span className="text-center col-span-1">저장위치</span>
+        </div>
 
-      {/* 파일 목록 */}
-      <div className="flex flex-col min-h-[200px]">
-        {currentFiles.length === 0 ? (
-          <div className="flex justify-center items-center h-[180px] text-gray-400 text-sm">
-            선택된 파일이 없습니다.
-          </div>
-        ) : (
-          currentFiles.map((file) => {
-            const categoryName =
-              (file.categoryNo && categoryMap[file.categoryNo]) || file.categoryNo || '기타';
+        {/* 파일 목록 */}
+        <div
+          className={`flex-1 ${currentFiles.length > 0 ? 'h-[270px] overflow-y-auto' : 'h-[270px] flex items-center justify-center'}`}
+        >
+          {currentFiles.length === 0 ? (
+            <div className="flex flex-col justify-center items-center h-full text-gray-400 text-sm">
+              선택된 파일이 없습니다.
+            </div>
+          ) : (
+            currentFiles.map((file) => {
+              const categoryName =
+                (file.categoryNo && categoryMap[file.categoryNo]) || file.categoryNo || '기타';
 
-            return (
-              <div
-                key={`${file.name}::${file.collectionNo}`}
-                onClick={() => {
-                  if (!isUploading) return; // 업로드 전에는 클릭 불가 (선택만 제한)
-                  setSelectedFile(file);
-                }}
-                className={`grid grid-cols-8 items-center text-sm p-2 border-b last:border-none
-    ${isUploading ? 'hover:bg-[var(--color-hebees-bg)]/50 cursor-pointer' : 'cursor-default'}
-    ${
-      selectedFile &&
-      selectedFile.name === file.name &&
-      selectedFile.collectionNo === file.collectionNo
-        ? 'bg-gray-200 ring-1 ring-[var(--color-hebees)]'
-        : ''
-    }`}
-              >
-                {/* 파일명 */}
-                <div className="col-span-3 flex items-center gap-2 text-xs pl-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation(); // 선택 클릭과 무관하게 동작
-                      handleRemove(file); // 업로드 중이든 아니든 삭제 가능
-                    }}
-                    className="hover:opacity-80 transition"
-                  >
-                    <X size={17} className="text-[var(--color-hebees)]" />
-                  </button>
-                  <div className="w-7 h-7 bg-[var(--color-hebees)] rounded-md flex items-center justify-center">
-                    <FileText size={17} className="text-[var(--color-white)]" />
+              return (
+                <div
+                  key={`${file.name}::${file.collectionNo}`}
+                  onClick={() => {
+                    if (!isUploading) return;
+                    setSelectedFile(file);
+                  }}
+                  className={`grid grid-cols-8 items-center text-sm border-b p-2 last:border-none transition
+              ${isUploading ? 'hover:bg-[var(--color-hebees-bg)]/40 cursor-pointer' : 'cursor-default'}
+              ${
+                selectedFile &&
+                selectedFile.name === file.name &&
+                selectedFile.collectionNo === file.collectionNo
+                  ? 'bg-gray-200 ring-1 ring-[var(--color-hebees)]'
+                  : ''
+              }`}
+                >
+                  {/* 파일명 */}
+                  <div className="col-span-3 flex items-center gap-1 text-xs">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemove(file);
+                      }}
+                      className="hover:opacity-80 transition"
+                    >
+                      <X size={16} className="text-[var(--color-hebees)]" />
+                    </button>
+                    <div className="w-6 h-6 bg-[var(--color-hebees)] rounded-md flex items-center justify-center">
+                      <FileText size={16} className="text-[var(--color-white)]" />
+                    </div>
+                    <span className="truncate max-w-[150px]">{file.name}</span>
                   </div>
-                  {file.name}
+
+                  {/* 크기 */}
+                  <span className="col-span-2 text-center text-xs">
+                    {(file.size / 1024).toFixed(1)} KB
+                  </span>
+
+                  {/* 카테고리 */}
+                  <span className="col-span-2 text-center text-xs">{categoryName}</span>
+
+                  {/* 저장위치 */}
+                  <span className="col-span-1 text-center text-xs">
+                    {' '}
+                    {collections.find((c) => c.collectionNo === file.collectionNo)?.name || '-'}
+                  </span>
                 </div>
-
-                {/* 크기 */}
-                <span className="text-center text-xs font-regular">
-                  {(file.size / 1024).toFixed(1)} KB
-                </span>
-
-                {/* 카테고리 */}
-                <span className="text-center text-xs font-regular">{categoryName}</span>
-
-                {/* 저장 위치 */}
-                <span className="text-center text-xs font-regular">
-                  {collections.find((c) => c.collectionNo === file.collectionNo)?.name || '-'}
-                </span>
-                {/* 진행률 (VecProcess 붙으면 실제 표시됨) */}
-                <span className="text-center text-xs font-regular">-</span>
-                <span className="text-center text-xs font-regular">-</span>
-              </div>
-            );
-          })
-        )}
+              );
+            })
+          )}
+        </div>
       </div>
 
       {/* 페이지네이션 */}
@@ -200,11 +201,9 @@ export default function SelectVectorization({
             <ChevronLeft size={10} />
             <span>이전</span>
           </button>
-
           <span className="text-xs font-medium">
             {currentPage} / {totalPages || 1}
           </span>
-
           <button
             onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
             disabled={currentPage === totalPages}
@@ -217,31 +216,27 @@ export default function SelectVectorization({
       )}
 
       {/* 벡터화 실행 버튼 */}
-      <div className="flex justify-center">
+      <div className="flex justify-center mt-6 mb-4">
         <button
           onClick={() => handleUpload(localFiles)}
-          className="
-            mt-6 mb-4 px-10 py-2
-            text-white font-semibold
-            rounded-md
-            bg-[linear-gradient(90deg,#BE7DB1_10%,#81BAFF_100%)]
-            hover:opacity-90
-            transition
-            shadow-md
-          "
+          className="px-10 py-2 text-white font-semibold rounded-md
+                   bg-[linear-gradient(90deg,#BE7DB1_10%,#81BAFF_100%)]
+                   hover:opacity-90 transition shadow-md"
         >
           벡터화 실행
         </button>
       </div>
 
-      {/* VecProcess 표시 */}
+      {/* VecProcess (고정된 높이 아래쪽에 추가로 띄움) */}
       {selectedFile && (
-        <VecProcess
-          selectedFiles={localFiles}
-          initialFileName={selectedFile.name}
-          initialCollection={selectedFile.collectionNo || ''}
-          isVectorizingDone={isVectorizingDone}
-        />
+        <div className="mt-4">
+          <VecProcess
+            selectedFiles={localFiles}
+            initialFileName={selectedFile.name}
+            initialCollection={selectedFile.collectionNo || ''}
+            isVectorizingDone={isVectorizingDone}
+          />
+        </div>
       )}
     </section>
   );

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { ArrowRight } from 'lucide-react';
 import FileUploader from '@/shared/components/file/FileUploader';
 import UploadList from '@/domains/admin/components/documents/UploadList';
 import ColSection from '@/domains/admin/components/documents/ColSection';
@@ -85,14 +86,14 @@ export default function UploadTab() {
   };
 
   return (
-    <section className="flex flex-col gap-4 my-4">
+    <section className="flex flex-col gap-6 my-4">
       {/* 파일 업로더 */}
       <FileUploader onUpload={handleUpload} accept=".pdf,.xlsx" multiple brand="hebees" />
 
-      {/* 2️업로드된 파일 목록 + 컬렉션 선택 */}
-      <div className="flex gap-4">
+      {/* 업로드 → 컬렉션 → 벡터화 흐름 */}
+      <div className="flex items-center justify-between gap-4">
         {/* 왼쪽: 업로드된 문서 */}
-        <div className="flex-[2]">
+        <div className="flex-1">
           <UploadList
             files={uploadedFiles}
             selectedFiles={selectedFiles}
@@ -101,21 +102,29 @@ export default function UploadTab() {
           />
         </div>
 
-        {/* 오른쪽: 컬렉션 선택 */}
-        <div className="flex-[2]">
+        {/* 화살표 ① */}
+        <ArrowRight className="text-gray-400 w-6 h-6 flex-shrink-0" />
+
+        {/* 가운데: 컬렉션 선택 */}
+        <div className="flex-1">
           <ColSection
             selectedCollection={selectedCollection}
             onCollectionSelect={handleCollectionSelect}
-            uploadedFiles={finalSelectedFiles} // 이미 컬렉션이 지정된 파일만 표시
+            uploadedFiles={finalSelectedFiles}
+          />
+        </div>
+
+        {/* 화살표 ② */}
+        <ArrowRight className="text-gray-400 w-6 h-6 flex-shrink-0" />
+
+        {/* 오른쪽: 벡터화 대상 목록 */}
+        <div className="flex-1">
+          <SelectVectorization
+            finalSelectedFiles={finalSelectedFiles}
+            onRemove={handleRemoveFromFinal}
           />
         </div>
       </div>
-
-      {/* 선택 목록 (벡터화 대상) */}
-      <SelectVectorization
-        finalSelectedFiles={finalSelectedFiles}
-        onRemove={handleRemoveFromFinal}
-      />
     </section>
   );
 }
