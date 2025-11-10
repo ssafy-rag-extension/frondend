@@ -70,9 +70,9 @@ export default function MyDocsTab() {
         sizeKB: d.sizeKB,
         uploadedAt: new Date(d.uploadedAt).toLocaleString(),
         category: d.bucket ?? '기타',
-        categoryId: d.categoryNo,
+        categoryId: d.categoryNo != null ? String(d.categoryNo) : undefined,
         type: typeof d.type === 'string' ? d.type : 'txt',
-        status: 'uploaded',
+        status: d.status ?? undefined,
       })),
     [myDocs]
   );

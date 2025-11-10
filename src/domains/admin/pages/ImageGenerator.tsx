@@ -73,20 +73,16 @@ export default function ImageGenerator() {
   };
 
   const handleCopy = async (src: string) => {
-    try {
-      if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
-        const resp = await fetch(src, { mode: 'cors' });
-        const blob = await resp.blob();
-        const item = new ClipboardItem({ [blob.type]: blob });
-        await navigator.clipboard.write([item]);
-        toast.success('이미지가 복사되었습니다.');
-        return;
-      }
-      await navigator.clipboard.writeText(src);
-      toast.success('이미지 URL을 복사했습니다.');
-    } catch {
-      // toast.error('복사에 실패했어요.');
+    if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+      const resp = await fetch(src, { mode: 'cors' });
+      const blob = await resp.blob();
+      const item = new ClipboardItem({ [blob.type]: blob });
+      await navigator.clipboard.write([item]);
+      toast.success('이미지가 복사되었습니다.');
+      return;
     }
+    await navigator.clipboard.writeText(src);
+    toast.success('이미지 URL을 복사했습니다.');
   };
 
   return (
