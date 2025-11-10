@@ -1,8 +1,6 @@
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import FileDropzone from '@/shared/components/file/FileUploader';
 import UploadedFileList from '@/shared/components/file/UploadedFileList';
-import FileNameConflictModal from '@/shared/components/file/FileNameConflictModal';
-import type { ConflictDecision } from '@/shared/components/file/FileNameConflictModal';
 import type { UploadedDoc as UDoc } from '@/shared/components/file/UploadedFileList';
 import { uploadFiles } from '@/shared/api/file.api';
 import { toast } from 'react-toastify';
@@ -12,43 +10,7 @@ type UploadPayload = { files: File[]; category: string; categoryName?: string };
 export default function UploadTab() {
   const [uploadedDocs, setUploadedDocs] = useState<UDoc[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
-  const [conflictOpen, setConflictOpen] = useState(false);
-  const [conflictTargetName, setConflictTargetName] = useState('');
-  const [conflictSuggested, setConflictSuggested] = useState('');
-  const resolverRef = useRef<(d: ConflictDecision) => void>();
-
-  const splitName = (name: string) => {
-    const idx = name.lastIndexOf('.');
-    return idx <= 0 ? { base: name, ext: '' } : { base: name.slice(0, idx), ext: name.slice(idx) };
-  };
-
-  const suggestNextName = (name: string, existing: Set<string>) => {
-    const { base, ext } = splitName(name);
-    let i = 1;
-    let candidate = `${base} (${i})${ext}`;
-    while (existing.has(candidate)) {
-      i += 1;
-      candidate = `${base} (${i})${ext}`;
-    }
-    return candidate;
-  };
-
-  const showConflictModal = (fileName: string, suggested: string) =>
-    new Promise<ConflictDecision>((resolve) => {
-      resolverRef.current = resolve;
-      setConflictTargetName(fileName);
-      setConflictSuggested(suggested);
-      setConflictOpen(true);
-    });
-
-  const resolveConflict = (d: ConflictDecision) => {
-    setConflictOpen(false);
-    resolverRef.current?.(d);
-  };
-
-  const renameFile = (file: File, newName: string) =>
-    new File([file], newName, { type: file.type, lastModified: file.lastModified });
+  const [uploading, setUploading] = useState(false);
 
   const detectType = (f: File): UDoc['type'] => {
     const name = f.name.toLowerCase();
@@ -70,57 +32,10 @@ export default function UploadTab() {
     file: f,
   });
 
-  const handleUpload = async ({ files, category, categoryName }: UploadPayload) => {
-    const existingNames = new Set(uploadedDocs.map((d) => d.name));
-    const nameToDoc = new Map(uploadedDocs.map((d) => [d.name, d]));
-    const toAdd: UDoc[] = [];
-    const replace = new Map<string, UDoc>();
-
-    for (const file of files) {
-      const name = file.name;
-
-      if (!existingNames.has(name)) {
-        toAdd.push(makeDoc(file, category, categoryName));
-        existingNames.add(name);
-        continue;
-      }
-
-      const suggestion = suggestNextName(name, existingNames);
-      const decision = await showConflictModal(name, suggestion);
-
-      if (decision.action === 'overwrite') {
-        const old = nameToDoc.get(name)!;
-        const updated: UDoc = {
-          ...old,
-          sizeKB: file.size / 1024,
-          uploadedAt: new Date().toLocaleString(),
-          category: categoryName ?? category,
-          categoryId: category,
-          type: detectType(file),
-          file,
-          status: undefined,
-          fileNo: undefined,
-        };
-        replace.set(name, updated);
-        continue;
-      }
-
-      if (decision.action === 'rename') {
-        const newName = decision.newName.trim();
-        const newFile = renameFile(file, newName);
-        toAdd.push(makeDoc(newFile, category, categoryName));
-        existingNames.add(newName);
-        continue;
-      }
-    }
-
-    setUploadedDocs((prev) => {
-      const updated = prev.map((d) => (replace.has(d.name) ? (replace.get(d.name) as UDoc) : d));
-      return [...toAdd, ...updated];
-    });
+  const handleUpload = ({ files, category, categoryName }: UploadPayload) => {
+    const mapped = files.map((f) => makeDoc(f, category, categoryName));
+    setUploadedDocs((prev) => [...mapped, ...prev]);
   };
-
-  const [uploading, setUploading] = useState(false);
 
   const ingestSelected = async () => {
     if (uploading) return;
@@ -176,9 +91,7 @@ export default function UploadTab() {
 
     if (successCount > 0) {
       toast.success(`문서 ${successCount}개 업로드 완료!`);
-      setTimeout(() => {
-        window.location.reload();
-      }, 500); // 토스트 약간 보이도록 딜레이
+      setTimeout(() => window.location.reload(), 500);
     }
   };
 
@@ -244,8 +157,7 @@ export default function UploadTab() {
                 type="button"
                 onClick={ingestSelected}
                 disabled={!canIngest || uploading}
-                className={`px-4 py-2 text-sm font-semibold rounded text-white bg-[var(--color-retina)] hover:bg-[var(--color-retina)]/90 
-                }`}
+                className="px-4 py-2 text-sm font-semibold rounded text-white bg-[var(--color-retina)] hover:bg-[var(--color-retina)]/90 disabled:opacity-60"
               >
                 {uploading ? '문서 업로드 중...' : '문서 업로드'}
               </button>
@@ -253,13 +165,6 @@ export default function UploadTab() {
           </div>
         </div>
       )}
-
-      <FileNameConflictModal
-        open={conflictOpen}
-        fileName={conflictTargetName}
-        suggested={conflictSuggested}
-        onClose={resolveConflict}
-      />
     </>
   );
 }

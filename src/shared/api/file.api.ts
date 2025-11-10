@@ -91,7 +91,7 @@ export async function getPresignedUrl(
   return res.data?.result?.data?.url;
 }
 
-// 파일 단건 삭제: 이미 구현됨
+// 파일 삭제
 export async function deleteFile(fileNo: string): Promise<DeleteFileData> {
   const res = await fastApi.delete<ApiEnvelope<{ data: DeleteFileData }>>(
     `/api/v1/files/${fileNo}`
