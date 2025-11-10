@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, NavLink, useNavigate, useSearchParams } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import {
   Menu,
   Settings,
@@ -65,6 +65,9 @@ export default function AdminLayout() {
   const activeSessionNo = sp.get('session') || undefined;
   const navigate = useNavigate();
   const { model, setModel } = useGlobalModelStore();
+
+  const { pathname } = useLocation();
+  const isChatRoute = pathname.startsWith('/admin/chat/text');
 
   return (
     <div className="flex min-h-screen">
@@ -204,15 +207,20 @@ export default function AdminLayout() {
       </aside>
 
       <main className="flex-1 min-w-0">
-        <div className="sticky z-30 top-0 bg-transparent flex justify-between px-8 py-5">
-          <Select
-            value={model}
-            onChange={setModel}
-            options={MODEL_OPTIONS}
-            className="w-[240px]"
-            placeholder="모델 선택"
-          />
-
+        <div
+          className={`sticky z-30 top-0 flex px-8 py-5 ${
+            isChatRoute ? 'justify-between' : 'justify-end'
+          }`}
+        >
+          {isChatRoute && (
+            <Select
+              value={model}
+              onChange={setModel}
+              options={MODEL_OPTIONS}
+              className="w-[240px]"
+              placeholder="모델 선택"
+            />
+          )}
           <Bell
             size={22}
             className="text-gray-600 hover:text-gray-800 cursor-pointer transition-colors shake-hover"

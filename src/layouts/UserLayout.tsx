@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Outlet, NavLink, useNavigate, useSearchParams } from 'react-router-dom';
+import { Outlet, NavLink, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Menu, MessageSquare, Image, FolderCog, LogOut, Bell, UserCog, Search } from 'lucide-react';
 import Tooltip from '@/shared/components/Tooltip';
 import ChatList from '@/shared/components/chat/list/ChatList';
@@ -52,6 +52,9 @@ export default function UserLayout() {
   const activeSessionNo = sp.get('session') || undefined;
   const navigate = useNavigate();
   const { model, setModel } = useGlobalModelStore();
+
+  const { pathname } = useLocation();
+  const isChatRoute = pathname.startsWith('/user/chat/text');
 
   return (
     <div className="flex min-h-screen bg-transparent">
@@ -161,15 +164,20 @@ export default function UserLayout() {
       </aside>
 
       <main className="flex-1 min-w-0">
-        <div className="sticky z-30 top-0 bg-transparent flex justify-end px-8 py-5">
-          <Select
-            value={model}
-            onChange={setModel}
-            options={MODEL_OPTIONS}
-            className="w-[240px]"
-            placeholder="모델 선택"
-          />
-
+        <div
+          className={`sticky z-30 top-0 flex px-8 py-5 ${
+            isChatRoute ? 'justify-between' : 'justify-end'
+          }`}
+        >
+          {isChatRoute && (
+            <Select
+              value={model}
+              onChange={setModel}
+              options={MODEL_OPTIONS}
+              className="w-[240px]"
+              placeholder="모델 선택"
+            />
+          )}
           <Bell
             size={22}
             className="text-gray-600 hover:text-gray-800 cursor-pointer transition-colors shake-hover"
