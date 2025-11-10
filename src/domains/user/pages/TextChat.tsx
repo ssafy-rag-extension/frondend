@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
-import { toast } from 'react-toastify';
 import ChatInput from '@/shared/components/chat/ChatInput';
 import ChatMessageItem from '@/shared/components/chat/ChatMessageItem';
 import ScrollToBottomButton from '@/shared/components/chat/ScrollToBottomButton';
@@ -20,14 +19,23 @@ import {
   useThinkingTicker,
 } from '@/domains/user/hooks/useChatHelpers';
 
+const DEFAULT_LLM = 'qwen3-v1:8b';
+const NAME_TO_ID: Record<string, string> = {
+  'Qwen3-v1:8B': 'qwen3-v1:8b',
+  'GPT-4o': 'gpt-4o',
+  'Gemini 2.5 Flash': 'gemini-2.5 flash',
+  'Claude Sonnet 4': 'claude-sonnet 4',
+};
+const mapNameToId = (name?: string) => (name ? NAME_TO_ID[name] : undefined);
+
 const mapRole = (r: ChatRole): UiRole => (r === 'human' ? 'user' : r === 'ai' ? 'assistant' : r);
 
 export default function TextChat() {
   const { sessionNo: paramsSessionNo } = useParams<{ sessionNo: string }>();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-
   const derivedSessionNo = useDerivedSessionNo(location, searchParams, paramsSessionNo);
+
   const [currentSessionNo, setCurrentSessionNo] = useState<string | null>(derivedSessionNo);
   const [list, setList] = useState<UiMsg[]>([]);
   const [awaitingAssistant, setAwaitingAssistant] = useState(false);
@@ -38,18 +46,26 @@ export default function TextChat() {
 
   const model = useGlobalModelStore((s) => s.model);
   const setModel = useGlobalModelStore((s) => s.setModel);
-
   const ensureSession = useEnsureSession(setCurrentSessionNo);
 
   useEffect(() => {
-    if (!derivedSessionNo) return;
-    setCurrentSessionNo(derivedSessionNo);
     (async () => {
-      const res = await getMessages(derivedSessionNo);
-      const page: MessagePage = res.data.result;
-      const res2 = await getSession(derivedSessionNo);
-      const sessionInfo = res2.data.result;
-      if (sessionInfo?.llmName) setModel(sessionInfo.llmName);
+      if (!derivedSessionNo) {
+        if (!model) setModel(DEFAULT_LLM);
+        return;
+      }
+
+      setCurrentSessionNo(derivedSessionNo);
+
+      const resMsgs = await getMessages(derivedSessionNo);
+      const page: MessagePage = resMsgs.data.result;
+
+      const resSess = await getSession(derivedSessionNo);
+      const sessionInfo = resSess.data.result as { llm?: string; llmName?: string } | undefined;
+
+      const llmId = sessionInfo?.llm || mapNameToId(sessionInfo?.llmName) || DEFAULT_LLM;
+      setModel(llmId);
+
       const mapped: UiMsg[] =
         page.data?.map((m: MessageItem) => ({
           role: mapRole(m.role),
@@ -58,15 +74,16 @@ export default function TextChat() {
           messageNo: m.messageNo,
           referencedDocuments: m.referencedDocuments,
         })) ?? [];
+
       setList(mapped);
-      requestAnimationFrame(() => bottomRef.current?.scrollIntoView({ behavior: 'auto' }));
+      requestAnimationFrame(() => bottomRef.current?.scrollIntoView());
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [derivedSessionNo, setModel]);
 
   const isAtBottom = () => {
     const el = scrollRef.current;
-    if (!el) return true;
-    return el.scrollTop + el.clientHeight >= el.scrollHeight - 50;
+    return !el || el.scrollTop + el.clientHeight >= el.scrollHeight - 50;
   };
 
   useEffect(() => {
@@ -80,40 +97,46 @@ export default function TextChat() {
 
   const handleSend = async (msg: string) => {
     forceScrollRef.current = true;
-    setList((prev) => [...prev, { role: 'user', content: msg }]);
     setAwaitingAssistant(true);
-    setList((prev) => [...prev, { role: 'assistant', content: '', messageNo: '__pending__' }]);
+
+    setList((prev) => [
+      ...prev,
+      { role: 'user', content: msg },
+      { role: 'assistant', content: '', messageNo: '__pending__' },
+    ]);
+
     try {
-      const sessionNo = await ensureSession();
-      const body: SendMessageRequest = { content: msg, model };
+      const llmId = model || DEFAULT_LLM;
+      const sessionNo = await ensureSession({ llm: llmId, query: msg });
+
+      const body: SendMessageRequest = { content: msg, model: llmId };
       const res = await sendMessage(sessionNo, body);
       const result: SendMessageResult = res.data.result;
+
       forceScrollRef.current = true;
       setList((prev) =>
-        prev.map((it) =>
-          it.messageNo === '__pending__'
+        prev.map((m) =>
+          m.messageNo === '__pending__'
             ? {
                 role: 'assistant',
                 content: result.content ?? '(응답이 없습니다)',
                 createdAt: result.timestamp,
               }
-            : it
+            : m
         )
       );
     } catch {
-      toast.error('메시지 전송에 실패했어요.');
-      setList((prev) => prev.filter((it) => it.messageNo !== '__pending__'));
+      setList((prev) => prev.filter((m) => m.messageNo !== '__pending__'));
     } finally {
       setAwaitingAssistant(false);
     }
   };
 
-  const hasMessages = list.length > 0;
   const thinkingSubtitle = useThinkingTicker(awaitingAssistant);
 
   return (
-    <section className="flex flex-col min-h-[calc(100vh-62px)] z-0 h-full">
-      {hasMessages ? (
+    <section className="flex flex-col min-h-[calc(100vh-62px)] h-full">
+      {list.length > 0 ? (
         <>
           <div
             ref={scrollRef}
@@ -122,7 +145,7 @@ export default function TextChat() {
             <div className="w-full max-w-[75%] space-y-10 px-12 py-4">
               {list.map((m, i) => (
                 <ChatMessageItem
-                  key={`${m.messageNo ?? 'pending'}-${i}-${m.role}`}
+                  key={`${m.messageNo ?? 'pending'}-${i}`}
                   msg={m}
                   index={i}
                   currentSessionNo={currentSessionNo}
@@ -139,7 +162,8 @@ export default function TextChat() {
               <div ref={bottomRef} />
             </div>
           </div>
-          <div className="sticky bottom-0 shrink-0 w-full flex flex-col items-center">
+
+          <div className="sticky bottom-0 w-full flex flex-col items-center">
             <div className="relative w-full flex justify-center mb-4">
               <ScrollToBottomButton
                 containerRef={scrollRef}
@@ -153,7 +177,7 @@ export default function TextChat() {
           </div>
         </>
       ) : (
-        <div className="flex-1 min-h-[calc(100vh-62px)] flex items-center justify-center px-4">
+        <div className="flex-1 flex items-center justify-center px-4">
           <div className="w-full max-w-[75%] flex flex-col items-center gap-6 text-center">
             <ChatInput onSend={handleSend} variant="retina" />
           </div>

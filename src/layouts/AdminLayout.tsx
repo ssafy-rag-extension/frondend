@@ -218,7 +218,6 @@ export default function AdminLayout() {
               onChange={setModel}
               options={MODEL_OPTIONS}
               className="w-[200px]"
-              placeholder="모델 선택"
             />
           )}
           <Bell
@@ -227,9 +226,7 @@ export default function AdminLayout() {
           />
         </div>
         <div className="flex w-full min-h-[calc(100vh-62px)] flex-col gap-3 px-8">
-          <div className="flex flex-col w-full gap-3 px-8">
-            <Outlet key={pathname + location.search} />
-          </div>
+          <Outlet key={pathname + location.search} />
         </div>
       </main>
 

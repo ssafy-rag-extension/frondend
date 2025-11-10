@@ -9,11 +9,9 @@ import type {
 } from '@/shared/types/chat.types';
 import type { ApiEnvelope } from '@/shared/lib/api.types';
 
-// 세션 리스트 1페이지 key
 const PAGE_SIZE = 20;
 const key = (pageNum = 0, pageSize = PAGE_SIZE) => ['sessions', pageNum, pageSize] as const;
 
-// URL에서 세션번호 추출
 const derive = (pathname: string, searchParams: URLSearchParams, paramsSessionNo?: string) => {
   if (paramsSessionNo) return paramsSessionNo;
   const byQuery = searchParams.get('session');
@@ -22,19 +20,16 @@ const derive = (pathname: string, searchParams: URLSearchParams, paramsSessionNo
   return legacy?.[1] ?? null;
 };
 
-// 세션번호 파싱 + URL 정규화
 export function useDerivedSessionNo(
   location: Location,
   searchParams: URLSearchParams,
   paramsSessionNo?: string
 ) {
-  // 세션 값 계산
   const derived = useMemo(
     () => derive(location.pathname, searchParams, paramsSessionNo),
     [location.pathname, searchParams, paramsSessionNo]
   );
 
-  // /user/chat/text?session=xxx → /user/chat/text/xxx 로 정규화
   useEffect(() => {
     if (!derived) return;
     const needNormalize =
@@ -49,17 +44,23 @@ export function useDerivedSessionNo(
   return derived;
 }
 
-// 세션 없으면 생성 + 목록 캐시에 즉시 추가
 export function useEnsureSession(setCurrentSessionNo: (v: string) => void) {
   const qc = useQueryClient();
 
-  return async () => {
-    // 새 세션 만들기
-    const created = await createSession({});
-    const data: CreateSessionResult = created.data.result;
-    const newItem = data as SessionItem;
+  return async (opts?: { llm?: string; query?: string }) => {
+    const tempId = `temp-${Date.now()}`;
+    const nowIso = new Date().toISOString();
 
-    // 세션 리스트 1페이지 캐시 업데이트
+    const tempSession: SessionItem = {
+      sessionNo: tempId,
+      title: '새 채팅',
+      createdAt: nowIso,
+      llmNo: 0 as unknown as SessionItem['llmNo'],
+      llmName: '' as unknown as SessionItem['llmName'],
+      userNo: 0 as unknown as SessionItem['userNo'],
+      userName: '' as unknown as SessionItem['userName'],
+    };
+
     qc.setQueryData<ApiEnvelope<ListSessionsResult>>(key(0, PAGE_SIZE), (old) => {
       const base: ApiEnvelope<ListSessionsResult> = old ?? {
         status: 200,
@@ -80,37 +81,74 @@ export function useEnsureSession(setCurrentSessionNo: (v: string) => void) {
 
       const env = base.result;
       const prev = Array.isArray(env.data) ? env.data : [];
-      const exists = prev.some((s) => s.sessionNo === newItem.sessionNo);
-
-      // 새 세션을 맨 위에 추가 (중복 제거)
-      const nextData = [newItem, ...prev.filter((s) => s.sessionNo !== newItem.sessionNo)];
 
       return {
         ...base,
+        result: {
+          ...env,
+          data: [tempSession, ...prev],
+          pagination: {
+            ...env.pagination,
+            pageNum: 0,
+          },
+        },
+      };
+    });
+
+    setCurrentSessionNo(tempId);
+
+    const payload: { llm?: string; query?: string } = {};
+    if (opts?.llm) payload.llm = opts.llm;
+    if (opts?.query) payload.query = opts.query;
+
+    const created = await createSession(payload);
+    const data: CreateSessionResult = created.data.result;
+
+    const realId = data.sessionNo;
+    const realTitle = data.title ?? '새 채팅';
+
+    const realSession: SessionItem = {
+      ...tempSession,
+      sessionNo: realId,
+      title: realTitle,
+    };
+
+    qc.setQueryData<ApiEnvelope<ListSessionsResult>>(key(0, PAGE_SIZE), (old) => {
+      if (!old) return old;
+      const env = old.result;
+
+      const alreadyExists = env.data.some((s) => s.sessionNo === realId);
+      const replaced = env.data.map((item) => (item.sessionNo === tempId ? realSession : item));
+      const nextData = alreadyExists ? replaced.filter((s) => s.sessionNo !== tempId) : replaced;
+
+      const prevTotal =
+        typeof env.pagination?.totalItems === 'number' ? env.pagination.totalItems : 0;
+      const nextTotal = alreadyExists ? prevTotal : prevTotal + 1;
+
+      return {
+        ...old,
         result: {
           ...env,
           data: nextData,
           pagination: {
             ...env.pagination,
             pageNum: 0,
-            totalItems: exists ? env.pagination.totalItems : env.pagination.totalItems + 1,
+            totalItems: nextTotal,
           },
         },
       };
     });
 
-    // 다른 페이지들 invalidate
     qc.invalidateQueries({ queryKey: ['sessions'] });
 
-    // URL 상태 갱신
-    setCurrentSessionNo(data.sessionNo);
-    window.history.replaceState(history.state, '', `/user/chat/text/${data.sessionNo}`);
+    setCurrentSessionNo(realId);
+    window.history.replaceState(history.state, '', `/user/chat/text/${realId}`);
+    document.title = realTitle;
 
-    return data.sessionNo;
+    return realId;
   };
 }
 
-// 답변 대기중 문구 순환
 const messages = [
   '문서를 분석하고 있습니다…',
   '핵심 정보를 정리하는 중입니다…',
@@ -121,7 +159,6 @@ const messages = [
   'HEBEES RAG 답변 생성 중입니다…',
 ] as const;
 
-// AI 응답 기다리는 동안 2초마다 문구 변경
 export function useThinkingTicker(active: boolean) {
   const [idx, setIdx] = useState(0);
 
