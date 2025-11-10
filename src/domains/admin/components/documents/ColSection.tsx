@@ -1,5 +1,5 @@
 import { FolderOpen, FileText, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { RawMyDoc } from '@/shared/types/file.types';
 import type { documentDatatype, collectionType } from '@/domains/admin/types/documents.types';
@@ -7,7 +7,7 @@ import { getDocInCollections, getCollections } from '@/domains/admin/api/documen
 
 type ColSectionProps = {
   selectedCollection: string | null;
-  onCollectionSelect: (name: string | null) => void;
+  onCollectionSelect: (no: string | null) => void;
   uploadedFiles?: RawMyDoc[];
 };
 
@@ -15,30 +15,43 @@ export default function ColSection({ selectedCollection, onCollectionSelect }: C
   const [openCollection, setOpenCollection] = useState<Record<string, boolean>>({});
   const [page, setPage] = useState<Record<string, number>>({});
   const [docsByCollection, setDocsByCollection] = useState<Record<string, documentDatatype[]>>({});
+  const [colLoading, setColLoading] = useState(false);
+
   const FILES_PER_PAGE = 5;
 
   // 컬렉션 목록 조회 (useQuery는 여기 1개만)
   const { data: collectionsResult } = useQuery({
     queryKey: ['collections', { filter: true }],
     queryFn: () => getCollections({ filter: true }),
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 10,
   });
 
   const collections = collectionsResult?.data ?? [];
 
   // 컬렉션 클릭 시 문서 가져오기
-  const handleToggleOpen = async (collectionNo: string) => {
-    setOpenCollection((prev) => ({ ...prev, [collectionNo]: !prev[collectionNo] }));
-    console.log(collectionNo);
-    // 처음 열 때만 문서 불러오기
-    if (!openCollection[collectionNo]) {
-      const res = await getDocInCollections(collectionNo);
+  const handleToggleOpen = (collectionNo: string) => {
+    setOpenCollection((prev) => ({
+      ...prev,
+      [collectionNo]: !prev[collectionNo],
+    }));
+    onCollectionSelect(collectionNo);
+  };
+
+  const { data: docs, isLoading } = useQuery({
+    queryKey: ['docs', selectedCollection],
+    queryFn: () => getDocInCollections(selectedCollection!).then((res) => res.data),
+    enabled: !!selectedCollection && !!openCollection[selectedCollection], // 열렸을 때만 실행
+    staleTime: 1000 * 60 * 10, // 3분 캐싱
+  });
+
+  useEffect(() => {
+    if (docs && selectedCollection) {
       setDocsByCollection((prev) => ({
         ...prev,
-        [collectionNo]: res.data ?? [],
+        [selectedCollection]: docs, // 쿼리 결과 저장
       }));
     }
-  };
+  }, [docs, selectedCollection]);
 
   const handleSelectCollection = (collectionNo: string) => {
     const newSelection = selectedCollection === collectionNo ? null : collectionNo;
@@ -113,7 +126,12 @@ export default function ColSection({ selectedCollection, onCollectionSelect }: C
               {openCollection[col.collectionNo] && (
                 <>
                   <ul className="pl-4 text-sm text-gray-700 space-y-1 mt-2">
-                    {visibleFiles.length === 0 ? (
+                    {/* 🔹 로딩 중 표시 */}
+                    {isLoading && selectedCollection === col.collectionNo ? (
+                      <li className="text-gray-400 text-xs animate-pulse">
+                        문서 목록을 불러오는 중...
+                      </li>
+                    ) : visibleFiles.length === 0 ? (
                       <li className="text-gray-400 text-xs">등록된 문서가 없습니다.</li>
                     ) : (
                       visibleFiles.map((file) => (

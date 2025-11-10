@@ -5,6 +5,7 @@ import VecProcess from './VecProcess';
 import type { RawMyDoc } from '@/shared/types/file.types';
 import { useCategoryStore } from '@/shared/store/categoryMap';
 import type { UploadBucket } from '@/shared/types/file.types';
+import { getCollections } from '@/domains/admin/api/documents.api';
 import { uploadFiles } from '@/shared/api/file.api';
 import { toast } from 'react-toastify';
 // import {uploadFiles} from '@/shared/api/file.api';
@@ -28,7 +29,6 @@ export default function SelectVectorization({
   const totalPages = Math.ceil(localFiles.length / itemsPerPage);
 
   const [isVectorizingDone, setIsVectorizingDone] = useState(false);
-
   const [isUploading, setIsUploading] = useState(false);
 
   //  업로드
@@ -60,8 +60,6 @@ export default function SelectVectorization({
     } catch (err) {
       console.error('❌ 업로드 실패', err);
       toast.error('파일 업로드에 실패했습니다. 다시 시도해주세요.');
-    } finally {
-      setIsUploading(false);
     }
   }
 
@@ -70,6 +68,13 @@ export default function SelectVectorization({
   //     refetch(); // ✅ React Query로 전체 벡터화 진행률 재요청
   //   }
   // }, [isVectorizingDone, refetch]);
+
+  const { data: collectionsResult } = useQuery({
+    queryKey: ['collections', { filter: true }],
+    queryFn: () => getCollections({ filter: true }),
+    staleTime: 1000 * 60 * 10,
+  });
+  const collections = collectionsResult?.data ?? [];
 
   const categoryMap = useCategoryStore((s) => s.categoryMap);
   const handleRemove = (fileToRemove: RawMyDoc) => {
@@ -172,8 +177,9 @@ export default function SelectVectorization({
                 <span className="text-center text-xs font-regular">{categoryName}</span>
 
                 {/* 저장 위치 */}
-                <span className="text-center text-xs font-regular">{file.collectionNo || '-'}</span>
-
+                <span className="text-center text-xs font-regular">
+                  {collections.find((c) => c.collectionNo === file.collectionNo)?.name || '-'}
+                </span>
                 {/* 진행률 (VecProcess 붙으면 실제 표시됨) */}
                 <span className="text-center text-xs font-regular">-</span>
                 <span className="text-center text-xs font-regular">-</span>
