@@ -64,11 +64,13 @@ export default function TemplateList({
         <div className="text-sm font-semibold text-gray-700">
           {kind === 'ingest' ? 'Ingest 템플릿' : 'Query 템플릿'}
         </div>
-
         {onCreate && (
           <button
             type="button"
-            onClick={onCreate}
+            onClick={() => {
+              setItems((prev) => prev.map((t) => ({ ...t, isDefault: false })));
+              onCreate();
+            }}
             className={clsx(
               'inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors',
               'border border-[var(--color-hebees)] text-[var(--color-hebees)]',

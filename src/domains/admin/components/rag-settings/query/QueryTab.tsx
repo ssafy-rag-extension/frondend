@@ -65,13 +65,13 @@ export default function QueryTab({
           (list.data ?? []).find((t) => t.isDefault)?.queryNo ??
           (list.data ?? [])[0]?.queryNo ??
           '';
-        if (!templateId && def) setTemplateId(def);
+        if (!isCreateMode && !templateId && def) setTemplateId(def);
       } finally {
         setTplLoading(false);
       }
     };
     void run();
-  }, [templateId]);
+  }, [templateId, isCreateMode]);
 
   useEffect(() => {
     const apply = (d: QueryTemplateDetailResult, id: string) => {

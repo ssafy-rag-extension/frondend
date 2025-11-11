@@ -57,13 +57,13 @@ export default function IngestTab({
           (list.data ?? []).find((t) => t.isDefault)?.ingestNo ??
           (list.data ?? [])[0]?.ingestNo ??
           '';
-        if (!templateId && def) setTemplateId(def);
+        if (!isCreateMode && !templateId && def) setTemplateId(def);
       } finally {
         setTplLoading(false);
       }
     };
     void run();
-  }, [templateId]);
+  }, [templateId, isCreateMode]);
 
   useEffect(() => {
     const apply = (d: IngestTemplateDetailResult) => {
