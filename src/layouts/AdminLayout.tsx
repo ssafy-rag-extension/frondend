@@ -36,8 +36,8 @@ const linkCls = ({ isActive }: { isActive: boolean }) =>
 
 const MODEL_OPTIONS: Option[] = [
   {
-    value: 'qwen3-v1:8b',
-    label: 'Qwen3-v1:8B',
+    value: 'qwen3-vl:8b',
+    label: 'Qwen3-vl:8B',
     desc: '가볍고 빠른 멀티모달 모델',
   },
   {

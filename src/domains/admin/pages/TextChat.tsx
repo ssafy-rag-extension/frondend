@@ -19,9 +19,9 @@ import {
   useThinkingTicker,
 } from '@/domains/user/hooks/useChatHelpers';
 
-const DEFAULT_LLM = 'qwen3-v1:8b';
+const DEFAULT_LLM = 'qwen3-vl:8b';
 const NAME_TO_ID: Record<string, string> = {
-  'Qwen3-v1:8B': 'qwen3-v1:8b',
+  'Qwen3-vl:8B': 'qwen3-vl:8b',
   'GPT-4o': 'gpt-4o',
   'Gemini 2.5 Flash': 'gemini-2.5 flash',
   'Claude Sonnet 4': 'claude-sonnet 4',

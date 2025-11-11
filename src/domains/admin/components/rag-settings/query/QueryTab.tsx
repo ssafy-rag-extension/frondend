@@ -8,7 +8,7 @@ import type { FlowStepId } from '@/shared/components/rag-pipeline/PipelineFlow';
 import {
   getQueryTemplates,
   getQueryTemplateDetail,
-  patchQueryTemplate,
+  putQueryTemplate,
   mapQueryTemplatesToOptions,
   createQueryTemplate,
 } from '@/domains/admin/api/rag-settings/query-templates.api';
@@ -216,7 +216,7 @@ export default function QueryTab({
       return;
     }
 
-    await patchQueryTemplate(payload.template, dto);
+    await putQueryTemplate(payload.template, dto);
 
     const [detail, list] = await Promise.all([
       getQueryTemplateDetail(payload.template),

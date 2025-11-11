@@ -43,26 +43,13 @@ export async function createIngestTemplate(
   return res.data.result;
 }
 
-// 전체 수정(PUT)
-export async function updateIngestTemplate(
-  ingestNo: string,
-  payload: UpsertIngestTemplateDto
-): Promise<IngestTemplateDetailResult> {
-  if (!ingestNo) throw new Error('ingestNo is required');
-  const res = await fastApi.put<ApiEnvelope<IngestTemplateDetailResult>>(
-    `/api/v1/rag/ingest-templates/${encodeURIComponent(ingestNo)}`,
-    payload
-  );
-  return res.data.result;
-}
-
-// 부분 수정(PATCH)
-export async function patchIngestTemplate(
+// 수정
+export async function putIngestTemplate(
   ingestNo: string,
   payload: Partial<UpsertIngestTemplateDto>
 ): Promise<IngestTemplateDetailResult> {
   if (!ingestNo) throw new Error('ingestNo is required');
-  const res = await fastApi.patch<ApiEnvelope<IngestTemplateDetailResult>>(
+  const res = await fastApi.put<ApiEnvelope<IngestTemplateDetailResult>>(
     `/api/v1/rag/ingest-templates/${encodeURIComponent(ingestNo)}`,
     payload
   );

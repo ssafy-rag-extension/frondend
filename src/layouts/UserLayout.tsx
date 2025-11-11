@@ -22,7 +22,7 @@ const linkCls = ({ isActive }: { isActive: boolean }) =>
     : 'text-gray-700 hover:bg-[var(--color-retina)] hover:text-white');
 
 const MODEL_OPTIONS: Option[] = [
-  { value: 'qwen3-v1:8b', label: 'Qwen3-v1:8B', desc: '가볍고 빠른 멀티모달 모델' },
+  { value: 'qwen3-vl:8b', label: 'Qwen3-vl:8B', desc: '가볍고 빠른 멀티모달 모델' },
   { value: 'gpt-4o', label: 'GPT-4o', desc: '전반적인 품질·안정성 균형' },
   { value: 'gemini-2.5 flash', label: 'Gemini 2.5 Flash', desc: '대용량 문서·검색 작업에 최적' },
   { value: 'claude-sonnet 4', label: 'Claude Sonnet 4', desc: '복잡한 분석·글쓰기·요약에 강점' },
@@ -40,7 +40,7 @@ export default function UserLayout() {
 
   useEffect(() => {
     if (!localStorage.getItem('global-chat-model')) {
-      setModel('qwen3-v1:8b');
+      setModel('qwen3-vl:8b');
     }
   }, [setModel]);
 

@@ -9,7 +9,7 @@ import {
   getIngestTemplates,
   getIngestTemplateDetail,
   createIngestTemplate,
-  patchIngestTemplate,
+  putIngestTemplate,
   mapIngestTemplatesToOptions,
 } from '@/domains/admin/api/rag-settings/ingest-templates.api';
 import type { IngestTemplateDetailResult } from '@/domains/admin/types/rag-settings/templates.types';
@@ -175,8 +175,7 @@ export default function IngestTab({
       return;
     }
 
-    // console.log('patchIngestTemplate', payload.template, dto);
-    await patchIngestTemplate(payload.template, dto);
+    await putIngestTemplate(payload.template, dto);
 
     const [detail, list] = await Promise.all([
       getIngestTemplateDetail(payload.template),
