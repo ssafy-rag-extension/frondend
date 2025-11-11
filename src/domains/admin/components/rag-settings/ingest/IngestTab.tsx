@@ -23,7 +23,7 @@ export type IngestPreset = {
   overlap: number;
   embedModel: string;
   embedSparse: string;
-  embedBackup: string;
+  isDefault?: boolean;
 };
 
 type Props = {
@@ -52,11 +52,9 @@ export default function IngestTab({
       setTplLoading(true);
       try {
         const list = await getIngestTemplates({ pageNum: 1, pageSize: 100 });
-        setTplOpts(mapIngestTemplatesToOptions(list.data ?? []));
-        const def =
-          (list.data ?? []).find((t) => t.isDefault)?.ingestNo ??
-          (list.data ?? [])[0]?.ingestNo ??
-          '';
+        const data = list.data ?? [];
+        setTplOpts(mapIngestTemplatesToOptions(data));
+        const def = data.find((t) => t.isDefault)?.ingestNo ?? data[0]?.ingestNo ?? '';
         if (!isCreateMode && !templateId && def) setTemplateId(def);
       } finally {
         setTplLoading(false);
@@ -65,38 +63,37 @@ export default function IngestTab({
     void run();
   }, [templateId, isCreateMode]);
 
-  useEffect(() => {
-    const apply = (d: IngestTemplateDetailResult) => {
-      const extractEngine = d.extractions?.[0]?.no ?? '';
-      const chunkStrategy = d.chunking?.no ?? '';
-      const embedModel = d.denseEmbeddings?.[0]?.no ?? '';
-      const embedBackup = d.denseEmbeddings?.[1]?.no ?? d.denseEmbeddings?.[0]?.no ?? '';
-      const embedSparse = d.sparseEmbedding?.no ?? '';
-      let chunkSize = 512;
-      let overlap = 40;
-      if (isChunkingParams(d.chunking?.parameters)) {
-        chunkSize = num(d.chunking.parameters?.token, chunkSize);
-        overlap = num(d.chunking.parameters?.overlap, overlap);
-      }
-      setPreset({
-        template: templateId,
-        extractEngine,
-        chunkStrategy,
-        chunkSize,
-        overlap,
-        embedModel,
-        embedSparse,
-        embedBackup,
-      });
-    };
+  const applyDetailToPreset = (d: IngestTemplateDetailResult, id: string) => {
+    const extractEngine = d.extractions?.[0]?.no ?? '';
+    const chunkStrategy = d.chunking?.no ?? '';
+    const embedModel = d.denseEmbeddings?.[0]?.no ?? '';
+    const embedSparse = d.sparseEmbedding?.no ?? '';
+    let chunkSize = 512;
+    let overlap = 40;
+    if (isChunkingParams(d.chunking?.parameters)) {
+      chunkSize = num(d.chunking.parameters?.token, chunkSize);
+      overlap = num(d.chunking.parameters?.overlap, overlap);
+    }
+    setPreset({
+      template: id,
+      extractEngine,
+      chunkStrategy,
+      chunkSize,
+      overlap,
+      embedModel,
+      embedSparse,
+      isDefault: !!d.isDefault,
+    });
+  };
 
+  useEffect(() => {
     const run = async () => {
       if (!templateId || isCreateMode) {
         setPreset(null);
         return;
       }
-      const d = await getIngestTemplateDetail(templateId);
-      apply(d);
+      const detail = await getIngestTemplateDetail(templateId);
+      applyDetailToPreset(detail, templateId);
     };
     void run();
   }, [templateId, isCreateMode]);
@@ -121,7 +118,7 @@ export default function IngestTab({
     overlap: number;
     embedModel: string;
     embedSparse: string;
-    embedBackup: string;
+    isDefault: boolean;
     isCreateMode?: boolean;
   }) => {
     const dto = {
@@ -131,13 +128,9 @@ export default function IngestTab({
         no: payload.chunkStrategy,
         parameters: { token: payload.chunkSize, overlap: payload.overlap },
       },
-      denseEmbeddings: [
-        ...(payload.embedModel ? [{ no: payload.embedModel }] : []),
-        ...(payload.embedBackup && payload.embedBackup !== payload.embedModel
-          ? [{ no: payload.embedBackup }]
-          : []),
-      ],
+      denseEmbeddings: payload.embedModel ? [{ no: payload.embedModel }] : [], // 배열이라면 이렇게
       sparseEmbedding: payload.embedSparse ? { no: payload.embedSparse } : undefined,
+      isDefault: payload.isDefault,
     };
 
     if (isCreateMode) {
@@ -149,63 +142,17 @@ export default function IngestTab({
       setTplOpts(mapIngestTemplatesToOptions(list.data ?? []));
       setTemplateId(created.ingestNo);
       setIsCreateMode(false);
-
-      const extractEngine = detail.extractions?.[0]?.no ?? '';
-      const chunkStrategy = detail.chunking?.no ?? '';
-      const embedModel = detail.denseEmbeddings?.[0]?.no ?? '';
-      const embedBackup = detail.denseEmbeddings?.[1]?.no ?? detail.denseEmbeddings?.[0]?.no ?? '';
-      const embedSparse = detail.sparseEmbedding?.no ?? '';
-      let chunkSize = 512;
-      let overlap = 40;
-      if (isChunkingParams(detail.chunking?.parameters)) {
-        chunkSize = num(detail.chunking.parameters?.token, chunkSize);
-        overlap = num(detail.chunking.parameters?.overlap, overlap);
-      }
-      setPreset({
-        template: created.ingestNo,
-        extractEngine,
-        chunkStrategy,
-        chunkSize,
-        overlap,
-        embedModel,
-        embedSparse,
-        embedBackup,
-      });
+      applyDetailToPreset(detail, created.ingestNo);
       onCreate?.();
       return;
     }
 
     await putIngestTemplate(payload.template, dto);
-
     const [detail, list] = await Promise.all([
       getIngestTemplateDetail(payload.template),
       getIngestTemplates({ pageNum: 1, pageSize: 100 }),
     ]);
-
-    {
-      const extractEngine = detail.extractions?.[0]?.no ?? '';
-      const chunkStrategy = detail.chunking?.no ?? '';
-      const embedModel = detail.denseEmbeddings?.[0]?.no ?? '';
-      const embedBackup = detail.denseEmbeddings?.[1]?.no ?? detail.denseEmbeddings?.[0]?.no ?? '';
-      const embedSparse = detail.sparseEmbedding?.no ?? '';
-      let chunkSize = 512;
-      let overlap = 40;
-      if (isChunkingParams(detail.chunking?.parameters)) {
-        chunkSize = num(detail.chunking.parameters?.token, chunkSize);
-        overlap = num(detail.chunking.parameters?.overlap, overlap);
-      }
-      setPreset({
-        template: payload.template,
-        extractEngine,
-        chunkStrategy,
-        chunkSize,
-        overlap,
-        embedModel,
-        embedSparse,
-        embedBackup,
-      });
-    }
-
+    applyDetailToPreset(detail, payload.template);
     setTplOpts(mapIngestTemplatesToOptions(list.data ?? []));
   };
 

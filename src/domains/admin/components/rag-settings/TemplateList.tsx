@@ -7,7 +7,7 @@ import { getQueryTemplates } from '@/domains/admin/api/rag-settings/query-templa
 
 type Props = {
   kind: 'ingest' | 'query';
-  active: string; // ingestNo | queryNo
+  active: string;
   onSelect: (id: string) => void;
   className?: string;
   onEdit?: (id: string) => void;

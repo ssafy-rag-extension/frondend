@@ -13,6 +13,7 @@ export type SavePayload = {
   llmModel: string;
   temperature: number;
   multimodal: boolean;
+  isDefault: boolean;
   isCreateMode?: boolean;
 };
 
@@ -25,6 +26,7 @@ export type QueryPreset = {
   llmModel?: string;
   temperature?: number;
   multimodal?: boolean;
+  isDefault: boolean;
 };
 
 export type Anchors = Partial<Record<FlowStepId, React.RefObject<HTMLDivElement>>>;
