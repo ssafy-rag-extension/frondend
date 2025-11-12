@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Option } from '@/shared/components/Select';
-import { Save } from 'lucide-react';
+import { Save, Check } from 'lucide-react';
 import { toast } from 'react-toastify';
 import Tooltip from '@/shared/components/Tooltip';
 import QuerySettingsFields from '@/domains/admin/components/rag-settings/query/QuerySettingsFields';
@@ -9,6 +9,8 @@ import type {
   QuerySettingsFormProps,
 } from '@/domains/admin/types/rag-settings/query/querySettings.types';
 import type { FlowStepId } from '@/shared/components/rag-pipeline/PipelineFlow';
+import clsx from 'clsx';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function QuerySettingsForm({
   template,
@@ -19,6 +21,8 @@ export function QuerySettingsForm({
   anchors,
   preset,
 }: QuerySettingsFormProps) {
+  const queryClient = useQueryClient();
+
   const templateOpts: Option[] = options?.queryTemplate ?? [];
   const transformOpts: Option[] = options?.transform ?? [];
   const searchAlgoOpts: Option[] = [
@@ -42,6 +46,11 @@ export function QuerySettingsForm({
   const [llmModel, setLlmModel] = useState(safe(llmOpts));
   const [temperature, setTemperature] = useState(0.2);
   const [multimodal, setMultimodal] = useState(false);
+  const [isDefault, setIsDefault] = useState<boolean>(!!preset?.isDefault);
+
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setTemplateName(isCreateMode ? '' : selectedTemplateLabel);
@@ -57,6 +66,7 @@ export function QuerySettingsForm({
     llmModel,
     temperature,
     multimodal,
+    isDefault,
   });
 
   useEffect(() => {
@@ -77,6 +87,7 @@ export function QuerySettingsForm({
           ? Math.min(1, Math.max(0, preset.temperature))
           : 0.2,
       multimodal: typeof preset?.multimodal === 'boolean' ? preset.multimodal : false,
+      isDefault: !!preset?.isDefault,
     };
 
     setQueryEngine(next.queryEngine);
@@ -87,6 +98,7 @@ export function QuerySettingsForm({
     setLlmModel(next.llmModel);
     setTemperature(next.temperature);
     setMultimodal(next.multimodal);
+    setIsDefault(next.isDefault);
 
     setBaseline({
       templateName: isCreateMode ? '' : selectedTemplateLabel,
@@ -103,22 +115,49 @@ export function QuerySettingsForm({
     selectedTemplateLabel,
   ]);
 
-  const dirty = isCreateMode
-    ? templateName.trim().length > 0
-    : JSON.stringify({
-        templateName,
-        queryEngine,
-        searchAlgorithm,
-        topK,
-        threshold,
-        reranking,
-        llmModel,
-        temperature,
-        multimodal,
-      }) !== JSON.stringify(baseline);
+  const dirty = useMemo(() => {
+    const current = {
+      templateName,
+      queryEngine,
+      searchAlgorithm,
+      topK,
+      threshold,
+      reranking,
+      llmModel,
+      temperature,
+      multimodal,
+      isDefault,
+    };
+    return isCreateMode
+      ? templateName.trim().length > 0
+      : JSON.stringify(current) !== JSON.stringify(baseline);
+  }, [
+    isCreateMode,
+    templateName,
+    queryEngine,
+    searchAlgorithm,
+    topK,
+    threshold,
+    reranking,
+    llmModel,
+    temperature,
+    multimodal,
+    isDefault,
+    baseline,
+  ]);
 
   const scrollTo = (id: FlowStepId) =>
     anchors?.[id]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const invalidateAllQueryQueries = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['admin', 'ragSettings', 'query', 'templates'] }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'ragSettings', 'query', 'current'] }),
+      queryClient.invalidateQueries({
+        queryKey: ['admin', 'ragSettings', 'query', 'detail', template],
+      }),
+    ]);
+  };
 
   const handleSave = async () => {
     const payload: SavePayload = {
@@ -132,40 +171,49 @@ export function QuerySettingsForm({
       llmModel,
       temperature,
       multimodal,
+      isDefault,
       isCreateMode,
     };
+
+    setSaving(true);
     await onSave?.(payload);
+    await invalidateAllQueryQueries();
+
+    setBaseline({
+      templateName,
+      queryEngine,
+      searchAlgorithm,
+      topK,
+      threshold,
+      reranking,
+      llmModel,
+      temperature,
+      multimodal,
+      isDefault,
+    });
+
     toast.success(isCreateMode ? '템플릿이 생성되었습니다.' : '설정이 저장되었습니다.');
-    if (!isCreateMode) {
-      setBaseline({
-        templateName,
-        queryEngine,
-        searchAlgorithm,
-        topK,
-        threshold,
-        reranking,
-        llmModel,
-        temperature,
-        multimodal,
-      });
-    }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 900);
+    setSaving(false);
   };
 
   const SaveBtn = (
     <button
       type="button"
       onClick={handleSave}
-      disabled={loading || !dirty}
-      className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors
-      disabled:cursor-not-allowed disabled:opacity-60
-      ${
-        dirty && !loading
+      disabled={loading || saving || !dirty}
+      className={clsx(
+        'inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-all',
+        'disabled:cursor-not-allowed disabled:opacity-60',
+        dirty && !loading && !saving
           ? 'bg-[var(--color-hebees)] text-white border-[var(--color-hebees)] hover:opacity-90'
-          : 'bg-white text-gray-700 border hover:bg-gray-50'
-      }`}
+          : 'bg-white text-gray-700 border hover:bg-gray-50',
+        saved && 'bg-emerald-500 border-emerald-500 text-white'
+      )}
     >
-      <Save className="h-4 w-4" />
-      <span>{isCreateMode ? '생성' : '저장'}</span>
+      {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+      <span>{saving ? '처리 중…' : saved ? '저장됨' : isCreateMode ? '생성' : '저장'}</span>
     </button>
   );
 
@@ -183,6 +231,7 @@ export function QuerySettingsForm({
         <div className="flex items-center gap-4">
           <div className="max-w-xs w-full">
             <input
+              ref={nameInputRef}
               type="text"
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
@@ -194,6 +243,35 @@ export function QuerySettingsForm({
               "
             />
           </div>
+
+          <Tooltip content="이 템플릿을 기본값으로 사용합니다." side="bottom">
+            <button
+              type="button"
+              onClick={() => setIsDefault((v) => !v)}
+              aria-pressed={isDefault}
+              className={clsx(
+                'inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition',
+                isDefault
+                  ? 'border-[var(--color-hebees)] bg-[var(--color-hebees-bg)] text-[var(--color-hebees)]'
+                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+              )}
+            >
+              <span
+                className={clsx(
+                  'inline-flex h-4 w-7 items-center rounded-full transition',
+                  isDefault ? 'bg-[var(--color-hebees)]' : 'bg-gray-300'
+                )}
+              >
+                <span
+                  className={clsx(
+                    'ml-[2px] h-3.5 w-3.5 rounded-full bg-white transition',
+                    isDefault ? 'translate-x-[10px]' : 'translate-x-0'
+                  )}
+                />
+              </span>
+              기본 템플릿
+            </button>
+          </Tooltip>
 
           {!dirty ? (
             <Tooltip content="변경된 값이 있을 경우 활성화 됩니다." side="bottom">
@@ -207,7 +285,7 @@ export function QuerySettingsForm({
 
       <QuerySettingsFields
         anchors={anchors}
-        loading={loading}
+        loading={loading || saving}
         scrollTo={scrollTo}
         // values
         queryEngine={queryEngine}

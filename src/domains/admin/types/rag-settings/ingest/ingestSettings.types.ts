@@ -11,8 +11,8 @@ export type SavePayload = {
   overlap: number;
   embedModel: string;
   embedSparse: string;
-  embedBackup: string;
   isCreateMode?: boolean;
+  isDefault: boolean;
 };
 
 export type IngestPreset = {
@@ -22,7 +22,7 @@ export type IngestPreset = {
   overlap?: number;
   embedModel?: string;
   embedSparse?: string;
-  embedBackup?: string;
+  isDefault?: boolean;
 };
 
 export type Anchors = Partial<Record<FlowStepId, React.RefObject<HTMLDivElement>>>;
@@ -43,7 +43,6 @@ export type CommonSelects = {
   chunkOpts: Option[];
   embedDenseOpts: Option[];
   embedSparseOpts: Option[];
-  embedBackupOpts: Option[];
 };
 
 export type IngestSettingsFieldsProps = {
@@ -58,7 +57,6 @@ export type IngestSettingsFieldsProps = {
   overlap: number;
   embedModel: string;
   embedSparse: string;
-  embedBackup: string;
 
   // handlers
   setExtractEngine: (v: string) => void;

@@ -121,7 +121,7 @@ export function ExpenseList({
   const sorted = [...models].sort((a, b) => b.totalPriceUsd - a.totalPriceUsd);
 
   return (
-    <div className="mt-6 max-h-[120px] overflow-y-auto" style={{ display: 'grid', gap }}>
+    <div className="mt-6 max-h-[120px] overflow-y-auto " style={{ display: 'grid', gap }}>
       {sorted.map((m, i) => (
         <Row key={m.model} m={m} total={total} index={i} />
       ))}

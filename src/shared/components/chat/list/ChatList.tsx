@@ -160,17 +160,17 @@ export default function ChatList({
   }, [activeSessionNo]);
 
   const isLoadingInitial = isFetching && pageNum === 0;
-  const activeNo = activeSessionNo ?? localActiveNo;
 
   return (
-    <div className="flex h-full flex-col bg-white">
+    <div className="flex flex-col bg-white min-h-0 overflow-x-visible">
       {items.length > 0 && (
-        <div className="flex items-center justify-between px-3 py-2 overflow-visible">
+        <div className="sticky top-0 z-10 flex items-center justify-between px-3 py-2 bg-white">
           <div className="text-sm font-semibold text-gray-700">
             채팅 목록 <span className="text-gray-400">({items.length})</span>
           </div>
 
           <Tooltip
+            portal
             content={collapsed ? '채팅 목록 펼치기' : '채팅 목록 접기'}
             side="bottom"
             shiftX={15}
@@ -193,17 +193,17 @@ export default function ChatList({
         </div>
       )}
 
-      <div className="relative min-h-[120px] flex-1 mt-1">
+      <div className="relative flex-1 min-h-0 mt-1">
         {!isLoadingInitial && !isError && items.length === 0 && null}
 
         {!collapsed && (
-          <>
+          <div className="relative h-full pr-1">
             <ul>
               {items.map((session) => (
                 <ChatListItem
                   key={session.sessionNo}
                   session={session}
-                  isActive={activeNo === session.sessionNo}
+                  isActive={(activeSessionNo ?? localActiveNo) === session.sessionNo}
                   onSelect={(s) => {
                     setLocalActiveNo(s.sessionNo);
                     onSelect?.(s);
@@ -229,7 +229,7 @@ export default function ChatList({
                 </button>
               </div>
             )}
-          </>
+          </div>
         )}
       </div>
 
