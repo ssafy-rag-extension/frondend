@@ -9,6 +9,7 @@ import Select from '@/shared/components/Select';
 import type { Option } from '@/shared/components/Select';
 import { getMyLlmKeys } from '@/shared/api/llm.api';
 import type { MyLlmKeyResponse, MyLlmKeyListResponse } from '@/shared/types/llm.types';
+import { useChatModelStore } from '@/shared/store/useChatModelStore';
 
 const labelCls = (isOpen: boolean) =>
   'ml-2 whitespace-nowrap transition-[max-width,opacity,transform] duration-300 ' +
@@ -22,6 +23,13 @@ const linkCls = ({ isActive }: { isActive: boolean }) =>
     ? 'bg-[var(--color-retina-bg)] text-[var(--color-retina)]'
     : 'text-gray-700 hover:bg-[var(--color-retina)] hover:text-white');
 
+const MODEL_DESCRIPTIONS: Record<string, string> = {
+  'Qwen3-vl:8B': '가볍고 빠른 멀티모달 모델',
+  'GPT-4o': '전반적인 품질·안정성 균형',
+  'Gemini 2.5 Flash': '대용량 문서·검색 작업에 최적',
+  'Claude Sonnet 4': '복잡한 분석·글쓰기·요약에 강점',
+};
+
 export default function UserLayout() {
   const [isOpen, setIsOpen] = useState(true);
   const [open, setOpen] = useState(false);
@@ -34,14 +42,7 @@ export default function UserLayout() {
   const isChatRoute = pathname.startsWith('/user/chat/text');
 
   const [modelOptions, setModelOptions] = useState<Option[]>([]);
-  const [modelValue, setModelValue] = useState<string | undefined>(undefined);
-
-  const MODEL_DESCRIPTIONS: Record<string, string> = {
-    'Qwen3-vl:8B': '가볍고 빠른 멀티모달 모델',
-    'GPT-4o': '전반적인 품질·안정성 균형',
-    'Gemini 2.5 Flash': '대용량 문서·검색 작업에 최적',
-    'Claude Sonnet 4': '복잡한 분석·글쓰기·요약에 강점',
-  };
+  const { selectedModel, setSelectedModel } = useChatModelStore();
 
   useEffect(() => {
     let active = true;
@@ -61,19 +62,20 @@ export default function UserLayout() {
         if (!active) return;
 
         setModelOptions(options);
-        setModelValue((prev) => prev ?? options[0]?.value);
+        if (!selectedModel && options[0]?.value) {
+          setSelectedModel(options[0].value);
+        }
       } catch {
         if (!active) return;
         setModelOptions([]);
-        setModelValue(undefined);
+        setSelectedModel(undefined);
       }
     })();
 
     return () => {
       active = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [setSelectedModel, selectedModel]);
 
   return (
     <div className="flex min-h-screen bg-transparent">
@@ -188,9 +190,9 @@ export default function UserLayout() {
           {isChatRoute && modelOptions.length > 0 && (
             <Select
               options={modelOptions}
-              value={modelValue}
-              onChange={setModelValue}
-              className="w-[220px]"
+              value={selectedModel}
+              onChange={(v) => setSelectedModel(v)}
+              className="w-[190px]"
               placeholder="모델 선택"
             />
           )}

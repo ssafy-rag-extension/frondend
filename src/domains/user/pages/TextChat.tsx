@@ -17,15 +17,7 @@ import {
   useEnsureSession,
   useThinkingTicker,
 } from '@/domains/user/hooks/useChatHelpers';
-
-const DEFAULT_LLM = 'qwen3-vl:8b';
-const NAME_TO_ID: Record<string, string> = {
-  'Qwen3-vl:8B': 'qwen3-vl:8b',
-  'GPT-4o': 'gpt-4o',
-  'Gemini 2.5-Flash': 'gemini 2.5-flash',
-  'Claude Sonnet 4': 'claude-sonnet 4',
-};
-const mapNameToId = (name?: string) => (name ? NAME_TO_ID[name] : undefined);
+import { useChatModelStore } from '@/shared/store/useChatModelStore';
 
 const mapRole = (r: ChatRole): UiRole => (r === 'human' ? 'user' : r === 'ai' ? 'assistant' : r);
 
@@ -39,6 +31,8 @@ export default function TextChat() {
   const [list, setList] = useState<UiMsg[]>([]);
   const [awaitingAssistant, setAwaitingAssistant] = useState(false);
 
+  const { selectedModel, setSelectedModel } = useChatModelStore();
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const forceScrollRef = useRef(false);
@@ -48,35 +42,37 @@ export default function TextChat() {
   useEffect(() => {
     (async () => {
       if (!derivedSessionNo) {
-        if (!model) setModel(DEFAULT_LLM);
+        if (!selectedModel) setSelectedModel('Qwen3-vl:8B');
         return;
       }
 
       setCurrentSessionNo(derivedSessionNo);
 
       const resMsgs = await getMessages(derivedSessionNo);
-      const page: MessagePage = resMsgs.data.result;
+      const page = resMsgs.data.result as MessagePage;
 
       const resSess = await getSession(derivedSessionNo);
-      const sessionInfo = resSess.data.result as { llm?: string; llmName?: string } | undefined;
+      const sessionInfo = resSess.data.result as { llmNo?: string; llmName?: string } | undefined;
 
-      const llmId = sessionInfo?.llm || mapNameToId(sessionInfo?.llmName) || DEFAULT_LLM;
-      setModel(llmId);
+      const llmName: string = sessionInfo?.llmName ?? selectedModel ?? 'Qwen3-vl:8B';
+      setSelectedModel(llmName);
 
       const mapped: UiMsg[] =
-        page.data?.map((m: MessageItem) => ({
-          role: mapRole(m.role),
-          content: m.content,
-          createdAt: m.createdAt,
-          messageNo: m.messageNo,
-          referencedDocuments: m.referencedDocuments,
-        })) ?? [];
+        (page.data ?? []).map(
+          (m: MessageItem): UiMsg => ({
+            role: mapRole(m.role),
+            content: m.content,
+            createdAt: m.createdAt,
+            messageNo: m.messageNo,
+            referencedDocuments: m.referencedDocuments,
+          })
+        ) ?? [];
 
       setList(mapped);
       requestAnimationFrame(() => bottomRef.current?.scrollIntoView());
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [derivedSessionNo, setModel]);
+  }, [derivedSessionNo, setSelectedModel]);
 
   const isAtBottom = () => {
     const el = scrollRef.current;
@@ -103,27 +99,28 @@ export default function TextChat() {
     ]);
 
     try {
-      const llmId = model || DEFAULT_LLM;
-      const sessionNo = await ensureSession({ llm: llmId, query: msg });
+      const llmId: string = selectedModel ?? 'Qwen3-vl:8B';
+      const sessionNo: string = await ensureSession({ llm: llmId, query: msg });
 
       const body: SendMessageRequest = { content: msg, model: llmId };
       const res = await sendMessage(sessionNo, body);
-      const result: SendMessageResult = res.data.result;
+      const result = res.data.result as SendMessageResult;
 
       forceScrollRef.current = true;
-      setList((prev) =>
-        prev.map((m) =>
-          m.messageNo === '__pending__'
-            ? {
-                role: 'assistant',
-                content: result.content ?? '(응답이 없습니다)',
-                createdAt: result.timestamp,
-              }
-            : m
+      setList((prev: UiMsg[]) =>
+        prev.map(
+          (m: UiMsg): UiMsg =>
+            m.messageNo === '__pending__'
+              ? {
+                  role: 'assistant',
+                  content: result.content ?? '(응답이 없습니다)',
+                  createdAt: result.timestamp,
+                }
+              : m
         )
       );
     } catch {
-      setList((prev) => prev.filter((m) => m.messageNo !== '__pending__'));
+      setList((prev: UiMsg[]) => prev.filter((m: UiMsg) => m.messageNo !== '__pending__'));
     } finally {
       setAwaitingAssistant(false);
     }
