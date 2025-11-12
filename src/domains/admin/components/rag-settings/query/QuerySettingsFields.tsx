@@ -127,14 +127,7 @@ export default function QuerySettingsFields({
           icon={PipelineIcons.Prompting}
           onClick={scrollTo}
         />
-        <div className="mb-2 flex items-center justify-between gap-4">
-          <LabelRow label="시스템 프롬프트 관리" hint="모델의 전체 톤·역할을 지정합니다." />
-        </div>
-        <PromptManager storageKey="system" />
-        <div className="my-2 mt-10 flex items-center justify-between gap-4">
-          <LabelRow label="사용자 프롬프트 관리" hint="사용자의 전체 톤·역할을 지정합니다." />
-        </div>
-        <PromptManager storageKey="user" />
+        <PromptManager />
       </div>
 
       <div ref={anchors?.generation} className="rounded-2xl border bg-white p-8 shadow-sm">

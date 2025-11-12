@@ -1,5 +1,4 @@
 import { Plus, Save, Trash2 } from 'lucide-react';
-import Tooltip from '@/shared/components/Tooltip';
 
 type Props = {
   hasSelection: boolean;
@@ -68,24 +67,21 @@ export default function PromptActionBar({
         </button>
       )}
 
-      <Tooltip
-        content={!hasSelection || isNew ? '선택된 프롬프트가 있을 경우 삭제가 가능합니다.' : ''}
+      <button
+        type="button"
+        onClick={onOpenDelete}
+        disabled={!canDelete}
+        className={[
+          'inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-all',
+          canDelete
+            ? 'border-gray-200 bg-white text-gray-800 hover:bg-gray-50'
+            : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60 pointer-events-none',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-hebees)] focus-visible:ring-offset-1',
+        ].join(' ')}
       >
-        <button
-          type="button"
-          onClick={onOpenDelete}
-          disabled={!canDelete}
-          className={[
-            'inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-all',
-            'border-gray-200 bg-white text-gray-800 hover:bg-gray-50',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-hebees)] focus-visible:ring-offset-1',
-            'disabled:opacity-40 disabled:cursor-not-allowed',
-          ].join(' ')}
-        >
-          <Trash2 className="size-4" />
-          {deleting ? '삭제 중…' : '삭제'}
-        </button>
-      </Tooltip>
+        <Trash2 className="size-4" />
+        {deleting ? '삭제 중…' : '삭제'}
+      </button>
 
       <button
         type="button"

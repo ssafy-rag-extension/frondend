@@ -7,7 +7,6 @@ import { usePromptManager } from '@/domains/admin/hooks/usePromptManager';
 import type { Prompt, PromptType } from '@/domains/admin/types/rag-settings/prompts.types';
 
 type Props = {
-  storageKey: string;
   initialPrompts?: Array<{ id: string; name: string; content: string; type?: PromptType }>;
   onChange?: (prompts: Prompt[]) => void;
 };
@@ -86,7 +85,7 @@ export default function PromptManager({ initialPrompts, onChange }: Props) {
         onClose={() => !deleting && setOpenDelete(false)}
         onConfirm={confirmDelete}
         title="프롬프트를 삭제할까요?"
-        message={`"${selected?.name ?? ''}" 프롬프트를 삭제하면 되돌릴 수 없습니다.`}
+        message={`"${selected?.name ?? ''}" 프롬프트를\n삭제하면 되돌릴 수 없습니다.`}
         confirmText={deleting ? '삭제 중…' : '삭제'}
         cancelText="취소"
         variant="danger"

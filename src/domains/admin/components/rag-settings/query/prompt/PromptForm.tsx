@@ -17,8 +17,41 @@ export default function PromptForm({
   onChangeDraft,
   onDirty,
 }: Props) {
+  const type = draft?.type ?? DEFAULT_TYPE;
+
   return (
     <div className="space-y-4 mt-4">
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-gray-700">프롬프트 타입</label>
+
+        <div className="flex gap-2 bg-gray-100 rounded-md p-1 w-fit">
+          {(['user', 'system'] as PromptType[]).map((t) => {
+            const active = t === type;
+            return (
+              <button
+                key={t}
+                type="button"
+                disabled={disabled}
+                onClick={() => {
+                  if (!draft || type === t) return;
+                  onChangeDraft(() => ({ ...(draft as Prompt), type: t }));
+                  onDirty();
+                }}
+                className={[
+                  'px-4 py-1.5 text-sm rounded-md font-medium transition-all',
+                  active
+                    ? 'bg-[var(--color-hebees)] text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-800 ',
+                  disabled && 'opacity-60 cursor-not-allowed',
+                ].join(' ')}
+              >
+                {t.toUpperCase()}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="space-y-1">
         <label className="text-sm font-medium text-gray-700">프롬프트 이름</label>
         <input
