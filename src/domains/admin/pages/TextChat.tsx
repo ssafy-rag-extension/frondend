@@ -23,7 +23,7 @@ const DEFAULT_LLM = 'qwen3-vl:8b';
 const NAME_TO_ID: Record<string, string> = {
   'Qwen3-vl:8B': 'qwen3-vl:8b',
   'GPT-4o': 'gpt-4o',
-  'Gemini 2.5 Flash': 'gemini-2.5 flash',
+  'Gemini 2.5-Flash': 'gemini 2.5-flash',
   'Claude Sonnet 4': 'claude-sonnet 4',
 };
 const mapNameToId = (name?: string) => (name ? NAME_TO_ID[name] : undefined);
