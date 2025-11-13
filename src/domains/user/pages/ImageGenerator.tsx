@@ -1,6 +1,6 @@
 import { Image } from 'lucide-react';
 import ImageGeneratorForm from '@/domains/user/components/image/ImageGeneratorForm';
-import ImageResultPane from '@/domains/user/components/image/ImageResultPanel';
+import ImageResultPanel from '@/domains/user/components/image/ImageResultPanel';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 import { generateImages } from '@/domains/user/api/image.api';
@@ -22,12 +22,9 @@ export default function ImageGenerator() {
     const body: GenerateImageRequest = { prompt, size, style, ..._override };
     try {
       const urls = await generateImages(body);
-      if (!urls.length)
-        return toast.error('이미지를 생성하지 못했어요. 프롬프트를 구체화해 보세요.');
       setImages(urls);
     } catch (err) {
       console.error('generateImages error:', err);
-      toast.error('이미지 생성 중 오류가 발생했어요.');
     } finally {
       setLoading(false);
     }
@@ -39,11 +36,9 @@ export default function ImageGenerator() {
     const body: GenerateImageRequest & { image_id: string } = { image_id, prompt, size, style };
     try {
       const urls = await generateImages(body);
-      if (!urls.length) return toast.error('이미지를 다시 생성하지 못했어요.');
       setImages(urls);
     } catch (err) {
       console.error('regenerateImages error:', err);
-      toast.error('재생성 중 오류가 발생했어요.');
     } finally {
       setLoading(false);
     }
@@ -119,7 +114,7 @@ export default function ImageGenerator() {
           brand="retina"
         />
 
-        <ImageResultPane
+        <ImageResultPanel
           images={images}
           loading={loading}
           style={style}
@@ -127,6 +122,7 @@ export default function ImageGenerator() {
           onDownload={handleDownload}
           onCopy={handleCopy}
           onRegenerate={(id) => onRegenerate(id)}
+          brand="retina"
         />
       </section>
     </div>

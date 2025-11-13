@@ -1,4 +1,3 @@
-// src/domains/admin/types/rag-settings/template.types.ts
 import type { Pagination } from '@/shared/lib/api.types';
 
 // 리스트 공통 아이템
@@ -42,7 +41,7 @@ export interface IngestTemplateDetailResult {
   extractions: StrategyRef[]; // 다중
   chunking: StrategyRef; // 단일
   denseEmbeddings: StrategyRef[]; // 다중
-  sparseEmbedding?: StrategyRef; // 단일 (optional)  ← sparse로 통일
+  sparseEmbedding?: StrategyRef; // 단일 (optional)
 }
 
 // 상세 결과(Query)
@@ -67,17 +66,17 @@ export interface StrategyRefInput {
 // Ingest 업서트
 export interface UpsertIngestTemplateDto {
   name: string;
-  isDefault?: boolean;
+  isDefault: boolean;
   extractions: StrategyRefInput[];
   chunking: StrategyRefInput;
   denseEmbeddings: StrategyRefInput[];
-  sparseEmbedding?: StrategyRefInput; // ← sparse로 통일
+  sparseEmbedding?: StrategyRefInput;
 }
 
 // Query 업서트
 export interface UpsertQueryTemplateDto {
   name: string;
-  isDefault?: boolean;
+  isDefault: boolean;
   transformations: StrategyRefInput[];
   retrieval: StrategyRefInput;
   reranking?: StrategyRefInput;

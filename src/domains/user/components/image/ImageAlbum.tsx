@@ -89,16 +89,18 @@ export default function ImageAlbum() {
 
   if (images.length === 0)
     return (
-      <div className="flex flex-col items-center justify-center py-10 text-gray-400">
-        <ImageOff size={40} strokeWidth={1.6} className="mb-3" />
-        <p className="text-sm">생성한 이미지가 없습니다.</p>
+      <div className="p-6">
+        <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+          <ImageOff size={40} strokeWidth={1.6} className="mb-3" />
+          <p className="text-sm">생성한 이미지가 없습니다.</p>
+        </div>
       </div>
     );
 
   return (
-    <>
+    <div className="rounded-xl border bg-white p-6 shadow-sm mt-6">
       <div
-        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-6 z-0"
+        className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 z-0"
         onMouseMove={onMouseMove}
       >
         {images.map((img) => (
@@ -127,7 +129,6 @@ export default function ImageAlbum() {
                   e.stopPropagation();
                   openModal(img.image_id, img.url);
                 }}
-                aria-label="확대 보기"
                 title="확대 보기"
               >
                 <Maximize2 size={16} />
@@ -140,7 +141,6 @@ export default function ImageAlbum() {
                   askDelete(img.image_id);
                 }}
                 disabled={deletingId === img.image_id}
-                aria-label="삭제"
                 title="삭제"
               >
                 {deletingId === img.image_id ? (
@@ -173,6 +173,6 @@ export default function ImageAlbum() {
         cancelText="취소"
         variant="danger"
       />
-    </>
+    </div>
   );
 }

@@ -44,18 +44,10 @@ export default function UploadTab() {
     setUploadedFiles((prev) => [...prev, ...newFiles]);
   };
 
-  // 파일 삭제
-  // const handleDelete = (remainingFiles: RawMyDoc[]) => {
-  //   setUploadedFiles(remainingFiles);
-  //   setSelectedFiles([]);
-  // };
-
-  // 컬렉션 선택 시
   const handleCollectionSelect = (name: string | null) => {
     setSelectedCollection(name);
   };
 
-  // 파일 선택 + 컬렉션 선택 시 → SelectVectorization으로 이동
   useEffect(() => {
     if (selectedFiles.length > 0 && selectedCollection) {
       const combined = selectedFiles.map((f) => ({
@@ -68,21 +60,18 @@ export default function UploadTab() {
         const newOnes = combined.filter(
           (f) => !existingKeys.has(`${f.fileNo}::${selectedCollection}`)
         );
-        console.log('새로 추가되는 파일들:', newOnes);
         if (newOnes.length === 0) {
           toast('⚠️ 해당 파일은 이미 선택 목록에 존재합니다.');
-          return prev; // 중복이면 추가하지 않음
+          return prev;
         }
         return [...prev, ...newOnes];
       });
 
-      // 초기화
       setSelectedFiles([]);
       setSelectedCollection(null);
     }
   }, [selectedFiles, selectedCollection]);
 
-  // 선택 목록에서 제거
   const handleRemoveFromFinal = (file: RawMyDoc) => {
     setFinalSelectedFiles((prev) =>
       prev.filter((f) => !(f.fileNo === file.fileNo && f.collectionNo === file.collectionNo))
@@ -125,6 +114,7 @@ export default function UploadTab() {
           <ColSection
             selectedCollection={selectedCollection}
             onCollectionSelect={handleCollectionSelect}
+            uploadedFiles={finalSelectedFiles}
             uploadedFiles={finalSelectedFiles}
           />
         </div>

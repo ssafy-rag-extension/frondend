@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, NavLink, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Menu, MessageSquare, Image, FolderCog, LogOut, Bell, UserCog, Search } from 'lucide-react';
 import Tooltip from '@/shared/components/Tooltip';
@@ -7,10 +7,12 @@ import ChatSearchModal from '@/shared/components/chat/ChatSearchModal';
 import RetinaLogo from '@/assets/retina-logo.png';
 import Select from '@/shared/components/Select';
 import type { Option } from '@/shared/components/Select';
-import { useGlobalModelStore } from '@/shared/store/useGlobalModelStore';
+import { getMyLlmKeys } from '@/shared/api/llm.api';
+import type { MyLlmKeyResponse, MyLlmKeyListResponse } from '@/shared/types/llm.types';
+import { useChatModelStore } from '@/shared/store/useChatModelStore';
 
 const labelCls = (isOpen: boolean) =>
-  'ml-2 overflow-hidden whitespace-nowrap transition-[max-width,opacity,transform] duration-300 ' +
+  'ml-2 whitespace-nowrap transition-[max-width,opacity,transform] duration-300 ' +
   (isOpen
     ? 'max-w-[8rem] opacity-100 translate-x-0'
     : 'max-w-0 opacity-0 -translate-x-2 pointer-events-none');
@@ -21,28 +23,12 @@ const linkCls = ({ isActive }: { isActive: boolean }) =>
     ? 'bg-[var(--color-retina-bg)] text-[var(--color-retina)]'
     : 'text-gray-700 hover:bg-[var(--color-retina)] hover:text-white');
 
-const MODEL_OPTIONS: Option[] = [
-  {
-    value: 'qwen3-v1:8b',
-    label: 'Qwen3-v1:8B',
-    desc: '가볍고 빠른 멀티모달 모델',
-  },
-  {
-    value: 'gpt-4o',
-    label: 'GPT-4o',
-    desc: '전반적인 품질·안정성 균형',
-  },
-  {
-    value: 'gemini-2.5 flash',
-    label: 'Gemini 2 .5 Flash',
-    desc: '대용량 문서·검색 작업에 최적',
-  },
-  {
-    value: 'claude-sonnet 4',
-    label: 'Claude Sonnet 4',
-    desc: '복잡한 분석·글쓰기·요약에 강점',
-  },
-];
+const MODEL_DESCRIPTIONS: Record<string, string> = {
+  'Qwen3-vl:8B': '가볍고 빠른 멀티모달 모델',
+  'GPT-4o': '전반적인 품질·안정성 균형',
+  'Gemini 2.5 Flash': '대용량 문서·검색 작업에 최적',
+  'Claude Sonnet 4': '복잡한 분석·글쓰기·요약에 강점',
+};
 
 export default function UserLayout() {
   const [isOpen, setIsOpen] = useState(true);
@@ -51,10 +37,45 @@ export default function UserLayout() {
   const [sp] = useSearchParams();
   const activeSessionNo = sp.get('session') || undefined;
   const navigate = useNavigate();
-  const { model, setModel } = useGlobalModelStore();
 
   const { pathname } = useLocation();
   const isChatRoute = pathname.startsWith('/user/chat/text');
+
+  const [modelOptions, setModelOptions] = useState<Option[]>([]);
+  const { selectedModel, setSelectedModel } = useChatModelStore();
+
+  useEffect(() => {
+    let active = true;
+
+    (async () => {
+      try {
+        const res = await getMyLlmKeys();
+        const result = res.data.result as MyLlmKeyListResponse;
+        const list: MyLlmKeyResponse[] = result?.data ?? [];
+
+        const options: Option[] = list.map((k) => ({
+          value: k.llmName,
+          label: k.llmName,
+          desc: MODEL_DESCRIPTIONS[k.llmName] ?? '모델 설명 없음',
+        }));
+
+        if (!active) return;
+
+        setModelOptions(options);
+        if (!selectedModel && options[0]?.value) {
+          setSelectedModel(options[0].value);
+        }
+      } catch {
+        if (!active) return;
+        setModelOptions([]);
+        setSelectedModel(undefined);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [setSelectedModel, selectedModel]);
 
   return (
     <div className="flex min-h-screen bg-transparent">
@@ -117,10 +138,7 @@ export default function UserLayout() {
 
           <button
             type="button"
-            className={
-              'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ' +
-              'text-gray-700 hover:bg-[var(--color-retina)] hover:text-white'
-            }
+            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors text-gray-700 hover:bg-[var(--color-retina)] hover:text-white"
             onClick={() => setOpen(true)}
           >
             <Search size={18} className="flex-shrink-0" />
@@ -131,7 +149,7 @@ export default function UserLayout() {
         </nav>
 
         {isOpen && (
-          <div className="mt-3 px-2">
+          <div className="mt-6 mb-10 px-2 flex-1 min-h-0 overflow-y-auto overflow-x-visible overscroll-contain no-scrollbar">
             <ChatList
               activeSessionNo={activeSessionNo}
               onSelect={(s) => navigate(`/user/chat/text/${s.sessionNo}`)}
@@ -141,7 +159,7 @@ export default function UserLayout() {
           </div>
         )}
 
-        <div className="mt-auto px-2 pb-4">
+        <div className="mt-auto px-2 pb-4 shrink-0">
           <NavLink
             to="/user/profile"
             className="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors text-gray-700 hover:bg-[var(--color-retina-bg)] hover:text-[var(--color-retina)]"
@@ -165,26 +183,28 @@ export default function UserLayout() {
 
       <main className="flex-1 min-w-0">
         <div
-          className={`sticky z-30 top-0 flex px-8 py-5 ${
+          className={`sticky z-50 top-0 flex px-8 py-5 ${
             isChatRoute ? 'justify-between' : 'justify-end'
           }`}
         >
-          {isChatRoute && (
+          {isChatRoute && modelOptions.length > 0 && (
             <Select
-              value={model}
-              onChange={setModel}
-              options={MODEL_OPTIONS}
-              className="w-[200px]"
+              options={modelOptions}
+              value={selectedModel}
+              onChange={(v) => setSelectedModel(v)}
+              className="w-[190px]"
               placeholder="모델 선택"
             />
           )}
+
           <Bell
             size={22}
             className="text-gray-600 hover:text-gray-800 cursor-pointer transition-colors shake-hover"
           />
         </div>
-        <div className="flex flex-col w-full gap-3 px-8">
-          <Outlet />
+
+        <div className="flex w-full flex-col gap-3 px-8">
+          <Outlet key={pathname + location.search} />
         </div>
       </main>
 

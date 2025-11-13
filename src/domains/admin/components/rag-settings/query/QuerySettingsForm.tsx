@@ -1,44 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
-import Select, { type Option } from '@/shared/components/Select';
-import { LabelRow } from '@/domains/admin/components/rag-settings/ui/labelRow';
-import { Slider } from '@/domains/admin/components/rag-settings/ui/Slider';
-import { Toggle } from '@/domains/admin/components/rag-settings/ui/Toggle';
-import PromptManager from '@/domains/admin/components/rag-settings/query/PromptManager';
-import Tooltip from '@/shared/components/Tooltip';
-import { Save } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { Option } from '@/shared/components/Select';
+import { Save, Check } from 'lucide-react';
 import { toast } from 'react-toastify';
-import type { RagOptions } from '@/domains/admin/components/rag-settings/options';
+import Tooltip from '@/shared/components/Tooltip';
+import QuerySettingsFields from '@/domains/admin/components/rag-settings/query/QuerySettingsFields';
+import type {
+  SavePayload,
+  QuerySettingsFormProps,
+} from '@/domains/admin/types/rag-settings/query/querySettings.types';
 import type { FlowStepId } from '@/shared/components/rag-pipeline/PipelineFlow';
-import SectionHeader from '@/domains/admin/components/rag-settings/ui/SectionHeader';
-import { PipelineIcons } from '@/shared/components/rag-pipeline/PipelineIcons';
-
-type SavePayload = {
-  template: string;
-  templateName: string;
-  queryEngine: string;
-  searchAlgorithm: string;
-  topK: number;
-  threshold: number;
-  reranking: string;
-  llmModel: string;
-  temperature: number;
-  multimodal: boolean;
-  isCreateMode?: boolean;
-};
-
-export type QueryPreset = Partial<
-  Pick<
-    SavePayload,
-    | 'queryEngine'
-    | 'searchAlgorithm'
-    | 'topK'
-    | 'threshold'
-    | 'reranking'
-    | 'llmModel'
-    | 'temperature'
-    | 'multimodal'
-  >
->;
+import clsx from 'clsx';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function QuerySettingsForm({
   template,
@@ -48,15 +20,9 @@ export function QuerySettingsForm({
   loading = false,
   anchors,
   preset,
-}: {
-  template: string;
-  isCreateMode?: boolean;
-  onSave?: (payload: SavePayload) => void | Promise<void>;
-  options?: RagOptions | null;
-  loading?: boolean;
-  anchors?: Partial<Record<FlowStepId, React.RefObject<HTMLDivElement>>>;
-  preset?: QueryPreset;
-}) {
+}: QuerySettingsFormProps) {
+  const queryClient = useQueryClient();
+
   const templateOpts: Option[] = options?.queryTemplate ?? [];
   const transformOpts: Option[] = options?.transform ?? [];
   const searchAlgoOpts: Option[] = [
@@ -68,7 +34,6 @@ export function QuerySettingsForm({
 
   const selectedTemplateLabel =
     templateOpts.find((o) => o.value === template)?.label ?? '템플릿 없음';
-
   const safe = (opts: Option[], v?: string) =>
     v && opts.some((o) => o.value === v) ? v : (opts[0]?.value ?? '');
 
@@ -81,53 +46,28 @@ export function QuerySettingsForm({
   const [llmModel, setLlmModel] = useState(safe(llmOpts));
   const [temperature, setTemperature] = useState(0.2);
   const [multimodal, setMultimodal] = useState(false);
+  const [isDefault, setIsDefault] = useState<boolean>(!!preset?.isDefault);
+
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setTemplateName(isCreateMode ? '' : selectedTemplateLabel);
   }, [isCreateMode, selectedTemplateLabel, template]);
 
-  const [baseline, setBaseline] = useState<SavePayload | null>(null);
-
-  const currentPayload = useMemo<SavePayload>(
-    () => ({
-      template,
-      templateName,
-      queryEngine,
-      searchAlgorithm,
-      topK,
-      threshold,
-      reranking,
-      llmModel,
-      temperature,
-      multimodal,
-      isCreateMode,
-    }),
-    [
-      template,
-      templateName,
-      queryEngine,
-      searchAlgorithm,
-      topK,
-      threshold,
-      reranking,
-      llmModel,
-      temperature,
-      multimodal,
-      isCreateMode,
-    ]
-  );
-
-  const toComparable = (p: SavePayload) => {
-    const { isCreateMode: _omit, ...rest } = p;
-    return rest;
-  };
-
-  const dirty = useMemo(() => {
-    if (isCreateMode) return templateName.trim().length > 0;
-    return baseline
-      ? JSON.stringify(toComparable(baseline)) !== JSON.stringify(toComparable(currentPayload))
-      : false;
-  }, [isCreateMode, templateName, baseline, currentPayload]);
+  const [baseline, setBaseline] = useState<Omit<SavePayload, 'isCreateMode' | 'template'>>({
+    templateName: selectedTemplateLabel,
+    queryEngine,
+    searchAlgorithm,
+    topK,
+    threshold,
+    reranking,
+    llmModel,
+    temperature,
+    multimodal,
+    isDefault,
+  });
 
   useEffect(() => {
     const ready =
@@ -135,20 +75,19 @@ export function QuerySettingsForm({
     if (!ready) return;
 
     const next = {
-      queryEngine: safe(transformOpts, preset?.queryEngine ?? queryEngine),
-      searchAlgorithm: safe(searchAlgoOpts, preset?.searchAlgorithm ?? searchAlgorithm),
-      topK: typeof preset?.topK === 'number' ? Math.max(1, preset.topK) : topK,
+      queryEngine: safe(transformOpts, preset?.queryEngine),
+      searchAlgorithm: safe(searchAlgoOpts, preset?.searchAlgorithm),
+      topK: typeof preset?.topK === 'number' ? Math.max(1, preset.topK) : 5,
       threshold:
-        typeof preset?.threshold === 'number'
-          ? Math.min(1, Math.max(0, preset.threshold))
-          : threshold,
-      reranking: safe(rerankOpts, preset?.reranking ?? reranking),
-      llmModel: safe(llmOpts, preset?.llmModel ?? llmModel),
+        typeof preset?.threshold === 'number' ? Math.min(1, Math.max(0, preset.threshold)) : 0.2,
+      reranking: safe(rerankOpts, preset?.reranking),
+      llmModel: safe(llmOpts, preset?.llmModel),
       temperature:
         typeof preset?.temperature === 'number'
           ? Math.min(1, Math.max(0, preset.temperature))
-          : temperature,
-      multimodal: typeof preset?.multimodal === 'boolean' ? preset.multimodal : multimodal,
+          : 0.2,
+      multimodal: typeof preset?.multimodal === 'boolean' ? preset.multimodal : false,
+      isDefault: !!preset?.isDefault,
     };
 
     setQueryEngine(next.queryEngine);
@@ -159,56 +98,122 @@ export function QuerySettingsForm({
     setLlmModel(next.llmModel);
     setTemperature(next.temperature);
     setMultimodal(next.multimodal);
+    setIsDefault(next.isDefault);
 
-    if (!isCreateMode) {
-      setBaseline({
-        template,
-        templateName: selectedTemplateLabel,
-        ...next,
-        isCreateMode: false,
-      });
-    } else {
-      setBaseline(null);
-    }
+    setBaseline({
+      templateName: isCreateMode ? '' : selectedTemplateLabel,
+      ...next,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
-    template,
     isCreateMode,
     preset,
     transformOpts.length,
     searchAlgoOpts.length,
     rerankOpts.length,
     llmOpts.length,
+    selectedTemplateLabel,
+  ]);
+
+  const dirty = useMemo(() => {
+    const current = {
+      templateName,
+      queryEngine,
+      searchAlgorithm,
+      topK,
+      threshold,
+      reranking,
+      llmModel,
+      temperature,
+      multimodal,
+      isDefault,
+    };
+    return isCreateMode
+      ? templateName.trim().length > 0
+      : JSON.stringify(current) !== JSON.stringify(baseline);
+  }, [
+    isCreateMode,
+    templateName,
+    queryEngine,
+    searchAlgorithm,
+    topK,
+    threshold,
+    reranking,
+    llmModel,
+    temperature,
+    multimodal,
+    isDefault,
+    baseline,
   ]);
 
   const scrollTo = (id: FlowStepId) =>
     anchors?.[id]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
+  const invalidateAllQueryQueries = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['admin', 'ragSettings', 'query', 'templates'] }),
+      queryClient.invalidateQueries({ queryKey: ['admin', 'ragSettings', 'query', 'current'] }),
+      queryClient.invalidateQueries({
+        queryKey: ['admin', 'ragSettings', 'query', 'detail', template],
+      }),
+    ]);
+  };
+
   const handleSave = async () => {
-    try {
-      await onSave?.(currentPayload);
-      toast.success(isCreateMode ? '템플릿이 생성되었습니다.' : '설정이 저장되었습니다.');
-      if (!isCreateMode) setBaseline(currentPayload);
-    } catch {
-      toast.error('설정 저장에 실패했습니다.');
-    }
+    const payload: SavePayload = {
+      template,
+      templateName,
+      queryEngine,
+      searchAlgorithm,
+      topK,
+      threshold,
+      reranking,
+      llmModel,
+      temperature,
+      multimodal,
+      isDefault,
+      isCreateMode,
+    };
+
+    setSaving(true);
+    await onSave?.(payload);
+    await invalidateAllQueryQueries();
+
+    setBaseline({
+      templateName,
+      queryEngine,
+      searchAlgorithm,
+      topK,
+      threshold,
+      reranking,
+      llmModel,
+      temperature,
+      multimodal,
+      isDefault,
+    });
+
+    toast.success(isCreateMode ? '템플릿이 생성되었습니다.' : '설정이 저장되었습니다.');
+    setSaved(true);
+    setTimeout(() => setSaved(false), 900);
+    setSaving(false);
   };
 
   const SaveBtn = (
     <button
       type="button"
       onClick={handleSave}
-      disabled={loading || !dirty}
-      className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors
-      disabled:cursor-not-allowed disabled:opacity-60
-      ${
-        dirty && !loading
+      disabled={loading || saving || !dirty}
+      className={clsx(
+        'inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-all',
+        'disabled:cursor-not-allowed disabled:opacity-60',
+        dirty && !loading && !saving
           ? 'bg-[var(--color-hebees)] text-white border-[var(--color-hebees)] hover:opacity-90'
-          : 'bg-white text-gray-700 border hover:bg-gray-50'
-      }`}
+          : 'bg-white text-gray-700 border hover:bg-gray-50',
+        saved && 'bg-emerald-500 border-emerald-500 text-white'
+      )}
     >
-      <Save className="h-4 w-4" />
-      {isCreateMode ? '생성' : '저장'}
+      {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
+      <span>{saving ? '처리 중…' : saved ? '저장됨' : isCreateMode ? '생성' : '저장'}</span>
     </button>
   );
 
@@ -226,6 +231,7 @@ export function QuerySettingsForm({
         <div className="flex items-center gap-4">
           <div className="max-w-xs w-full">
             <input
+              ref={nameInputRef}
               type="text"
               value={templateName}
               onChange={(e) => setTemplateName(e.target.value)}
@@ -238,6 +244,35 @@ export function QuerySettingsForm({
             />
           </div>
 
+          <Tooltip content="이 템플릿을 기본값으로 사용합니다." side="bottom">
+            <button
+              type="button"
+              onClick={() => setIsDefault((v) => !v)}
+              aria-pressed={isDefault}
+              className={clsx(
+                'inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition',
+                isDefault
+                  ? 'border-[var(--color-hebees)] bg-[var(--color-hebees-bg)] text-[var(--color-hebees)]'
+                  : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+              )}
+            >
+              <span
+                className={clsx(
+                  'inline-flex h-4 w-7 items-center rounded-full transition',
+                  isDefault ? 'bg-[var(--color-hebees)]' : 'bg-gray-300'
+                )}
+              >
+                <span
+                  className={clsx(
+                    'ml-[2px] h-3.5 w-3.5 rounded-full bg-white transition',
+                    isDefault ? 'translate-x-[10px]' : 'translate-x-0'
+                  )}
+                />
+              </span>
+              기본 템플릿
+            </button>
+          </Tooltip>
+
           {!dirty ? (
             <Tooltip content="변경된 값이 있을 경우 활성화 됩니다." side="bottom">
               <div className="inline-flex">{SaveBtn}</div>
@@ -248,141 +283,34 @@ export function QuerySettingsForm({
         </div>
       </div>
 
-      <div ref={anchors?.['query-embed']} className="rounded-2xl border bg-white p-8 shadow-sm">
-        <SectionHeader
-          id="query-embed"
-          title="Query Embed · 질의 벡터화"
-          subtitle="질의를 변환/확장해 검색 품질을 높입니다."
-          icon={PipelineIcons.QueryEmbed}
-          onClick={scrollTo}
-        />
-        <div className="mb-2 flex items-center justify-between gap-4">
-          <LabelRow label="질의 변환" hint="HyDE / Buffer 등 변환 전략을 선택하세요." />
-          <div className="max-w-xs w-full">
-            <Select
-              value={queryEngine}
-              onChange={setQueryEngine}
-              options={transformOpts}
-              disabled={loading || transformOpts.length === 0}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div ref={anchors?.searching} className="rounded-2xl border bg-white p-8 shadow-sm">
-        <SectionHeader
-          id="searching"
-          title="Searching · 검색"
-          subtitle="관련 텍스트 청크를 검색할 알고리즘과 파라미터를 설정합니다."
-          icon={PipelineIcons.Searching}
-          onClick={scrollTo}
-        />
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <LabelRow label="검색 알고리즘" hint="Semantic 또는 Hybrid 검색 전략을 고르세요." />
-          <div className="max-w-xs w-full">
-            <Select
-              value={searchAlgorithm}
-              onChange={setSearchAlgorithm}
-              options={searchAlgoOpts}
-              disabled={loading || searchAlgoOpts.length === 0}
-            />
-          </div>
-        </div>
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <LabelRow label="Top-K" hint="쿼리와 가장 유사한 K개의 후보를 검색합니다." />
-          <div className="max-w-xs w-full">
-            <input
-              type="number"
-              value={topK}
-              onChange={(e) => setTopK(Math.max(1, Number(e.target.value) || 1))}
-              min={1}
-              className="w-full rounded-md border border-gray-200 px-3 py-2 text-base focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-transparent text-right"
-              disabled={loading}
-            />
-          </div>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <LabelRow label="유사도 임계값" hint="결과 필터링을 위한 임계값을 설정합니다." />
-          <div className="max-w-sm w-full">
-            <Slider value={threshold} min={0} max={1} step={0.1} onChange={setThreshold} />
-          </div>
-        </div>
-      </div>
-
-      <div ref={anchors?.reranker} className="rounded-2xl border bg-white p-8 shadow-sm">
-        <SectionHeader
-          id="reranker"
-          title="Re-ranker · 재정렬"
-          subtitle="검색된 결과를 의미 기반으로 재정렬하여 정확도를 높입니다."
-          icon={PipelineIcons.Reranker}
-          onClick={scrollTo}
-        />
-        <div className="flex items-center justify-between gap-4">
-          <LabelRow label="Re-ranking" hint="리랭킹 전략을 선택합니다." />
-          <div className="max-w-sm w-full">
-            <Select
-              value={reranking}
-              onChange={setReranking}
-              options={rerankOpts}
-              disabled={loading || rerankOpts.length === 0}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div ref={anchors?.prompting} className="rounded-2xl border bg-white p-8 shadow-sm">
-        <SectionHeader
-          id="prompting"
-          title="Prompting · 프롬프트"
-          subtitle="시스템/사용자 프롬프트를 관리합니다."
-          icon={PipelineIcons.Prompting}
-          onClick={scrollTo}
-        />
-        <div className="mb-2 flex items-center justify-between gap-4">
-          <LabelRow label="시스템 프롬프트 관리" hint="모델의 전체 톤·역할을 지정합니다." />
-        </div>
-        <PromptManager storageKey="system" />
-        <div className="my-2 mt-10 flex items-center justify-between gap-4">
-          <LabelRow label="사용자 프롬프트 관리" hint="사용자의 전체 톤·역할을 지정합니다." />
-        </div>
-        <PromptManager storageKey="user" />
-      </div>
-
-      <div ref={anchors?.generation} className="rounded-2xl border bg-white p-8 shadow-sm">
-        <SectionHeader
-          id="generation"
-          title="Generation · 응답 생성"
-          subtitle="응답을 생성할 LLM과 파라미터를 설정합니다."
-          icon={PipelineIcons.Generation}
-          onClick={scrollTo}
-        />
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <LabelRow label="LLM 모델 선택" hint="응답을 생성할 언어 모델을 선택합니다." />
-          <div className="max-w-xs w-full">
-            <Select
-              value={llmModel}
-              onChange={setLlmModel}
-              options={llmOpts}
-              disabled={loading || llmOpts.length === 0}
-            />
-          </div>
-        </div>
-        <div className="mb-6 flex items-center justify-between gap-4">
-          <LabelRow label="Temperature" hint="모델의 응답 다양성·창의성 정도입니다." />
-          <div className="max-w-xs w-full">
-            <Slider value={temperature} min={0} max={1} step={0.1} onChange={setTemperature} />
-          </div>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <LabelRow
-            label="멀티모달 활성화"
-            hint="이미지·차트 등 비텍스트 입력을 이해해야 할 때만 활성화하세요."
-          />
-          <div className="flex-shrink-0">
-            <Toggle checked={multimodal} onChange={setMultimodal} />
-          </div>
-        </div>
-      </div>
+      <QuerySettingsFields
+        anchors={anchors}
+        loading={loading || saving}
+        scrollTo={scrollTo}
+        // values
+        queryEngine={queryEngine}
+        searchAlgorithm={searchAlgorithm}
+        topK={topK}
+        threshold={threshold}
+        reranking={reranking}
+        llmModel={llmModel}
+        temperature={temperature}
+        multimodal={multimodal}
+        // handlers
+        setQueryEngine={setQueryEngine}
+        setSearchAlgorithm={setSearchAlgorithm}
+        setTopK={setTopK}
+        setThreshold={setThreshold}
+        setReranking={setReranking}
+        setLlmModel={setLlmModel}
+        setTemperature={setTemperature}
+        setMultimodal={setMultimodal}
+        // options
+        transformOpts={transformOpts}
+        searchAlgoOpts={searchAlgoOpts}
+        rerankOpts={rerankOpts}
+        llmOpts={llmOpts}
+      />
     </div>
   );
 }

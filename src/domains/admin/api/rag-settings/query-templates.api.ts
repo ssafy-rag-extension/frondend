@@ -41,26 +41,13 @@ export async function createQueryTemplate(
   return res.data.result;
 }
 
-// 전체 수정(PUT)
-export async function updateQueryTemplate(
-  queryNo: string,
-  payload: UpsertQueryTemplateDto
-): Promise<QueryTemplateDetailResult> {
-  if (!queryNo) throw new Error('queryNo is required');
-  const res = await fastApi.put<ApiEnvelope<QueryTemplateDetailResult>>(
-    `/api/v1/rag/query-templates/${encodeURIComponent(queryNo)}`,
-    payload
-  );
-  return res.data.result;
-}
-
-// 부분 수정(PATCH)
-export async function patchQueryTemplate(
+// 수정
+export async function putQueryTemplate(
   queryNo: string,
   payload: Partial<UpsertQueryTemplateDto>
 ): Promise<QueryTemplateDetailResult> {
   if (!queryNo) throw new Error('queryNo is required');
-  const res = await fastApi.patch<ApiEnvelope<QueryTemplateDetailResult>>(
+  const res = await fastApi.put<ApiEnvelope<QueryTemplateDetailResult>>(
     `/api/v1/rag/query-templates/${encodeURIComponent(queryNo)}`,
     payload
   );

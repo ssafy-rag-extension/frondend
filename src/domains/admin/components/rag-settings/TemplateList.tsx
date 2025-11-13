@@ -7,7 +7,7 @@ import { getQueryTemplates } from '@/domains/admin/api/rag-settings/query-templa
 
 type Props = {
   kind: 'ingest' | 'query';
-  active: string; // ingestNo | queryNo
+  active: string;
   onSelect: (id: string) => void;
   className?: string;
   onEdit?: (id: string) => void;
@@ -64,11 +64,13 @@ export default function TemplateList({
         <div className="text-sm font-semibold text-gray-700">
           {kind === 'ingest' ? 'Ingest 템플릿' : 'Query 템플릿'}
         </div>
-
         {onCreate && (
           <button
             type="button"
-            onClick={onCreate}
+            onClick={() => {
+              setItems((prev) => prev.map((t) => ({ ...t, isDefault: false })));
+              onCreate();
+            }}
             className={clsx(
               'inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition-colors',
               'border border-[var(--color-hebees)] text-[var(--color-hebees)]',
@@ -149,7 +151,7 @@ export default function TemplateList({
                             'h-9 w-9 rounded-lg border bg-white',
                             'inline-flex items-center justify-center',
                             'border-gray-200 hover:bg-gray-100',
-                            'focus:outline-none focus:ring-2 focus:ring-gray-300'
+                            'focus:outline-none '
                           )}
                         >
                           <Pencil size={16} strokeWidth={2} className="text-gray-700" />
@@ -168,7 +170,7 @@ export default function TemplateList({
                             'h-9 w-9 rounded-lg border bg-white',
                             'inline-flex items-center justify-center',
                             'border-gray-200 hover:bg-gray-100',
-                            'focus:outline-none focus:ring-2 focus:ring-gray-300'
+                            'focus:outline-none'
                           )}
                         >
                           <Trash2 size={16} strokeWidth={2} className="text-gray-700" />

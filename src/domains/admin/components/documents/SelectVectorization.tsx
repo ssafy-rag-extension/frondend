@@ -2,7 +2,7 @@ import { FileText, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { RawMyDoc } from '@/shared/types/file.types';
-import { useCategoryStore } from '@/shared/store/categoryMap';
+import { useCategoryStore } from '@/shared/store/useCategoryMap';
 import type { UploadBucket } from '@/shared/types/file.types';
 import { getCollections } from '@/domains/admin/api/documents.api';
 import { uploadFiles } from '@/shared/api/file.api';

@@ -23,7 +23,7 @@ export const springApi = axios.create({
 export const ragApi = axios.create({
   baseURL: RAG_API_BASE_URL,
   withCredentials: true,
-  timeout: 10000,
+  timeout: 180000,
 });
 
 export const fastApi = axios.create({
@@ -158,7 +158,6 @@ function applyInterceptors(instance: typeof springApi | typeof ragApi | typeof f
 
         default:
           toast.error(msg);
-          console.error('[API ERROR]', error);
           break;
       }
 

@@ -3,7 +3,7 @@ import Tooltip from '@/shared/components/Tooltip';
 import ChatMarkdown from '@/shared/components/chat/ChatMarkdown';
 import InlineReaskInput from '@/shared/components/chat/InlineReaskInput';
 import ReferencedDocsPanel from '@/shared/components/chat/ReferencedDocs';
-import { formatIsoDatetime } from '@/shared/util/iso';
+import { formatIsoDatetime } from '@/shared/utils/iso';
 import type { ReferencedDocument } from '@/shared/types/chat.types';
 
 type Brand = 'retina' | 'hebees';
@@ -31,6 +31,11 @@ type Props = {
   brand: Brand;
 };
 
+const brandBgClass: Record<Brand, string> = {
+  retina: 'bg-[var(--color-retina-bg)]',
+  hebees: 'bg-[var(--color-hebees-bg)]',
+};
+
 export default function ChatMessageItem({
   msg,
   index,
@@ -45,20 +50,15 @@ export default function ChatMessageItem({
   brand = 'retina',
 }: Props) {
   const isUser = msg.role === 'user';
-
-  const BRAND_COLORS: Record<Brand, { bg: string }> = {
-    retina: { bg: 'var(--color-retina-bg)' },
-    hebees: { bg: 'var(--color-hebees-bg)' },
-  };
-
-  const bgColor = BRAND_COLORS[brand].bg;
+  const userBubbleBase = `rounded-xl border ml-auto ${brandBgClass[brand]} text-black border-gray-200`;
 
   return (
     <div
       className={`
-        px-3 py-1.5 relative group break-words
+        relative group break-words overflow-visible
         ${isUser ? (isEditing ? 'w-full max-w-lg' : 'w-fit max-w-[60%]') : 'w-full'}
-        ${isUser ? `rounded-xl border ml-auto bg-[${bgColor}] text-black` : 'bg-white'}
+        ${isUser ? userBubbleBase : 'bg-white'}
+        px-3 py-1.5
       `}
     >
       {isEditing && isUser ? (
@@ -72,27 +72,27 @@ export default function ChatMessageItem({
           <span className="relative inline-flex h-6 w-6">
             <span
               className="
-        absolute inset-0 rounded-full opacity-90
-        bg-[linear-gradient(90deg,#BE7DB1_0%,#81BAFF_100%)]
-        animate-[spin_1.1s_linear_infinite]
-      "
+                absolute inset-0 rounded-full opacity-90
+                bg-[linear-gradient(90deg,#BE7DB1_0%,#81BAFF_100%)]
+                animate-[spin_1.1s_linear_infinite]
+              "
             />
             <span
               className="
-        absolute inset-0 rounded-full
-        bg-gradient-to-br from-white/40 to-transparent
-        mix-blend-overlay
-      "
+                absolute inset-0 rounded-full
+                bg-gradient-to-br from-white/40 to-transparent
+                mix-blend-overlay
+              "
             />
           </span>
 
           <span
             className="
-      text-sm font-medium bg-clip-text text-transparent
-      bg-[linear-gradient(90deg,#BE7DB1_0%,#81BAFF_50%,#BE7DB1_100%)]
-      bg-[length:200%_200%] animate-gradientMove
-      whitespace-nowrap
-    "
+              text-sm font-medium bg-clip-text text-transparent
+              bg-[linear-gradient(90deg,#BE7DB1_0%,#81BAFF_50%,#BE7DB1_100%)]
+              bg-[length:200%_200%] animate-gradientMove
+              whitespace-nowrap
+            "
           >
             {pendingSubtitle}
           </span>
@@ -102,22 +102,24 @@ export default function ChatMessageItem({
       )}
 
       {!isUser && msg.createdAt && !isPendingAssistant && (
-        <div className="text-xs text-gray-400 mt-1">{formatIsoDatetime(msg.createdAt)}</div>
+        <div className="mt-1 text-xs text-gray-400">{formatIsoDatetime(msg.createdAt)}</div>
       )}
 
       <div
         className={`
-          absolute flex gap-2 items-center
+          absolute z-20 flex items-center gap-2
           ${isUser ? 'right-2' : 'left-2'}
-          bottom-[-30px] opacity-0 group-hover:opacity-100
-          transition-opacity duration-200
+          top-full mt-1
+          opacity-0 transition-opacity duration-200
+          group-hover:opacity-100 hover:opacity-100
+          pointer-events-none
         `}
       >
         {isUser && !isEditing && (
           <Tooltip content="질문 재생성 (수정 후 전송)" side="bottom">
             <button
               onClick={() => onStartReask(index, msg.content)}
-              className="p-1 rounded hover:bg-gray-100"
+              className="p-1 rounded hover:bg-gray-100 pointer-events-auto"
             >
               <Wand2 size={14} className="text-gray-500" />
             </button>

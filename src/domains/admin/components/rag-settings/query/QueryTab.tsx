@@ -8,7 +8,7 @@ import type { FlowStepId } from '@/shared/components/rag-pipeline/PipelineFlow';
 import {
   getQueryTemplates,
   getQueryTemplateDetail,
-  patchQueryTemplate,
+  putQueryTemplate,
   mapQueryTemplatesToOptions,
   createQueryTemplate,
 } from '@/domains/admin/api/rag-settings/query-templates.api';
@@ -32,6 +32,7 @@ export type QueryPreset = {
   llmModel: string;
   temperature: number;
   multimodal: boolean;
+  isDefault: boolean;
 };
 
 type Props = {
@@ -60,65 +61,64 @@ export default function QueryTab({
       setTplLoading(true);
       try {
         const list = await getQueryTemplates({ pageNum: 1, pageSize: 100 });
-        setTplOpts(mapQueryTemplatesToOptions(list.data ?? []));
-        const def =
-          (list.data ?? []).find((t) => t.isDefault)?.queryNo ??
-          (list.data ?? [])[0]?.queryNo ??
-          '';
-        if (!templateId && def) setTemplateId(def);
+        const data = list.data ?? [];
+        setTplOpts(mapQueryTemplatesToOptions(data));
+        const def = data.find((t) => t.isDefault)?.queryNo ?? data[0]?.queryNo ?? '';
+        if (!isCreateMode && !templateId && def) setTemplateId(def);
       } finally {
         setTplLoading(false);
       }
     };
     void run();
-  }, [templateId]);
+  }, [templateId, isCreateMode]);
+
+  const applyDetailToPreset = (d: QueryTemplateDetailResult, id: string) => {
+    const queryEngine = d.transformations?.[0]?.no ?? '';
+    const searchAlgorithm = d.retrieval?.no ?? '';
+
+    let topK = 5;
+    let threshold = 0.2;
+    const rp = d.retrieval?.parameters;
+    if (isSemanticParams(rp)) {
+      topK = num(rp.semantic?.topK, topK);
+      threshold = num(rp.semantic?.threshold, threshold);
+    } else if (isHybridParams(rp)) {
+      topK = num(rp.semantic?.topK, num(rp.keyword?.topK, num(rp.reranker?.topK, topK)));
+      threshold = num(rp.semantic?.threshold, threshold);
+    }
+
+    const reranking = d.reranking?.no ?? '';
+    const llmModel = d.generation?.no ?? '';
+
+    let temperature = 0.2;
+    let multimodal = false;
+    if (isGenerationParams(d.generation?.parameters)) {
+      temperature = num(d.generation.parameters?.temperature, temperature);
+      multimodal = bool(d.generation.parameters?.multimodal, multimodal);
+    }
+
+    setPreset({
+      template: id,
+      queryEngine,
+      searchAlgorithm,
+      topK,
+      threshold,
+      reranking,
+      llmModel,
+      temperature,
+      multimodal,
+      isDefault: !!d.isDefault,
+    });
+  };
 
   useEffect(() => {
-    const apply = (d: QueryTemplateDetailResult, id: string) => {
-      const queryEngine = d.transformations?.[0]?.no ?? '';
-      const searchAlgorithm = d.retrieval?.no ?? '';
-
-      let topK = 5;
-      let threshold = 0.2;
-      const rp = d.retrieval?.parameters;
-      if (isSemanticParams(rp)) {
-        topK = num(rp.semantic?.topK, topK);
-        threshold = num(rp.semantic?.threshold, threshold);
-      } else if (isHybridParams(rp)) {
-        topK = num(rp.semantic?.topK, num(rp.keyword?.topK, num(rp.reranker?.topK, topK)));
-        threshold = num(rp.semantic?.threshold, threshold);
-      }
-
-      const reranking = d.reranking?.no ?? '';
-      const llmModel = d.generation?.no ?? '';
-
-      let temperature = 0.2;
-      let multimodal = false;
-      if (isGenerationParams(d.generation?.parameters)) {
-        temperature = num(d.generation.parameters?.temperature, temperature);
-        multimodal = bool(d.generation.parameters?.multimodal, multimodal);
-      }
-
-      setPreset({
-        template: id,
-        queryEngine,
-        searchAlgorithm,
-        topK,
-        threshold,
-        reranking,
-        llmModel,
-        temperature,
-        multimodal,
-      });
-    };
-
     const run = async () => {
       if (!templateId || isCreateMode) {
         setPreset(null);
         return;
       }
       const d = await getQueryTemplateDetail(templateId);
-      apply(d, templateId);
+      applyDetailToPreset(d, templateId);
     };
     void run();
   }, [templateId, isCreateMode]);
@@ -145,6 +145,8 @@ export default function QueryTab({
     llmModel: string;
     temperature: number;
     multimodal: boolean;
+    isDefault: boolean;
+    isCreateMode?: boolean;
   }) => {
     const isHybrid = !!ragOptions?.searchHybrid?.some((o) => o.value === payload.searchAlgorithm);
 
@@ -166,6 +168,7 @@ export default function QueryTab({
         no: payload.llmModel,
         parameters: { temperature: payload.temperature, multimodal: payload.multimodal },
       },
+      isDefault: payload.isDefault,
     };
 
     if (isCreateMode) {
@@ -177,86 +180,19 @@ export default function QueryTab({
       setTplOpts(mapQueryTemplatesToOptions(list.data ?? []));
       setTemplateId(created.queryNo);
       setIsCreateMode(false);
-
-      const applyCreated = (d: QueryTemplateDetailResult) => {
-        const queryEngine = d.transformations?.[0]?.no ?? '';
-        const searchAlgorithm = d.retrieval?.no ?? '';
-        let topK = 5;
-        let threshold = 0.2;
-        const rp = d.retrieval?.parameters;
-        if (isSemanticParams(rp)) {
-          topK = num(rp.semantic?.topK, topK);
-          threshold = num(rp.semantic?.threshold, threshold);
-        } else if (isHybridParams(rp)) {
-          topK = num(rp.semantic?.topK, num(rp.keyword?.topK, num(rp.reranker?.topK, topK)));
-          threshold = num(rp.semantic?.threshold, threshold);
-        }
-        const reranking = d.reranking?.no ?? '';
-        const llmModel = d.generation?.no ?? '';
-        let temperature = 0.2;
-        let multimodal = false;
-        if (isGenerationParams(d.generation?.parameters)) {
-          temperature = num(d.generation.parameters?.temperature, temperature);
-          multimodal = bool(d.generation.parameters?.multimodal, multimodal);
-        }
-        setPreset({
-          template: created.queryNo,
-          queryEngine,
-          searchAlgorithm,
-          topK,
-          threshold,
-          reranking,
-          llmModel,
-          temperature,
-          multimodal,
-        });
-      };
-      applyCreated(detail);
+      applyDetailToPreset(detail, created.queryNo);
       onCreate?.();
       return;
     }
 
-    await patchQueryTemplate(payload.template, dto);
+    await putQueryTemplate(payload.template, dto);
 
     const [detail, list] = await Promise.all([
       getQueryTemplateDetail(payload.template),
       getQueryTemplates({ pageNum: 1, pageSize: 100 }),
     ]);
 
-    {
-      const queryEngine = detail.transformations?.[0]?.no ?? '';
-      const searchAlgorithm = detail.retrieval?.no ?? '';
-      let topK = 5;
-      let threshold = 0.2;
-      const rp = detail.retrieval?.parameters;
-      if (isSemanticParams(rp)) {
-        topK = num(rp.semantic?.topK, topK);
-        threshold = num(rp.semantic?.threshold, threshold);
-      } else if (isHybridParams(rp)) {
-        topK = num(rp.semantic?.topK, num(rp.keyword?.topK, num(rp.reranker?.topK, topK)));
-        threshold = num(rp.semantic?.threshold, threshold);
-      }
-      const reranking = detail.reranking?.no ?? '';
-      const llmModel = detail.generation?.no ?? '';
-      let temperature = 0.2;
-      let multimodal = false;
-      if (isGenerationParams(detail.generation?.parameters)) {
-        temperature = num(detail.generation.parameters?.temperature, temperature);
-        multimodal = bool(detail.generation.parameters?.multimodal, multimodal);
-      }
-      setPreset({
-        template: payload.template,
-        queryEngine,
-        searchAlgorithm,
-        topK,
-        threshold,
-        reranking,
-        llmModel,
-        temperature,
-        multimodal,
-      });
-    }
-
+    applyDetailToPreset(detail, payload.template);
     setTplOpts(mapQueryTemplatesToOptions(list.data ?? []));
   };
 
