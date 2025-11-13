@@ -3,9 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { deleteFile, downloadFile } from '@/shared/api/file.api';
 import { toast } from 'react-toastify';
 import ColList from '@/domains/admin/components/documents/ColList';
-import CollectionDocuments, {
-  type DocItem,
-} from '@/domains/admin/components/rag-test/CollectionDocuments';
+import type { DocItem } from '@/domains/admin/components/rag-test/CollectionDocuments';
 import CollectionDocumentsAdm from '@/domains/admin/components/documents/CollectionDocumentsAdm';
 import type { Collection } from '@/domains/admin/components/rag-test/types';
 
@@ -69,6 +67,8 @@ export default function CollectionTab() {
   // ColList에서 선택된 컬렉션 정보 받기
   const handleCollectionSelect = (collection: Collection | null, docs: DocItem[]) => {
     setSelectedCollection(collection);
+    console.log('선택된 컬렉션:', collection);
+    console.log('선택된 문서들:', docs);
     setSelectedDocs(docs);
   };
 

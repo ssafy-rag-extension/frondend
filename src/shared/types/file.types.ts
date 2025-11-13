@@ -7,7 +7,7 @@ export type UploadedDoc = {
   id: string;
   name: string;
   sizeKB: number;
-  uploadedAt?: string;
+  createdAt?: string;
   category?: string;
   categoryId?: string;
   type: string;
@@ -43,7 +43,7 @@ export interface RawMyDoc {
   type: string;
   bucket: string;
   path: string;
-  status?: 'PENDING' | 'INGESTING' | 'COMPLETED' | 'FAILED';
+  status: 'PENDING' | 'INGESTING' | 'COMPLETED' | 'FAILED';
   categoryNo: string;
   collectionNo: string;
   createdAt: string;
@@ -96,22 +96,4 @@ export type DeleteFileData = {
   fileNo: string;
   name: string;
   deleted: boolean;
-};
-
-export type DownloadResult = {
-  data: {
-    url: string;
-  };
-  pagination: {
-    pageNum: number;
-    pageSize: number;
-    totalItems: number;
-    totalPages: number;
-    hasNext: boolean;
-  };
-  hasNext: boolean;
-  nextCursor: {
-    cursorCreatedAt: string;
-    cursorId: string;
-  };
 };

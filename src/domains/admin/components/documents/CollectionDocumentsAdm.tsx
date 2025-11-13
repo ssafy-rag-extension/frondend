@@ -8,8 +8,8 @@ export type DocItem = {
   id: string;
   name: string;
   sizeKB: number;
-  embeddedAt?: string;
-  category?: string;
+  createdAt?: string;
+  categoryNo?: string;
   type: string;
 };
 
@@ -82,7 +82,6 @@ export default function CollectionDocumentsAdm({
         onDownload={onDownload}
         onDelete={onDelete}
         brand="hebees"
-        // onSelectChange={setSelectedIds}
         showStatus={false}
       />
     </div>

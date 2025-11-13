@@ -192,8 +192,8 @@ export default function ColList({ onCollectionSelect }: ColListProps) {
       id: doc.fileNo,
       name: doc.name,
       sizeKB: Number(doc.size) / 1024,
-      embeddedAt: doc.createdAt,
-      category: doc.categoryNo || undefined,
+      createdAt: doc.createdAt,
+      categoryNo: doc.categoryNo || undefined,
       type: doc.type || 'txt',
     }));
   };
