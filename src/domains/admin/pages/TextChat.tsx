@@ -188,7 +188,7 @@ export default function TextChat() {
 
   if (initialLoading) {
     return (
-      <section className="flex flex-col min-h-[calc(100vh-82px)] h-[calc(100vh-82px)] overflow-hidden">
+      <section className="flex flex-col min-h-[calc(100vh-82px)] h-[calc(100vh-82px)]">
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="flex flex-col items-center gap-3 text-gray-500">
             <div className="w-8 h-8 rounded-full border-2 border-gray-300 border-t-gray-600 animate-spin" />
@@ -200,7 +200,7 @@ export default function TextChat() {
   }
 
   return (
-    <section className="flex flex-col min-h-[calc(100vh-82px)] h-[calc(100vh-82px)] overflow-hidden">
+    <section className="flex flex-col min-h-[calc(100vh-82px)] h-[calc(100vh-82px)]">
       {list.length > 0 ? (
         <>
           <div
@@ -229,14 +229,14 @@ export default function TextChat() {
           </div>
 
           <div className="sticky bottom-0 w-full flex flex-col items-center bg-transparent">
-            <div className="relative w-full flex justify-center mb-4">
+            <div className="relative w-full flex justify-center">
               <ScrollToBottomButton
                 containerRef={scrollRef}
                 watch={list.length}
-                className="absolute bottom-0"
+                className="absolute bottom-4"
               />
             </div>
-            <div className="w-full max-w-[75%] pb-6">
+            <div className="w-full max-w-[75%] pb-6 bg-white">
               <ChatInput onSend={handleSend} variant="hebees" />
             </div>
           </div>

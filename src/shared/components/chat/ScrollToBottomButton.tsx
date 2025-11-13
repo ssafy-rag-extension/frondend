@@ -45,7 +45,7 @@ export default function ScrollToBottomButton({
       if (atBottom) setHasUnseen(false);
     };
 
-    onScroll(); // 초기 상태 한 번 계산
+    onScroll();
     el.addEventListener('scroll', onScroll, { passive: true });
     return () => el.removeEventListener('scroll', onScroll);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,12 +67,11 @@ export default function ScrollToBottomButton({
         setHasUnseen(false);
       }}
       className={clsx(
-        'inline-flex items-center gap-2 rounded-full border bg-white px-3 py-2 text-xs shadow-lg',
+        'inline-flex items-center gap-2 rounded-full border bg-white px-3 py-2 text-sm shadow-lg',
         'text-gray-700 hover:bg-gray-50 transition',
         'focus:outline-none focus-visible:outline-none',
         className
       )}
-      aria-label="최신 메시지로 이동"
     >
       {hasUnseen && (
         <span className="relative mr-1 inline-flex h-2.5 w-2.5 items-center justify-center">

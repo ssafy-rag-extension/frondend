@@ -16,7 +16,6 @@ export default function ChatInput({ onSend, variant = 'retina' }: Props) {
     if (!content) return;
     onSend(content);
     setText('');
-    // 전송 후 높이 초기화
     requestAnimationFrame(() => {
       const el = textareaRef.current;
       if (!el) return;
@@ -29,8 +28,6 @@ export default function ChatInput({ onSend, variant = 'retina' }: Props) {
     if (e.key !== 'Enter') return;
 
     const native = e.nativeEvent as unknown as { isComposing?: boolean } & KeyboardEvent;
-
-    // 한글/일본어 등 조합 입력 중이면 전송 막기
     if (
       native.isComposing ||
       composingRef.current ||
@@ -39,7 +36,6 @@ export default function ChatInput({ onSend, variant = 'retina' }: Props) {
       return;
     }
 
-    // Shift+Enter는 줄바꿈
     if (e.shiftKey) return;
 
     e.preventDefault();
