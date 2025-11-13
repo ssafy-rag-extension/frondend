@@ -224,7 +224,7 @@ export default function SelectVectorization({
         <button
           onClick={() => handleUpload(localFiles)}
           disabled={isUploading || localFiles.length === 0 || isVectorizing} // ✅ 추가
-          className={`px-10 py-2 text-white font-semibold rounded-md transition shadow-md ${
+          className={`px-10 py-2 text-white cursor-pointer font-semibold rounded-md transition shadow-md ${
             isUploading || isVectorizing
               ? 'bg-gray-300 cursor-not-allowed'
               : 'bg-[linear-gradient(90deg,#BE7DB1_10%,#81BAFF_100%)] hover:opacity-90'

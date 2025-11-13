@@ -115,7 +115,6 @@ export default function UploadTab() {
             selectedCollection={selectedCollection}
             onCollectionSelect={handleCollectionSelect}
             uploadedFiles={finalSelectedFiles}
-            uploadedFiles={finalSelectedFiles}
           />
         </div>
 

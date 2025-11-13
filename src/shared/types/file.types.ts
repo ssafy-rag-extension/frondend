@@ -43,7 +43,7 @@ export interface RawMyDoc {
   type: string;
   bucket: string;
   path: string;
-  status: 'PENDING' | 'INGESTING' | 'COMPLETED' | 'FAILED';
+  status?: 'PENDING' | 'INGESTING' | 'COMPLETED' | 'FAILED';
   categoryNo: string;
   collectionNo: string;
   createdAt: string;
