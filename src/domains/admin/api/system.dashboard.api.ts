@@ -3,6 +3,7 @@ import type {
   ServicesPerformanceResponse,
   ServicesStatusResponse,
   StorageUsageResponse,
+  RagPipelineResponseTimeResponse,
 } from '@/domains/admin/types/system.dashboard.types';
 
 // 9개 서비스 성능
@@ -20,5 +21,13 @@ export async function getServicesStatus() {
 // 파일시스템 사용량
 export async function getStorageUsage() {
   const res = await springApi.get<StorageUsageResponse>(`/api/v1/monitoring/storage`);
+  return res.data.result;
+}
+
+// RAG Pipeline 평균 응답시간 조회
+export async function getRagPipelineResponseTime() {
+  const res = await springApi.get<RagPipelineResponseTimeResponse>(
+    `/api/v1/monitoring/metrics/rag`
+  );
   return res.data.result;
 }

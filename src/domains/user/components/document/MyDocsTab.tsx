@@ -8,6 +8,7 @@ import Pagination from '@/shared/components/Pagination';
 import { RefreshCw } from 'lucide-react';
 import { toast } from 'react-toastify';
 import ConfirmModal from '@/shared/components/ConfirmModal';
+import { formatCreatedAt } from '@/shared/utils/date';
 
 const PAGE_SIZE = 20;
 
@@ -45,6 +46,8 @@ export default function MyDocsTab() {
         if (!active || myReqId !== reqSeq.current) return;
 
         setMyDocs(items);
+        console.log(items);
+
         setTotal(total);
         setTotalPages(Math.max(1, totalPages));
         setHasNext(hasNext);
@@ -69,7 +72,7 @@ export default function MyDocsTab() {
         fileNo: d.fileNo,
         name: d.name,
         sizeKB: d.sizeKB,
-        uploadedAt: new Date(d.uploadedAt).toLocaleString(),
+        createdAt: formatCreatedAt(d.createdAt),
         category: d.bucket ?? '기타',
         categoryId: d.categoryNo != null ? String(d.categoryNo) : undefined,
         type: typeof d.type === 'string' ? d.type : 'txt',
