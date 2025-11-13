@@ -21,7 +21,7 @@ import {
 import { useChatModelStore } from '@/shared/store/useChatModelStore';
 // import type { RagQueryProcessResult } from '@/shared/types/chat.rag.types';
 // import { postRagQuery } from '@/shared/api/chat.rag.api';
-// import { toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 
 const mapRole = (r: ChatRole): UiRole => (r === 'human' ? 'user' : r === 'ai' ? 'assistant' : r);
 
@@ -49,6 +49,24 @@ export default function TextChat() {
   const [historyCursor, setHistoryCursor] = useState<string | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [hasMoreHistory, setHasMoreHistory] = useState(true);
+
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [editingDraft, setEditingDraft] = useState<string>('');
+
+  const startReask = (idx: number, content: string) => {
+    setEditingIdx(idx);
+    setEditingDraft(content);
+  };
+  const cancelReask = () => {
+    setEditingIdx(null);
+    setEditingDraft('');
+  };
+  const submitReask = async (value: string) => {
+    await handleSend(value);
+    setEditingIdx(null);
+    setEditingDraft('');
+    toast.success('수정된 질문으로 다시 보냈습니다.');
+  };
 
   const getOrCreateSessionNo = async (llmName: string, firstMsg: string): Promise<string> => {
     if (currentSessionNo) return currentSessionNo;
@@ -304,17 +322,17 @@ export default function TextChat() {
                   msg={m}
                   index={i}
                   currentSessionNo={currentSessionNo}
-                  isEditing={false}
-                  editingDraft=""
-                  onStartReask={() => {}}
-                  onCancelReask={() => {}}
-                  onSubmitReask={() => {}}
+                  isEditing={m.role === 'user' && editingIdx === i}
+                  editingDraft={editingDraft}
+                  onStartReask={startReask}
+                  onCancelReask={cancelReask}
+                  onSubmitReask={submitReask}
                   isPendingAssistant={awaitingAssistant && m.role === 'assistant' && !m.content}
                   pendingSubtitle={thinkingSubtitle}
                   brand="hebees"
                 />
               ))}
-              <div ref={bottomRef} className="h-4" />
+              <div ref={bottomRef} className="h-6" />
             </div>
           </div>
 
@@ -323,7 +341,7 @@ export default function TextChat() {
               <ScrollToBottomButton
                 containerRef={scrollRef}
                 watch={list.length}
-                className="absolute bottom-4"
+                className="absolute bottom-6"
               />
             </div>
             <div className="w-full max-w-[75%] pb-6 bg-white">
