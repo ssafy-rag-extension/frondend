@@ -138,10 +138,9 @@ export type VectorizationItem = {
   currentStep: 'CLEAN' | 'EMBED' | 'UPSERT' | null;
   overallPct: number; // 전체 진행률
   version: number;
-  createdAt: string;
   enqueuedAt: string | null;
   startedAt: string | null;
-  updatedAt: string | null;
+  createdAt: string | null;
   queue: VectorizationQueue;
   etaSec: number | null; // 예상 남은 시간(초)
   lastError: string | null;

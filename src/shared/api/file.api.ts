@@ -63,7 +63,7 @@ export async function fetchMyDocumentsNormalized(params?: {
       status: f.status,
       categoryNo: f.categoryNo ?? undefined,
       collectionNo: f.collectionNo ?? undefined,
-      uploadedAt: f.createdAt,
+      createdAt: f.createdAt,
     })),
     total: pg.totalItems,
     totalPages: pg.totalPages,

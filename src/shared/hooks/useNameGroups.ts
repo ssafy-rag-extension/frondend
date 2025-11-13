@@ -13,7 +13,7 @@ export function useNameGroups(docs: UploadedDoc[]) {
     });
 
     const byRecent = (a: UploadedDoc, b: UploadedDoc) =>
-      (new Date(b.uploadedAt || 0).getTime() || 0) - (new Date(a.uploadedAt || 0).getTime() || 0);
+      (new Date(b.createdAt || 0).getTime() || 0) - (new Date(a.createdAt || 0).getTime() || 0);
 
     map.forEach((arr) => arr.sort(byRecent));
 
