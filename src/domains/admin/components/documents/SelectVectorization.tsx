@@ -33,6 +33,10 @@ export default function SelectVectorization({
 
   const [isUploading, setIsUploading] = useState(false);
 
+  useEffect(() => {
+    setLocalFiles(finalSelectedFiles);
+  }, [finalSelectedFiles]);
+
   //  업로드
   async function handleUpload(finalSelectedFiles: RawMyDoc[]) {
     try {
@@ -103,10 +107,6 @@ export default function SelectVectorization({
   //   const groupByCategory = UploadedFileList
   // }
   // 상위에서 finalSelectedFiles 변경 시 반영
-
-  useEffect(() => {
-    setLocalFiles(finalSelectedFiles);
-  }, [finalSelectedFiles]);
 
   return (
     <section className="flex flex-col w-full p-4 border rounded-xl bg-white min-h-[475px]">

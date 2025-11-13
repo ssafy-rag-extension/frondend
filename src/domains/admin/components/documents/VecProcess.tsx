@@ -31,7 +31,7 @@ export default function VecProcess({
   const totalFiles = selectedFiles.length;
   const currentFile = selectedFiles[currentIndex];
 
-  // ✅ 최초 조회
+  //  최초 조회
   const { data: initialData } = useQuery({
     queryKey: ['vectorization-progress'],
     queryFn: () => getVectorizationProgress(),
@@ -39,7 +39,7 @@ export default function VecProcess({
     refetchOnWindowFocus: false,
   });
 
-  // ✅ 초기 데이터 세팅
+  //  초기 데이터 세팅
   useEffect(() => {
     if (!initialData) return;
 
@@ -56,7 +56,7 @@ export default function VecProcess({
     setOverallStatus('RUNNING');
   }, [initialData]);
 
-  // ✅ SSE 실시간 진행률 반영
+  //  SSE 실시간 진행률 반영
   useEffect(() => {
     if (!isVectorizingDone || selectedFiles.length === 0) return;
 

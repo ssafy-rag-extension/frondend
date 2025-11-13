@@ -29,7 +29,7 @@ export const ragApi = axios.create({
 export const fastApi = axios.create({
   baseURL: FASTAPI_BASE_URL,
   withCredentials: true,
-  timeout: 10000,
+  timeout: 180000,
 });
 
 // 에러 코드별 메세지 정의
