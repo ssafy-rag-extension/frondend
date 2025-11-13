@@ -17,7 +17,7 @@ const FASTAPI_BASE_URL = import.meta.env.VITE_FASTAPI_BASE_URL;
 export const springApi = axios.create({
   baseURL: SPRING_API_BASE_URL,
   withCredentials: true,
-  timeout: 10000,
+  timeout: 180000,
 });
 
 export const ragApi = axios.create({
