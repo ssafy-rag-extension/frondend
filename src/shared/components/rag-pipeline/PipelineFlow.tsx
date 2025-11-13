@@ -1,4 +1,3 @@
-import React from 'react';
 import clsx from 'clsx';
 import { PipelineTooltip } from '@/shared/components/rag-pipeline/PipelineTooltip';
 

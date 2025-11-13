@@ -26,7 +26,7 @@ export default function UploadTab() {
     id: globalThis.crypto?.randomUUID?.() ?? `${Date.now()}_${f.name}`,
     name: f.name,
     sizeKB: f.size / 1024,
-    uploadedAt: new Date().toLocaleString(),
+    createdAt: new Date().toLocaleString(),
     category: categoryName ?? category,
     categoryId: category,
     type: detectType(f),
@@ -140,6 +140,7 @@ export default function UploadTab() {
         onRename={handleRename}
         brand="retina"
         onSelectChange={setSelectedIds}
+        showStatus={false}
       />
 
       {selectedIds.length > 0 && (

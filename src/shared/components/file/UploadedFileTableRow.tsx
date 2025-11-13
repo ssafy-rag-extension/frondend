@@ -17,6 +17,7 @@ type RowProps = {
   onDelete?: (ids: string[]) => void;
   onRename?: (id: string, nextName: string) => void;
   existingNames: string[];
+  showStatus?: boolean;
 };
 
 export default function UploadedFileTableRow({
@@ -31,6 +32,7 @@ export default function UploadedFileTableRow({
   onDelete,
   onRename,
   existingNames,
+  showStatus = true,
 }: RowProps) {
   return (
     <tr className={`border-b last:border-b-0 ${losing ? 'bg-amber-50/40' : ''}`}>
@@ -59,7 +61,7 @@ export default function UploadedFileTableRow({
           : `${doc.sizeKB.toFixed(1)} KB`}
       </td>
 
-      <td className="px-4 py-2 text-right text-gray-600">{doc.uploadedAt ?? '-'}</td>
+      <td className="px-4 py-2 text-right text-gray-600">{doc.createdAt ?? '-'}</td>
 
       <td className="px-4 py-2">
         <div className="flex justify-end">
@@ -69,9 +71,11 @@ export default function UploadedFileTableRow({
         </div>
       </td>
 
-      <td className="px-4 py-2 text-right">
-        <StatusBadge status={doc.status} />
-      </td>
+      {showStatus && (
+        <td className="px-4 py-2 text-right">
+          <StatusBadge status={doc.status} />
+        </td>
+      )}
 
       <td>
         <div className="flex items-center justify-end gap-1.5">
