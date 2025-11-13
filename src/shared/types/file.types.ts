@@ -59,7 +59,7 @@ export interface MyDoc {
   status: 'PENDING' | 'INGESTING' | 'COMPLETED' | 'FAILED';
   categoryNo: string;
   collectionNo: string;
-  uploadedAt: string;
+  createdAt: string;
 }
 
 export interface ServerPagination {
