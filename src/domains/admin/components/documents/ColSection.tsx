@@ -7,7 +7,7 @@ import { getDocInCollections, getCollections } from '@/domains/admin/api/documen
 
 type ColSectionProps = {
   selectedCollection: string | null;
-  onCollectionSelect: (no: string | null) => void;
+  onCollectionSelect: (name: string | null) => void;
   uploadedFiles?: RawMyDoc[];
 };
 
@@ -43,6 +43,12 @@ export default function ColSection({ selectedCollection, onCollectionSelect }: C
   });
 
   useEffect(() => {
+    if (collectionsResult) {
+      console.log('📌 Collections Response:', collectionsResult);
+    }
+  }, [collectionsResult]);
+
+  useEffect(() => {
     if (docs && selectedCollection) {
       setDocsByCollection((prev) => ({
         ...prev,
@@ -51,8 +57,8 @@ export default function ColSection({ selectedCollection, onCollectionSelect }: C
     }
   }, [docs, selectedCollection]);
 
-  const handleSelectCollection = (collectionNo: string) => {
-    const newSelection = selectedCollection === collectionNo ? null : collectionNo;
+  const handleSelectCollection = (collectionName: string) => {
+    const newSelection = selectedCollection === collectionName ? null : collectionName;
     onCollectionSelect(newSelection);
   };
 
@@ -78,7 +84,7 @@ export default function ColSection({ selectedCollection, onCollectionSelect }: C
                   ? 'bg-[var(--color-hebees-bg)]/40 ring-1 ring-[var(--color-hebees)]'
                   : 'hover:bg-[var(--color-hebees-bg)]/40 hover:ring-1 hover:ring-[var(--color-hebees)]'
               }`}
-              onClick={() => handleSelectCollection(col.collectionNo)}
+              onClick={() => handleSelectCollection(col.name)}
             >
               {/* 헤더 */}
               <div className="flex items-center justify-between">
@@ -93,9 +99,9 @@ export default function ColSection({ selectedCollection, onCollectionSelect }: C
                   <input
                     type="checkbox"
                     className="accent-[var(--color-hebees)] cursor-pointer"
-                    checked={selectedCollection === col.collectionNo}
+                    checked={selectedCollection === col.name}
                     onClick={(e) => e.stopPropagation()}
-                    onChange={() => handleSelectCollection(col.collectionNo)}
+                    onChange={() => handleSelectCollection(col.name)}
                   />
 
                   <button
