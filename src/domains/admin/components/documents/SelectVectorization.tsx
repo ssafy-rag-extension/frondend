@@ -12,13 +12,13 @@ import { toast } from 'react-toastify';
 export default function SelectVectorization({
   finalSelectedFiles,
   onRemove,
-  // onUploadComplete,
+  onUploadComplete,
   isVectorizing,
   onStartVectorizing,
 }: {
   finalSelectedFiles: RawMyDoc[];
   onRemove?: (file: RawMyDoc) => void;
-  onUploadComplete?: (files: RawMyDoc[]) => void;
+  onUploadComplete: () => void;
   isVectorizing: boolean;
   onStartVectorizing: () => void;
 }) {
@@ -41,7 +41,7 @@ export default function SelectVectorization({
   // 업로드
   async function handleUpload(finalSelectedFiles: RawMyDoc[]) {
     try {
-      console.log(finalSelectedFiles);
+      console.log('@%%%%', finalSelectedFiles);
       onStartVectorizing();
 
       setIsUploading(true);
@@ -68,10 +68,14 @@ export default function SelectVectorization({
       });
 
       const uploadResults = await Promise.all(uploadPromises);
-      console.log(uploadResults);
       toast.success('파일 업로드 완료!');
+      // 초기화
+      setLocalFiles([]);
+      setSelectedFile(null);
+      setCurrentPage(1);
+      console.log('🔥 벡터화 시작 요청 결과:', uploadResults);
 
-      // onUploadComplete?.(finalSelectedFiles);
+      onUploadComplete();
     } catch (err) {
       console.error('❌ 업로드 실패', err);
       toast.error('업로드 중 오류가 발생했습니다.');

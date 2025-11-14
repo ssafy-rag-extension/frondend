@@ -21,9 +21,9 @@ export default function UploadTab() {
   //  컬렉션 지정까지 완료된 최종 선택 목록
   const [finalSelectedFiles, setFinalSelectedFiles] = useState<RawMyDoc[]>([]);
 
-  // const [isVectorizingDone, setIsVectorizingDone] = useState(false);
+  const [isUploadDone, setIsUploadDone] = useState(false);
   const [runningFiles, _setRunningFiles] = useState<RawMyDoc[]>([]);
-  const [isVectorizing, setIsVectorizing] = useState(false);
+  const [_isVectorizing, setIsVectorizing] = useState(false);
 
   //  FileUploader → RawMyDoc 변환
   const handleUpload = ({ files, category }: { files: File[]; category: string }) => {
@@ -81,6 +81,10 @@ export default function UploadTab() {
     );
   };
 
+  const handleUploadComplete = () => {
+    setIsUploadDone(true);
+  };
+
   return (
     <section className="flex flex-col gap-6 my-4">
       {/* 파일 업로더 */}
@@ -118,21 +122,14 @@ export default function UploadTab() {
           <SelectVectorization
             finalSelectedFiles={finalSelectedFiles}
             onRemove={handleRemoveFromFinal}
-            // onUploadComplete={handleUploadComplete}
+            onUploadComplete={handleUploadComplete}
             isVectorizing={runningFiles.length > 0}
             onStartVectorizing={() => setIsVectorizing(true)}
           />
         </div>
       </div>
       <div>
-        {isVectorizing && <VecProcess />}{' '}
-        {/* {runningFiles.length > 0 && (
-          <VecProcess
-          selectedFiles={runningFiles}
-          isVectorizingDone={isVectorizingDone}
-          onVectorizationComplete={handleVectorizationComplete}
-          />
-        )} */}
+        <VecProcess isUploadDone={isUploadDone} />
       </div>
     </section>
   );

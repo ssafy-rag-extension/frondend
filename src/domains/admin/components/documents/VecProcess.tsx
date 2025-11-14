@@ -6,26 +6,32 @@ import type { VectorizationItem } from '@/domains/admin/types/documents.types';
 import { getVectorizationProgress } from '@/domains/admin/api/documents.api';
 import Pagination from '@/shared/components/Pagination';
 import { useAuthStore } from '@/domains/auth/store/auth.store';
+import type {
+  IngestStreamProgress,
+  IngestStreamSummary,
+} from '@/domains/admin/components/rag-test/types';
 
-// 🔥 단계별 progress 포함한 확장 구조
+// 단계별 progress 포함한 확장 구조
 type FileState = {
   overall: number;
   status: VectorizationItem['status'];
   step: VectorizationItem['currentStep'];
   steps: {
+    UPLOAD: number;
     EXTRACTION: number;
     EMBEDDING: number;
-    VECTOR_STORED: number;
+    VECTOR_STORE: number;
   };
 };
 
-export default function VecProcess() {
+export default function VecProcess({ isUploadDone }: { isUploadDone: boolean }) {
   const [pageNum, setPageNum] = useState(1);
 
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [fileStates, setFileStates] = useState<Record<string, FileState>>({});
   const [overallStatus, setOverallStatus] = useState<'IDLE' | 'RUNNING' | 'DONE' | 'ERROR'>('IDLE');
-  const validSteps = ['EXTRACTION', 'EMBEDDING', 'VECTOR_STORED'] as const;
+  const validSteps = ['UPLOAD', 'EXTRACTION', 'EMBEDDING', 'VECTOR_STORE'] as const;
+  const [summary, setSummary] = useState<{ completed: number; total: number } | null>(null);
 
   const SPRING_API_BASE_URL = import.meta.env.VITE_SPRING_BASE_URL;
   const token = useAuthStore((s) => s.accessToken);
@@ -39,9 +45,21 @@ export default function VecProcess() {
   const { data: progressData, refetch } = useQuery({
     queryKey: ['vectorization-progress', pageNum],
     queryFn: () => getVectorizationProgress(pageNum - 1, pageSize),
+    enabled: false,
     staleTime: 0,
     refetchOnWindowFocus: false,
   });
+
+  useEffect(() => {
+    if (isUploadDone) {
+      refetch(); // 최초 조회
+    }
+  }, [isUploadDone]);
+
+  useEffect(() => {
+    console.log('🔥 progressData:', progressData);
+  }, [progressData]);
+
   const items = progressData?.data ?? [];
 
   //fileNo → fileName 매핑
@@ -57,20 +75,50 @@ export default function VecProcess() {
 
     const initial: Record<string, FileState> = {};
 
-    items.forEach((item: VectorizationItem) => {
-      initial[item.fileNo] = {
-        overall: item.overallPct ?? 0,
-        status: item.status,
-        step: item.currentStep,
-        steps: {
-          EXTRACTION: item.currentStep === 'EXTRACTION' ? (item.progressPct ?? 0) : 0,
-          EMBEDDING: item.currentStep === 'EMBEDDING' ? (item.progressPct ?? 0) : 0,
-          VECTOR_STORED: item.currentStep === 'VECTOR_STORED' ? (item.progressPct ?? 0) : 0,
-        },
-      };
-    });
+    items
+      .filter((item: VectorizationItem) => item.status !== 'COMPLETED')
+      .forEach((item: VectorizationItem) => {
+        if (item.status === 'COMPLETED') return;
 
-    setFileStates((prev) => ({ ...prev, ...initial }));
+        const idx = validSteps.indexOf(item.currentStep);
+
+        const stepState = {
+          UPLOAD: 0,
+          EXTRACTION: 0,
+          EMBEDDING: 0,
+          VECTOR_STORE: 0,
+        };
+
+        // 현재 단계
+        if (isValidStep(item.currentStep)) {
+          stepState[item.currentStep] = item.progressPct ?? 0;
+        }
+
+        // 이전 단계는 100으로
+        for (let i = 0; i < idx; i++) {
+          stepState[validSteps[i]] = 100;
+        }
+
+        initial[item.fileNo] = {
+          overall: item.overallPct ?? 0,
+          status: item.status,
+          step: item.currentStep,
+          steps: stepState,
+        };
+      });
+
+    setFileStates((prev) => {
+      const next = { ...prev };
+
+      Object.entries(initial).forEach(([fileNo, state]) => {
+        // 이미 SSE에서 관리 중인 파일이면 덮어쓰지 않음
+        if (!next[fileNo]) {
+          next[fileNo] = state;
+        }
+      });
+
+      return next;
+    });
     setOverallStatus('RUNNING');
 
     if (!selectedFile && items.length > 0) {
@@ -80,10 +128,8 @@ export default function VecProcess() {
 
   // SSE 연결
   useEffect(() => {
-    if (!token) {
-      console.error('No auth token for SSE connection');
-      return;
-    }
+    if (!isUploadDone) return;
+    if (!token) return;
 
     const eventSource = new EventSourcePolyfill(
       `${SPRING_API_BASE_URL}/api/v1/ingest/progress/stream`,
@@ -92,29 +138,47 @@ export default function VecProcess() {
       }
     );
 
-    const updateState = (payload: any) => {
-      const fileNo = payload.fileNo;
-      if (!fileNo) return;
+    const updateState = (payload: IngestStreamProgress) => {
+      if (!payload || typeof payload !== 'object') return;
+      if (!payload.fileNo) return;
 
-      setFileStates((prev) => {
+      const fileNo = payload.fileNo;
+
+      setFileStates((prev: Record<string, FileState>): Record<string, FileState> => {
         const prevState = prev[fileNo] ?? {
           overall: 0,
           status: 'PENDING',
           step: null,
           steps: {
+            UPLOAD: 0,
             EXTRACTION: 0,
             EMBEDDING: 0,
-            VECTOR_STORED: 0,
+            VECTOR_STORE: 0,
           },
         };
 
         const newSteps = { ...prevState.steps };
 
-        // 현재 단계별 진행률 값 저장
+        // 현재 단계 갱신
         if (isValidStep(payload.currentStep)) {
-          newSteps[payload.currentStep as keyof FileState['steps']] = payload.progressPct ?? 0;
+          newSteps[payload.currentStep] = payload.progressPct ?? 0;
         }
 
+        // 현재 단계 갱신 이전 단계들은 자동 100%
+        if (isValidStep(payload.currentStep)) {
+          const currentIndex = validSteps.indexOf(payload.currentStep);
+
+          for (let i = 0; i < currentIndex; i++) {
+            const prevStep = validSteps[i];
+            newSteps[prevStep] = 100; // 자동 100%
+          }
+        }
+
+        // 단계가 COMPLETED 상태라면 → 100%로 강제 설정
+        if (payload.status === 'COMPLETED' && isValidStep(payload.currentStep)) {
+          newSteps[payload.currentStep] = 100;
+        }
+        console.log(payload);
         return {
           ...prev,
           [fileNo]: {
@@ -125,23 +189,45 @@ export default function VecProcess() {
           },
         };
       });
-
-      refetch();
-      if (payload.status === 'COMPLETED') {
-        setOverallStatus('DONE');
-      }
     };
 
     eventSource.addEventListener('heartbeat', () => {});
 
-    eventSource.addEventListener('initial', (event: any) => {
-      updateState(JSON.parse(event.data));
-      refetch();
+    eventSource.addEventListener('initial', (event) => {
+      const msg = event as MessageEvent<string>;
+      if (!msg.data) return;
+
+      const payload: IngestStreamProgress = JSON.parse(msg.data);
+      updateState(payload);
     });
 
-    eventSource.addEventListener('progress', (event: any) => {
-      updateState(JSON.parse(event.data));
-      refetch();
+    eventSource.addEventListener('progress', (event) => {
+      const msg = event as MessageEvent<string>;
+      if (!msg.data) return;
+
+      const payload: IngestStreamProgress = JSON.parse(msg.data);
+      updateState(payload);
+    });
+
+    eventSource.addEventListener('summary', (event) => {
+      const msg = event as MessageEvent<string>;
+      if (!msg.data) return;
+
+      try {
+        const payload: IngestStreamSummary = JSON.parse(msg.data);
+        setSummary(payload);
+        if (payload.completed === payload.total) {
+          console.log('🎉 모든 ingest run 완료 → SSE 연결 종료');
+
+          setOverallStatus('DONE');
+          // 약간의 지연 후 종료
+          setTimeout(() => {
+            eventSource.close();
+          }, 300);
+        }
+      } catch (error) {
+        console.error('Error parsing summary event data:', error);
+      }
     });
 
     eventSource.onerror = () => {
@@ -151,7 +237,7 @@ export default function VecProcess() {
     };
 
     return () => eventSource.close();
-  }, [token]);
+  }, [isUploadDone, token]);
 
   // 완료된 파일 제거
   useEffect(() => {
@@ -190,9 +276,9 @@ export default function VecProcess() {
   const current = selectedFile ? fileStates[selectedFile] : null;
 
   return (
-    <section className="grid grid-cols-[2fr_5fr] gap-6 mt-6 p-5 border rounded-xl bg-white">
+    <section className="grid grid-cols-[3fr_7fr] gap-6 mt-6 p-5 border rounded-xl bg-white">
       {/* ---------------- 왼쪽 목록 ---------------- */}
-      <div className="border rounded-lg p-4">
+      <div className=" rounded-lg p-4">
         <h3 className="font-bold mb-3 text-gray-800">진행 중인 파일 목록</h3>
 
         {activeItems.length === 0 ? (
@@ -236,7 +322,7 @@ export default function VecProcess() {
       </div>
 
       {/* ---------------- 오른쪽 상세 ---------------- */}
-      <div className="border rounded-lg p-4">
+      <div className="rounded-lg p-4">
         <h3 className="font-bold mb-4 text-gray-800">상세 진행률</h3>
 
         {!current ? (
@@ -255,39 +341,22 @@ export default function VecProcess() {
             <div className="grid grid-cols-4 gap-6 mb-6">
               {/* 1. 업로드 */}
               <div className="flex flex-col items-center">
-                <CloudUpload
-                  className={`w-12 h-12 ${
-                    current.step?.includes('UPLOAD') || current.step?.includes('MINIO')
-                      ? 'text-[var(--color-hebees)]'
-                      : 'text-[var(--color-hebees-blue)] opacity-50'
-                  }`}
-                />
+                <CloudUpload className="w-12 h-12 text-[var(--color-hebees-blue)]" />
+
                 <span className="text-sm font-medium text-gray-700 mt-1">업로드</span>
-                <span className="text-xs text-gray-500">{current.overall.toFixed(1)}%</span>
+                <span className="text-xs text-gray-500">{current.steps.UPLOAD.toFixed(1)}%</span>
 
                 <div className="w-full h-2 bg-gray-200 rounded-full mt-2 overflow-hidden">
                   <div
                     className="h-full bg-[var(--color-hebees)] transition-all"
-                    style={{
-                      width: `${
-                        current.step?.includes('UPLOAD') || current.step?.includes('MINIO')
-                          ? current.overall
-                          : 0
-                      }%`,
-                    }}
+                    style={{ width: `${current.steps.UPLOAD}%` }}
                   />
                 </div>
               </div>
 
               {/* 2. 데이터 정제 */}
               <div className="flex flex-col items-center">
-                <Zap
-                  className={`w-12 h-12 ${
-                    current.step === 'EXTRACTION'
-                      ? 'text-[var(--color-hebees)]'
-                      : 'text-[var(--color-hebees-blue)] opacity-50'
-                  }`}
-                />
+                <Zap className="w-12 h-12 text-[var(--color-hebees-blue)]" />
                 <span className="text-sm font-medium text-gray-700 mt-1">데이터 정제</span>
                 <span className="text-xs text-gray-500">
                   {current.steps.EXTRACTION.toFixed(1)}%
@@ -303,13 +372,7 @@ export default function VecProcess() {
 
               {/* 3. 임베딩 생성 */}
               <div className="flex flex-col items-center">
-                <Database
-                  className={`w-12 h-12 ${
-                    current.step === 'EMBEDDING'
-                      ? 'text-[var(--color-hebees)]'
-                      : 'text-[var(--color-hebees-blue)] opacity-50'
-                  }`}
-                />
+                <Database className="w-12 h-12 text-[var(--color-hebees-blue)]" />
                 <span className="text-sm font-medium text-gray-700 mt-1">임베딩 생성</span>
                 <span className="text-xs text-gray-500">{current.steps.EMBEDDING.toFixed(1)}%</span>
 
@@ -323,22 +386,16 @@ export default function VecProcess() {
 
               {/* 4. Vector DB 저장 */}
               <div className="flex flex-col items-center">
-                <CircleCheck
-                  className={`w-12 h-12 ${
-                    current.step === 'VECTOR_STORED'
-                      ? 'text-[var(--color-hebees)]'
-                      : 'text-[var(--color-hebees-blue)] opacity-50'
-                  }`}
-                />
+                <CircleCheck className="w-12 h-12 text-[var(--color-hebees-blue)]" />
                 <span className="text-sm font-medium text-gray-700 mt-1">Vector 저장</span>
                 <span className="text-xs text-gray-500">
-                  {current.steps.VECTOR_STORED.toFixed(1)}%
+                  {current.steps.VECTOR_STORE.toFixed(1)}%
                 </span>
 
                 <div className="w-full h-2 bg-gray-200 rounded-full mt-2 overflow-hidden">
                   <div
                     className="h-full bg-[var(--color-hebees)] transition-all"
-                    style={{ width: `${current.steps.VECTOR_STORED}%` }}
+                    style={{ width: `${current.steps.VECTOR_STORE}%` }}
                   />
                 </div>
               </div>
@@ -352,6 +409,11 @@ export default function VecProcess() {
                   className="h-full bg-[var(--color-retina)] transition-all"
                   style={{ width: `${current.overall}%` }}
                 />
+                {summary && (
+                  <div className="text-xs text-gray-700 mt-1">
+                    {summary.completed} / {summary.total} 완료
+                  </div>
+                )}
               </div>
             </div>
           </>

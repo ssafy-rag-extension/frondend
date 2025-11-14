@@ -195,6 +195,7 @@ export default function ColList({ onCollectionSelect }: ColListProps) {
       createdAt: doc.createdAt,
       categoryNo: doc.categoryNo || undefined,
       type: doc.type || 'txt',
+      status: doc.status,
     }));
   };
 

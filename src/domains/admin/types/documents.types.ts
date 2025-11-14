@@ -81,6 +81,7 @@ export type documentDatatype = {
   categoryNo: string;
   collectionNo: string;
   createdAt: string;
+  status: string;
 };
 
 // 컬렉션 환경 타입
@@ -97,7 +98,7 @@ export type FileType = {
 };
 
 export type VectorizationStep = {
-  type: 'UPLOAD' | 'EXTRACTION' | 'EMBEDDING' | 'VECTOR_STORED';
+  type: 'UPLOAD' | 'EXTRACTION' | 'EMBEDDING' | 'VECTOR_STORE';
   percentage: number;
 };
 
@@ -110,7 +111,7 @@ export type VectorizationItem = {
   size: number;
 
   status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED';
-  currentStep: 'UPLOAD' | 'EXTRACTION' | 'EMBEDDING' | 'VECTOR_STORED';
+  currentStep: 'UPLOAD' | 'EXTRACTION' | 'EMBEDDING' | 'VECTOR_STORE';
 
   progressPct: number;
   overallPct: number;

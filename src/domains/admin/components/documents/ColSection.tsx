@@ -70,11 +70,14 @@ export default function ColSection({ selectedCollection, onCollectionSelect }: C
 
       <div className="space-y-4">
         {collections.map((col) => {
-          const docs = docsByCollection[col.collectionNo] ?? [];
-          const totalPages = Math.ceil(docs.length / FILES_PER_PAGE);
+          const rawDocs = docsByCollection[col.collectionNo];
+          const safeDocs = Array.isArray(rawDocs) ? rawDocs : [];
+
+          const totalPages = Math.ceil(safeDocs.length / FILES_PER_PAGE);
+
           const currentPage = page[col.collectionNo] || 1;
           const startIndex = (currentPage - 1) * FILES_PER_PAGE;
-          const visibleFiles = docs.slice(startIndex, startIndex + FILES_PER_PAGE);
+          const visibleFiles = safeDocs.slice(startIndex, startIndex + FILES_PER_PAGE);
 
           return (
             <div
