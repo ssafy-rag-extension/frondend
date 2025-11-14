@@ -3,15 +3,15 @@ import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import ChatInput from '@/shared/components/chat/ChatInput';
 import ChatMessageItem from '@/shared/components/chat/ChatMessageItem';
 import ScrollToBottomButton from '@/shared/components/chat/ScrollToBottomButton';
-import { getSession, getMessages, sendMessage } from '@/shared/api/chat.api';
-// import { getSession, getMessages } from '@/shared/api/chat.api';
+// import { getSession, getMessages, sendMessage } from '@/shared/api/chat.api';
+import { getSession, getMessages } from '@/shared/api/chat.api';
 import type { UiMsg, UiRole } from '@/shared/components/chat/ChatMessageItem';
 import type {
   ChatRole,
   MessageItem,
   MessagePage,
-  SendMessageRequest,
-  SendMessageResult,
+  // SendMessageRequest,
+  // SendMessageResult,
 } from '@/shared/types/chat.types';
 import {
   useDerivedSessionNo,
@@ -19,9 +19,10 @@ import {
   useThinkingTicker,
 } from '@/domains/user/hooks/useChatHelpers';
 import { useChatModelStore } from '@/shared/store/useChatModelStore';
-// import type { RagQueryProcessResult } from '@/shared/types/chat.rag.types';
-// import { postRagQuery } from '@/shared/api/chat.rag.api';
+import type { RagQueryProcessResult } from '@/shared/types/chat.rag.types';
+import { postRagQuery } from '@/shared/api/chat.rag.api';
 import { toast } from 'react-toastify';
+import ChatEmptyState from '@/shared/components/chat/ChatEmptyState';
 
 const mapRole = (r: ChatRole): UiRole => (r === 'human' ? 'user' : r === 'ai' ? 'assistant' : r);
 
@@ -44,7 +45,7 @@ export default function TextChat() {
   const sessionPromiseRef = useRef<Promise<string> | null>(null);
 
   const { selectedModel, selectedLlmNo, setSelectedModel } = useChatModelStore();
-  // const [llmNo, setLlmNo] = useState<string | null>(null);
+  const [llmNo, setLlmNo] = useState<string | null>(null);
 
   const [historyCursor, setHistoryCursor] = useState<string | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -112,7 +113,7 @@ export default function TextChat() {
         const llmNoFromSession = sessionInfo?.llmNo ?? selectedLlmNo;
 
         setSelectedModel(llmName, llmNoFromSession);
-        // setLlmNo(llmNoFromSession ?? null);
+        setLlmNo(llmNoFromSession ?? null);
 
         const mapped: UiMsg[] =
           (page.data ?? []).map(
@@ -128,7 +129,6 @@ export default function TextChat() {
         if (!cancelled) {
           setList(mapped);
 
-          // 다음 페이지용 커서 저장
           const nextCursor = page.pagination.nextCursor ?? null;
           setHistoryCursor(nextCursor);
           setHasMoreHistory(Boolean(nextCursor));
@@ -192,7 +192,7 @@ export default function TextChat() {
         el.scrollTop = newScrollHeight - prevScrollHeight;
       });
     } catch {
-      // 에러 시에는 상태만 되돌려두고, hasMoreHistory는 그대로 둠
+      setHasMoreHistory(false);
     } finally {
       setHistoryLoading(false);
     }
@@ -217,10 +217,7 @@ export default function TextChat() {
     if (historyLoading) {
       return;
     }
-    // if (!hasMoreHistory) {
-    //   console.log('[scroll] blocked: hasMoreHistory = false');
-    //   return;
-    // }
+    if (!hasMoreHistory) return;
     if (el.scrollTop <= 30) {
       console.log('[scroll] top reached → loadOlderMessages() 호출');
       void loadOlderMessages();
@@ -241,22 +238,22 @@ export default function TextChat() {
       const llmName: string = selectedModel ?? 'Qwen3-vl:8B';
       const sessionNo: string = await getOrCreateSessionNo(llmName, msg);
 
-      const body: SendMessageRequest = { content: msg, model: llmName };
-      const res = await sendMessage(sessionNo, body);
-      const result = res.data.result as SendMessageResult;
-      // const effectiveLlmNo = llmNo ?? selectedLlmNo;
+      // const body: SendMessageRequest = { content: msg, model: llmName };
+      // const res = await sendMessage(sessionNo, body);
+      // const result = res.data.result as SendMessageResult;
+      const effectiveLlmNo = llmNo ?? selectedLlmNo;
 
-      // if (!effectiveLlmNo) {
-      //   toast.error('LLM 정보가 없습니다. 세션 정보를 다시 불러와 주세요.');
-      //   throw new Error('LLM 정보가 없습니다.');
-      // }
+      if (!effectiveLlmNo) {
+        toast.error('LLM 정보가 없습니다. 세션 정보를 다시 불러와 주세요.');
+        throw new Error('LLM 정보가 없습니다.');
+      }
 
-      // const res = await postRagQuery({
-      //   llmNo: effectiveLlmNo,
-      //   sessionNo,
-      //   query: msg,
-      // });
-      // const result = res.data.result as RagQueryProcessResult;
+      const res = await postRagQuery({
+        llmNo: effectiveLlmNo,
+        sessionNo,
+        query: msg,
+      });
+      const result = res.data.result as RagQueryProcessResult;
 
       forceScrollRef.current = true;
       setList((prev: UiMsg[]) =>
@@ -266,8 +263,8 @@ export default function TextChat() {
               ? {
                   role: 'assistant',
                   content: result.content ?? '(응답이 없습니다)',
-                  createdAt: result.timestamp,
-                  // createdAt: result.createdAt,
+                  // createdAt: result.timestamp,
+                  createdAt: result.createdAt,
                   messageNo: result.messageNo,
                 }
               : m
@@ -351,7 +348,8 @@ export default function TextChat() {
         </>
       ) : (
         <div className="flex-1 flex items-center justify-center px-4">
-          <div className="w-full max-w-[75%] flex flex-col items-center gap-6 text-center">
+          <div className="w-full max-w-[75%] flex flex-col items-center gap-4 text-center">
+            <ChatEmptyState onSelectPrompt={handleSend} />
             <ChatInput onSend={handleSend} variant="retina" />
           </div>
         </div>

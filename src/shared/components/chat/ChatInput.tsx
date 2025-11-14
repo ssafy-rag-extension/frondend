@@ -71,16 +71,16 @@ export default function ChatInput({ onSend, variant = 'retina' }: Props) {
       <div className="w-full">
         <div
           className={`
-            border border-gray-300 px-4 py-3 shadow-sm transition-all
-            ${isTall ? 'rounded-xl' : 'rounded-full'}
-          `}
+    border border-gray-300 px-3 py-2 shadow-sm transition-all
+    ${isTall ? 'rounded-xl' : 'rounded-full'}
+  `}
         >
           <div className="flex items-end gap-2">
             <textarea
               ref={textareaRef}
               className="flex-1 w-full text-base border-none text-black placeholder-gray-400
-                         resize-none overflow-hidden leading-[1.4] min-h-[32px] max-h-[40vh]
-                         focus:outline-none focus:ring-0"
+                 resize-none overflow-hidden leading-[1.3] min-h-[24px] max-h-[40vh]
+                 focus:outline-none focus:ring-0"
               placeholder="레티나 챗봇에게 무엇이든 물어보세요."
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -89,6 +89,7 @@ export default function ChatInput({ onSend, variant = 'retina' }: Props) {
               onCompositionEnd={onCompositionEnd}
               rows={1}
             />
+
             <button
               type="button"
               disabled={isDisabled}
