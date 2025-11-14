@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, FileText, TriangleAlert, TrendingUp, TrendingDown } from 'lucide-react';
-import Card from '@/shared/components/Card';
+// import Card from '@/shared/components/Card';
 import { EventSourcePolyfill } from 'event-source-polyfill';
 import { useAuthStore } from '@/domains/auth/store/auth.store';
 import {
@@ -16,6 +16,7 @@ import type {
   TotalGroup,
   CurrentGroup,
 } from '@/domains/admin/types/rag.dashboard.types';
+import { DatabaseZap } from 'lucide-react';
 
 export default function NumberBoard() {
   // 실시간 데이터
@@ -202,21 +203,19 @@ export default function NumberBoard() {
     return (
       <div className="p-4 sm:p-5 h-full flex flex-col bg-white rounded-lg border shadow-sm">
         {/* 헤더 */}
-        <div className="mb-4 flex items-center gap-2">
+        <div className="flex items-center gap-2">
           {icon}
-          <span className="text-xl font-bold text-gray-900">{title}</span>
+          <span className="text-lg font-bold text-gray-900">{title}</span>
         </div>
 
         {/* 메인 숫자 */}
-        <div className="flex flex-col space-y-1 justify-center flex-1">
-          <div className="flex items-center gap-0.5">
-            <div className="relative aspect-square w-[45%] flex items-center justify-center overflow-hidden">
-              <p className="absolute left-0 right-0 text-4xl sm:text-4xl font-extrabold text-gray-900">
-                {current.toLocaleString()}
-              </p>
-            </div>
-            <span className="text-xl text-gray-400 mx-[2px] mt-2.5">/</span>
-            <span className="text-xl text-gray-400 font-normal mt-2.5">
+        <div className="flex flex-col gap-y-1 justify-center flex-1 mt-2.5">
+          <div className="flex items-end gap-1 leading-tight">
+            <span className="text-2xl font-extrabold text-gray-900 min-w-[2ch] text-right tabular-nums">
+              {current.toLocaleString()}
+            </span>
+            <span className="text-lg text-gray-400 mx-1">/</span>
+            <span className="text-lg text-gray-400 font-normal min-w-[2ch] text-right tabular-nums">
               {totalLabel} {totalCount.toLocaleString()}
             </span>
           </div>
@@ -235,8 +234,8 @@ export default function NumberBoard() {
                   }`}
                 />
               )}
-              <span className="text-gray-600 text-lg">하루 전 대비</span>
-              <span className={`text-lg font-semibold ${color}`}>
+              <span className="text-gray-600 text-sm">전일 대비</span>
+              <span className={`text-sm font-semibold ${color}`}>
                 {sign}
                 {Math.abs(deltaValue).toFixed(2)}%
               </span>
@@ -248,38 +247,40 @@ export default function NumberBoard() {
   };
 
   return (
-    <Card
-      title="오늘의 실시간 로그"
-      subtitle="실시간으로 처리되는 로그 데이터"
-      className="p-4 h-full flex flex-col"
-    >
+    <div className="flex h-full flex-col rounded-2xl border bg-white p-8 shadow-sm">
+      <div className="flex items-start gap-3">
+        <DatabaseZap size={18} className="text-blue-500 mt-1" />
+        <h3 className="text-xl font-semibold text-gray-900">오늘의 실시간 로그</h3>
+      </div>
+      <p className="mt-0.5 mb-4 text-sm text-gray-500">실시간으로 처리되는 로그 데이터</p>
+
       <div className="mb-4 flex items-center"></div>
       <section className="grid grid-cols-1 md:grid-cols-3 gap-2 flex-1">
         {renderCard(
           'user',
           '현재 사용자 수',
-          <div className="h-[3rem] w-[3rem] rounded-lg bg-[var(--color-hebees-blue-bg)] flex items-center justify-center shadow-sm">
-            <Users size={35} className="text-[var(--color-hebees-blue)]" />
+          <div className="h-10 w-10 rounded-lg bg-[var(--color-hebees-blue-bg)] flex items-center justify-center shadow-sm">
+            <Users size={25} className="text-[var(--color-hebees-blue)]" />
           </div>,
           '총'
         )}
         {renderCard(
           'document',
           '업로드 문서 수',
-          <div className="h-[3rem] w-[3rem] rounded-lg bg-[var(--color-hebees-bg)] flex items-center justify-center shadow-sm">
-            <FileText size={35} className="text-[var(--color-hebees)]" />
+          <div className="h-10 w-10 rounded-lg bg-[var(--color-hebees-bg)] flex items-center justify-center shadow-sm">
+            <FileText size={25} className="text-[var(--color-hebees)]" />
           </div>,
           '총'
         )}
         {renderCard(
           'error',
           '오류 발생 수',
-          <div className="h-[3rem] w-[3rem] rounded-lg bg-red-50 flex items-center justify-center shadow-sm">
-            <TriangleAlert size={35} className="text-red-500" />
+          <div className="h-10 w-10 rounded-lg bg-red-50 flex items-center justify-center shadow-sm">
+            <TriangleAlert size={25} className="text-red-500" />
           </div>,
           '총'
         )}
       </section>
-    </Card>
+    </div>
   );
 }

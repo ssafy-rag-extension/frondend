@@ -3,7 +3,7 @@ import { Search, X, Clock, ChevronRight, Loader2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { getSessions } from '@/shared/api/chat.api';
 import type { SessionItem, ListSessionsResult } from '@/shared/types/chat.types';
-import { formatIsoDatetime } from '@/shared/utils/iso';
+import { formatCreatedAt } from '@/shared/utils/date';
 
 export type ChatSearchModalProps = {
   open: boolean;
@@ -95,7 +95,7 @@ export default function ChatSearchModal({
           <div className="truncate text-[13px] font-medium text-gray-800">{s.title}</div>
           <div className="mt-0.5 flex items-center gap-2 text-[11px] text-gray-500">
             <span className="inline-flex items-center gap-1">
-              <Clock size={12} /> {formatIsoDatetime(s.updatedAt)}
+              <Clock size={12} /> {formatCreatedAt(s.updatedAt)}
             </span>
           </div>
         </div>
@@ -224,7 +224,7 @@ function EmptyState({ query }: { query: string }) {
         <Search size={20} className="text-gray-400" />
       </div>
       <p className="text-sm font-medium text-gray-800">결과가 없어요</p>
-      <p className="mt-1 text-xs text-gray-500">'{query}'에 대한 세션을 찾지 못했습니다.</p>
+      <p className="mt-1 text-xs text-gray-500">'{query}'에 대한 채팅을 찾지 못했습니다.</p>
     </div>
   );
 }

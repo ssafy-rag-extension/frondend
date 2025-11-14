@@ -7,7 +7,7 @@ export type UploadedDoc = {
   id: string;
   name: string;
   sizeKB: number;
-  uploadedAt?: string;
+  createdAt?: string;
   category?: string;
   categoryId?: string;
   type: string;
@@ -49,6 +49,7 @@ export interface RawMyDoc {
   createdAt: string;
   originalFile?: File;
 }
+
 export interface MyDoc {
   fileNo: string;
   name: string;
@@ -59,7 +60,7 @@ export interface MyDoc {
   status: 'PENDING' | 'INGESTING' | 'COMPLETED' | 'FAILED';
   categoryNo: string;
   collectionNo: string;
-  uploadedAt: string;
+  createdAt: string;
 }
 
 export interface ServerPagination {

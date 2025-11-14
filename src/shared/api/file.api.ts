@@ -63,7 +63,7 @@ export async function fetchMyDocumentsNormalized(params?: {
       status: f.status,
       categoryNo: f.categoryNo ?? undefined,
       collectionNo: f.collectionNo ?? undefined,
-      uploadedAt: f.createdAt,
+      createdAt: f.createdAt,
     })),
     total: pg.totalItems,
     totalPages: pg.totalPages,
@@ -97,5 +97,5 @@ export async function deleteFile(fileNo: string): Promise<DeleteFileData> {
   const res = await fastApi.delete<ApiEnvelope<{ data: DeleteFileData }>>(
     `/api/v1/files/${fileNo}`
   );
-  return res.data?.result?.data;
+  return res.data.result.data;
 }

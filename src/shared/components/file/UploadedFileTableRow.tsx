@@ -61,7 +61,7 @@ export default function UploadedFileTableRow({
           : `${doc.sizeKB.toFixed(1)} KB`}
       </td>
 
-      <td className="px-4 py-2 text-right text-gray-600">{doc.uploadedAt ?? '-'}</td>
+      <td className="px-4 py-2 text-right text-gray-600">{doc.createdAt ?? '-'}</td>
 
       <td className="px-4 py-2">
         <div className="flex justify-end">

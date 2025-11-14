@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import Highcharts from 'highcharts';
-import Card from '@/shared/components/Card';
 import Select from '@/shared/components/Select';
 import type { modelTokenTime, modelData } from '@/domains/admin/types/rag.dashboard.types';
 import { getModelTokenUsageTimeSeries } from '@/domains/admin/api/rag.dashboard.api';
+import { Braces } from 'lucide-react';
 
 export default function ModelUsageChart() {
   const chartRef = useRef<Highcharts.Chart | null>(null);
@@ -17,7 +17,7 @@ export default function ModelUsageChart() {
       const result = await getModelTokenUsageTimeSeries({ granularity: period });
       console.log('✅ 모델 토큰 사용량 시계열 데이터:', result);
       setData(result);
-      setModelsData(result.models);
+      setModelsData(result.model);
     };
     fetchData();
   }, [period]);
@@ -52,7 +52,7 @@ export default function ModelUsageChart() {
       legend: {
         align: 'center',
         verticalAlign: 'bottom',
-        itemStyle: { color: '#374151', fontSize: '12px' },
+        itemStyle: { color: '#374151', fontSize: '10px' },
       },
       plotOptions: {
         series: {
@@ -69,6 +69,20 @@ export default function ModelUsageChart() {
 
     handlePeriodChange('day');
   }, []);
+
+  useEffect(() => {
+    if (!modelsData || !chartRef.current) return;
+
+    const newSeries: Highcharts.SeriesOptionsType[] = modelsData.map((m) => ({
+      name: m.modelName,
+      type: 'line',
+      data: m.usageTokens.map((p) => [p.x, p.y]),
+    }));
+
+    setTimeout(() => {
+      chartRef.current?.update({ series: newSeries as Highcharts.SeriesOptionsType[] }, true, true);
+    }, 0);
+  }, [modelsData, chartRef.current]);
 
   // 기간 변경 핸들러
   const handlePeriodChange = (type: (typeof periods)[number]) => {
@@ -93,20 +107,16 @@ export default function ModelUsageChart() {
         labels: { format: '{value:%m}월', style: { fontSize: '11px', color: '#6B7280' } },
       });
     }
-
-    // 모델별 누적 면적 그래프 시리즈 생성
-    const newSeries = modelsData?.map((model) => ({
-      name: model.modelName,
-      type: 'areaspline' as const,
-      data: model.usageTokens.map((point) => [point.x, point.y]),
-    }));
-
-    chart.update({ series: newSeries }, true, true);
   };
 
   return (
-    <Card title="모델별 토큰 사용량" subtitle="일별, 주별, 월별 토큰 사용량 추이" className="p-4">
-      <div className="flex items-center justify-between mb-3">
+    <div className="flex h-full flex-col rounded-2xl border bg-white p-8 shadow-sm">
+      <div className="flex items-start gap-3">
+        <Braces size={18} className="text-blue-500 mt-1" />
+        <h3 className="text-xl font-semibold text-gray-900">모델별 토큰 사용량</h3>
+      </div>
+      <p className="mt-0.5 mb-4 text-sm text-gray-500">일별, 주별, 월별 토큰 사용량 추이</p>
+      <div className="flex items-center justify-between mb-6">
         <div className="ml-auto w-40">
           <Select
             value={period}
@@ -121,6 +131,6 @@ export default function ModelUsageChart() {
       </div>
 
       <div id="model-usage-chart" className="w-full" />
-    </Card>
+    </div>
   );
 }

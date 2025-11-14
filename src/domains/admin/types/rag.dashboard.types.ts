@@ -76,7 +76,7 @@ export type chatbotUsageItems = {
 // 모델별 평균 토큰, 응답 시간 타입
 export type modelTokenTime = {
   timeframe: modelTimeFrame;
-  models: Array<modelData>;
+  model: Array<modelData>;
 };
 
 export type modelTimeFrame = {
@@ -88,7 +88,7 @@ export type modelData = {
   modelId: string;
   modelName: string;
   usageTokens: Array<modelTokenResponse>;
-  averageResponseTimesMs: Array<modelTokenResponse>;
+  averageResponseTimeMs: Array<modelTokenResponse>;
 };
 export type modelTokenResponse = {
   x: string;
@@ -143,7 +143,7 @@ export type errorItem = {
   userName: string;
   chatRoomId: string;
   errorType: string;
-  occurredAt: string;
+  occuredAt: string;
 };
 
 ////////////////////////////
@@ -157,7 +157,7 @@ export type chatroomTimeframe = {
   end: string;
 };
 export type chatroomItem = {
-  chatTitle: string;
+  title: string;
   userType: string;
   userName: string;
   chatRoomId: string;

@@ -124,3 +124,17 @@ export type ExpenseEvent = {
   models: ModelExpense[];
   grandPriceUsd: number;
 };
+
+export type RagPipelineResponseTimeMetric = {
+  name: string;
+  averageTimeMs: number;
+  count: number;
+  minTimeMs: number;
+  maxTimeMs: number;
+};
+
+export type RagPipelineResponseTimeResult = {
+  metrics: RagPipelineResponseTimeMetric[];
+};
+
+export type RagPipelineResponseTimeResponse = ApiEnvelope<RagPipelineResponseTimeResult>;
