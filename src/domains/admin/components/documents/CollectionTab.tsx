@@ -6,6 +6,7 @@ import ColList from '@/domains/admin/components/documents/ColList';
 import type { DocItem } from '@/domains/admin/components/rag-test/CollectionDocuments';
 import CollectionDocumentsAdm from '@/domains/admin/components/documents/CollectionDocumentsAdm';
 import type { Collection } from '@/domains/admin/components/rag-test/types';
+import { formatCreatedAt } from '@/shared/utils/date';
 
 export default function CollectionTab() {
   const [selectedCollection, setSelectedCollection] = useState<Collection | null>(null);
@@ -76,7 +77,12 @@ export default function CollectionTab() {
     setSelectedCollection(collection);
     console.log('선택된 컬렉션:', collection);
     console.log('선택된 문서들:', docs);
-    setSelectedDocs(docs);
+    setSelectedDocs(
+      docs.map((d) => ({
+        ...d,
+        createdAt: formatCreatedAt(d.createdAt),
+      }))
+    );
   };
 
   return (
