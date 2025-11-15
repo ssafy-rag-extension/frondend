@@ -36,33 +36,39 @@ export default function SelectVectorization({
 
   useEffect(() => {
     setLocalFiles(finalSelectedFiles);
+    console.log('@%%%%', finalSelectedFiles);
   }, [finalSelectedFiles]);
 
   // 업로드
   async function handleUpload(finalSelectedFiles: RawMyDoc[]) {
     try {
-      console.log('@%%%%', finalSelectedFiles);
       onStartVectorizing();
 
       setIsUploading(true);
 
       // 카테고리로 그룹화
-      const groupedByCategory = finalSelectedFiles.reduce<Record<string, RawMyDoc[]>>(
+      const groupedByCategoryAndCollection = finalSelectedFiles.reduce<Record<string, RawMyDoc[]>>(
         (acc, file) => {
-          const category = file.categoryNo;
-          if (!acc[category]) acc[category] = [];
-          acc[category].push(file);
+          const categoryNo = file.categoryNo;
+          const bucket = file.collectionNo; // 👈 RawMyDoc에 있어야 함
+
+          const key = `${categoryNo}__${bucket}`;
+
+          if (!acc[key]) acc[key] = [];
+          acc[key].push(file);
           return acc;
         },
         {}
       );
 
-      const uploadPromises = Object.entries(groupedByCategory).map(([categoryNo, files]) => {
-        const bucket = files[0].bucket;
+      // 그룹별로 업로드 요청
+      const uploadPromises = Object.entries(groupedByCategoryAndCollection).map(([key, files]) => {
+        const categoryNo = files[0].categoryNo;
+        const bucket = files[0].collectionNo;
 
         return uploadFiles({
-          bucket, // string 단일 값
           categoryNo,
+          bucket,
           files: files.map((f) => f.originalFile as File),
         });
       });
@@ -83,12 +89,6 @@ export default function SelectVectorization({
       setIsUploading(false);
     }
   }
-
-  //   useEffect(() => {
-  //   if (isVectorizingDone) {
-  //     refetch(); // ✅ React Query로 전체 벡터화 진행률 재요청
-  //   }
-  // }, [isVectorizingDone, refetch]);
 
   const { data: collectionsResult } = useQuery({
     queryKey: ['collections', { filter: true }],
