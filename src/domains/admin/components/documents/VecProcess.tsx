@@ -42,22 +42,28 @@ export default function VecProcess({
 
   const SPRING_API_BASE_URL = import.meta.env.VITE_SPRING_BASE_URL;
   const token = useAuthStore((s) => s.accessToken);
+  const queryClient = useQueryClient();
 
   // 타입 가드
   const isValidStep = (step: any): step is keyof FileState['steps'] => {
     return validSteps.includes(step);
   };
 
-  // 이전 벡터화 내역 삭제
   useEffect(() => {
+    if (!isUploadDone) return;
+
+    // 상태 초기화
+    setFileStates({});
+    setSummary(null);
+    setSelectedFile(null);
+    setOverallStatus('RUNNING');
+
+    // 캐싱된 벡터화 진행률 삭제
     queryClient.removeQueries({
       queryKey: ['vectorization-progress'],
       exact: false,
     });
-    setFileStates({});
-    setSummary(null);
-    setSelectedFile(null);
-  }, []); // 최초 렌더 시 1번
+  }, [isUploadDone]);
 
   // 초기 데이터 조회
   const { data: progressData, refetch } = useQuery({
@@ -67,8 +73,6 @@ export default function VecProcess({
     enabled: false,
     refetchOnWindowFocus: false,
   });
-
-  const queryClient = useQueryClient();
 
   // useEffect(() => {
   //   if (isUploadDone) refetch();
@@ -85,9 +89,9 @@ export default function VecProcess({
     }
   }, [isUploadDone]);
 
-  useEffect(() => {
-    console.log('🔥 progressData:', progressData);
-  }, [progressData]);
+  // useEffect(() => {
+  //   console.log('🔥 progressData:', progressData);
+  // }, [progressData]);
 
   const items = progressData?.data ?? [];
 
@@ -101,6 +105,8 @@ export default function VecProcess({
   // 초기 상태 설정
   useEffect(() => {
     if (!progressData) return;
+    if (!isUploadDone) return;
+
     console.log('🟦 API progressData:', progressData);
     progressData?.data?.forEach((item: any) => {
       console.log(`🟩 API item:`, item.fileNo, item.fileName, item.status);
@@ -135,7 +141,7 @@ export default function VecProcess({
       };
     });
 
-    // 🔥🔥🔥 프론트 상태를 완전히 progressData 기반으로 재설정
+    // 프론트 상태를 완전히 progressData 기반으로 재설정
     setFileStates(initial);
 
     if (!selectedFile && items.length > 0) {
@@ -148,8 +154,7 @@ export default function VecProcess({
   // SSE 연결
   useEffect(() => {
     if (!isUploadDone) return;
-    if (!token) return;
-
+    // if (!progressData) return;
     const eventSource = new EventSourcePolyfill(
       `${SPRING_API_BASE_URL}/api/v1/ingest/progress/stream`,
       {
@@ -238,15 +243,12 @@ export default function VecProcess({
         if (payload.completed === payload.total) {
           console.log('🎉 모든 ingest run 완료 → SSE 연결 종료');
           toast.success('모든 파일이 업로드 되었습니다!');
+
+          eventSource.close();
           setFileStates({}); // 초기화
           setSelectedFile(null);
           setIsUploadDone(false);
           setOverallStatus('DONE');
-          setIsUploadDone(false);
-          // 약간의 지연 후 종료
-          setTimeout(() => {
-            eventSource.close();
-          }, 300);
         }
       } catch (error) {
         console.error('Error parsing summary event data:', error);
