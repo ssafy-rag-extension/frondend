@@ -1,10 +1,10 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { deleteFile, getPresignedUrl } from '@/shared/api/file.api';
 import { toast } from 'react-toastify';
-import ColList from '@/domains/admin/components/documents/ColList';
+import ColList from '@/domains/admin/components/documents/collection/ColList';
 import type { DocItem } from '@/domains/admin/components/rag-test/CollectionDocuments';
-import CollectionDocumentsAdm from '@/domains/admin/components/documents/CollectionDocumentsAdm';
+import CollectionDocumentsAdm from '@/domains/admin/components/documents/collection/CollectionDocumentsAdm';
 import type { Collection } from '@/domains/admin/components/rag-test/types';
 import { formatCreatedAt } from '@/shared/utils/date';
 
@@ -13,7 +13,7 @@ export default function CollectionTab() {
   const [selectedDocs, setSelectedDocs] = useState<DocItem[]>([]);
   const queryClient = useQueryClient();
 
-  // 문서 다운로드
+  // 1. 문서 다운로드
   const handleDownload = async (fileNo: string) => {
     const doc = selectedDocs.find((m) => m.id === fileNo);
     const fallbackName = doc?.name || `${fileNo}.bin`;
@@ -40,7 +40,7 @@ export default function CollectionTab() {
     }
   };
 
-  // 문서 삭제
+  // 2.  문서 삭제
   const handleDelete = async (ids: string[]) => {
     if (!selectedCollection) return;
 
@@ -55,9 +55,7 @@ export default function CollectionTab() {
         }
       }
 
-      // React Query 캐시 업데이트
       queryClient.invalidateQueries({ queryKey: ['docs', selectedCollection.id] });
-      // 선택된 문서 목록도 업데이트
       setSelectedDocs((prev) => prev.filter((d) => !ids.includes(d.id)));
       toast.success('삭제 완료 ✅');
     } catch (error) {
@@ -66,32 +64,30 @@ export default function CollectionTab() {
     }
   };
 
-  // 새로고침
+  // 3. 문서 새로고침
   const handleRefresh = () => {
     if (!selectedCollection) return;
     queryClient.invalidateQueries({ queryKey: ['docs', selectedCollection.id] });
   };
 
-  // ColList에서 선택된 컬렉션 정보 받기
-  const handleCollectionSelect = (collection: Collection | null, docs: DocItem[]) => {
+  // 4. ColList에서 선택된 컬렉션/문서 상태 반영
+  const handleCollectionSelect = useCallback((collection: Collection | null, docs: DocItem[]) => {
     setSelectedCollection(collection);
-    console.log('선택된 컬렉션:', collection);
-    console.log('선택된 문서들:', docs);
+
     setSelectedDocs(
       docs.map((d) => ({
         ...d,
-        createdAt: formatCreatedAt(d.createdAt),
+        createdAt: d.createdAt ? formatCreatedAt(d.createdAt) : undefined,
       }))
     );
-  };
+  }, []);
 
   return (
     <div className="flex gap-4">
-      {/* 왼쪽 1/3: ColList */}
       <div className="w-1/5 flex-shrink-0">
         <ColList onCollectionSelect={handleCollectionSelect} />
       </div>
-      {/* 오른쪽 2/3: CollectionDocuments 또는 빈 공간 */}
+
       <div className="w-4/5 flex-shrink-0">
         {selectedCollection ? (
           <CollectionDocumentsAdm
@@ -102,8 +98,8 @@ export default function CollectionTab() {
             onRefresh={handleRefresh}
           />
         ) : (
-          <div className="rounded-2xl border bg-white p-8 shadow-sm flex items-center justify-center h-full min-h-[400px]">
-            <p className="text-gray-400 text-center">컬렉션을 선택하면 문서 목록이 표시됩니다.</p>
+          <div className="flex min-h-[400px] h-full items-center justify-center rounded-2xl border bg-white p-8 shadow-sm">
+            <p className="text-center text-gray-400">컬렉션을 선택하면 문서 목록이 표시됩니다.</p>
           </div>
         )}
       </div>

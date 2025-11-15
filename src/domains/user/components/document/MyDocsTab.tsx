@@ -124,7 +124,7 @@ export default function MyDocsTab() {
       const res = await deleteFile(pendingDelete.fileNo);
 
       if (res?.deleted) {
-        toast.success('문서를 삭제했어요.');
+        toast.success('문서를 삭제했습니다.');
 
         setMyDocs((prev) => prev.filter((d) => d.fileNo !== pendingDelete.fileNo));
         setTotal((t) => Math.max(0, t - 1));

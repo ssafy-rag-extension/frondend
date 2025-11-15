@@ -1,31 +1,26 @@
 import { useState, useEffect } from 'react';
 import { ArrowRight } from 'lucide-react';
 import FileUploader from '@/shared/components/file/FileUploader';
-import UploadList from '@/domains/admin/components/documents/UploadList';
-import ColSection from '@/domains/admin/components/documents/ColSection';
-import SelectVectorization from '@/domains/admin/components/documents/SelectVectorization';
+import UploadList from '@/domains/admin/components/documents/upload/UploadList';
+import ColSection from '@/domains/admin/components/documents/upload/ColSection';
+import SelectVectorization from '@/domains/admin/components/documents/upload/SelectVectorization';
 import type { RawMyDoc } from '@/shared/types/file.types';
 import { toast } from 'react-toastify';
-import VecProcess from '@/domains/admin/components/documents/VecProcess';
+import VecProcess from '@/domains/admin/components/documents/upload/VecProcess';
 
 export default function UploadTab() {
-  //  업로드된 전체 파일
+  // 1. 업로드된 파일 / 컬렉션 매핑 상태
   const [uploadedFiles, setUploadedFiles] = useState<RawMyDoc[]>([]);
-
-  //  UploadList에서 선택된 파일들
   const [selectedFiles, setSelectedFiles] = useState<RawMyDoc[]>([]);
-
-  //  선택된 컬렉션 (public / hebees)
   const [selectedCollection, setSelectedCollection] = useState<string | null>(null);
-
-  //  컬렉션 지정까지 완료된 최종 선택 목록
+  const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [finalSelectedFiles, setFinalSelectedFiles] = useState<RawMyDoc[]>([]);
 
   const [isUploadDone, setIsUploadDone] = useState(false);
-  const [runningFiles, _setRunningFiles] = useState<RawMyDoc[]>([]);
-  const [_isVectorizing, setIsVectorizing] = useState(false);
+  const [runningFiles] = useState<RawMyDoc[]>([]);
+  const [, setIsVectorizing] = useState(false);
 
-  //  FileUploader → RawMyDoc 변환
+  // 2. 로컬 파일 업로드 → 임시 목록에 추가
   const handleUpload = ({ files, category }: { files: File[]; category: string }) => {
     if (!files || files.length === 0) return;
 
@@ -46,53 +41,58 @@ export default function UploadTab() {
     setUploadedFiles((prev) => [...prev, ...newFiles]);
   };
 
-  const handleCollectionSelect = (name: string | null) => {
-    setSelectedCollection(name);
+  // 3. 컬렉션 선택 콜백 (컬렉션 ID + bucket 문자열 전달)
+  const handleCollectionSelect = (collectionNo: string | null, bucket: string | null) => {
+    setSelectedCollection(collectionNo);
+    setSelectedBucket(bucket);
   };
 
+  // 4. 선택한 파일 + 선택한 컬렉션을 최종 벡터화 대상 리스트로 이동
   useEffect(() => {
-    if (selectedFiles.length > 0 && selectedCollection) {
-      const combined = selectedFiles.map((f) => ({
-        ...f,
-        collectionNo: selectedCollection,
-        bucket: selectedCollection,
-      }));
+    if (selectedFiles.length === 0) return;
+    if (!selectedCollection || !selectedBucket) return;
 
-      setFinalSelectedFiles((prev) => {
-        const existingKeys = new Set(prev.map((f) => `${f.fileNo}::${f.collectionNo}`));
-        const newOnes = combined.filter(
-          (f) => !existingKeys.has(`${f.fileNo}::${selectedCollection}`)
-        );
-        if (newOnes.length === 0) {
-          toast('⚠️ 해당 파일은 이미 선택 목록에 존재합니다.');
-          return prev;
-        }
-        return [...prev, ...newOnes];
-      });
+    const combined = selectedFiles.map((f) => ({
+      ...f,
+      collectionNo: selectedCollection,
+      bucket: selectedBucket,
+    }));
 
-      setSelectedFiles([]);
-      setSelectedCollection(null);
-    }
-  }, [selectedFiles, selectedCollection]);
+    setFinalSelectedFiles((prev) => {
+      const existingKeys = new Set(prev.map((f) => `${f.fileNo}::${f.collectionNo}`));
+      const newOnes = combined.filter((f) => !existingKeys.has(`${f.fileNo}::${f.collectionNo}`));
 
+      if (newOnes.length === 0) {
+        toast.error('해당 파일은 이미 선택 목록에 존재합니다.');
+        return prev;
+      }
+
+      return [...prev, ...newOnes];
+    });
+
+    setSelectedFiles([]);
+    setSelectedCollection(null);
+    setSelectedBucket(null);
+  }, [selectedFiles, selectedCollection, selectedBucket]);
+
+  // 5. 최종 선택 리스트에서 제거
   const handleRemoveFromFinal = (file: RawMyDoc) => {
     setFinalSelectedFiles((prev) =>
       prev.filter((f) => !(f.fileNo === file.fileNo && f.collectionNo === file.collectionNo))
     );
   };
 
+  // 6. 업로드 완료 → 벡터화 진행 SSE 시작 트리거
   const handleUploadComplete = () => {
     setIsUploadDone(true);
   };
 
   return (
-    <section className="flex flex-col gap-6 my-4">
-      {/* 파일 업로더 */}
-      <FileUploader onUpload={handleUpload} accept=".pdf,.xlsx" multiple brand="hebees" />
+    <section className="my-4 flex flex-col gap-6">
+      <FileUploader onUpload={handleUpload} brand="hebees" />
 
-      {/* 업로드 → 컬렉션 → 벡터화 흐름 */}
       <div className="flex items-center justify-between gap-4">
-        {/* 왼쪽: 업로드된 문서 */}
+        {/* 7. 업로드된 원본 파일 리스트 */}
         <div className="flex-1">
           <UploadList
             files={uploadedFiles}
@@ -102,10 +102,9 @@ export default function UploadTab() {
           />
         </div>
 
-        {/* 화살표 ① */}
-        <ArrowRight className="w-6 h-6 text-[var(--color-retina-dark)]" />
+        <ArrowRight className="h-6 w-6 text-[var(--color-hebees)]" />
 
-        {/* 가운데: 컬렉션 선택 */}
+        {/* 8. 파일을 저장할 컬렉션 선택 */}
         <div className="flex-1">
           <ColSection
             selectedCollection={selectedCollection}
@@ -114,10 +113,9 @@ export default function UploadTab() {
           />
         </div>
 
-        {/* 화살표 ② */}
-        <ArrowRight className="w-6 h-6 text-[var(--color-retina-dark)]" />
+        <ArrowRight className="h-6 w-6 text-[var(--color-hebees)]" />
 
-        {/* 오른쪽: 벡터화 대상 목록 */}
+        {/* 9. 최종 벡터화 대상 파일 목록 + 업로드 실행 */}
         <div className="flex-1">
           <SelectVectorization
             finalSelectedFiles={finalSelectedFiles}
@@ -128,6 +126,8 @@ export default function UploadTab() {
           />
         </div>
       </div>
+
+      {/* 10. 벡터화 진행 상황 SSE */}
       <div>
         <VecProcess isUploadDone={isUploadDone} setIsUploadDone={setIsUploadDone} />
       </div>

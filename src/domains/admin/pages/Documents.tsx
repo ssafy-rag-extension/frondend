@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { FileText, List as ListIcon, Upload as UploadIcon } from 'lucide-react';
 import SegmentedTabs from '@/shared/components/controls/SegmentedTabs';
-import UploadTab from '@/domains/admin/components/documents/UploadTab';
-import CollectionTab from '@/domains/admin/components/documents/CollectionTab';
+import UploadTab from '@/domains/admin/components/documents/upload/UploadTab';
+import CollectionTab from '@/domains/admin/components/documents/collection/CollectionTab';
 
 type TabKey = 'upload' | 'collection';
 const TAB_KEY_STORAGE = 'documents.activeTab';
