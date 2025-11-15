@@ -1,122 +1,345 @@
-import { useState } from 'react';
-import { Outlet, NavLink } from 'react-router-dom';
-import { Menu, Settings, Monitor, FolderCog, MessageCirclePlus, Bot, Bell } from 'lucide-react';
-import Tooltip from '@/shared/components/Tooltip';
+import { useState, useEffect } from 'react';
+import { Outlet, NavLink, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
+import {
+  Menu,
+  Settings,
+  Monitor,
+  FolderCog,
+  MessageSquare,
+  // Bot,
+  Bell,
+  LogOut,
+  UserCog,
+  Users,
+  Search,
+  Image,
+} from 'lucide-react';
+import Tooltip from '@/shared/components/controls/Tooltip';
+import ChatList from '@/shared/components/chat/list/ChatList';
+import ChatSearchModal from '@/shared/components/chat/layout/ChatSearchModal';
 import HebeesLogo from '@/assets/hebees-logo.png';
+import Select from '@/shared/components/controls/Select';
+import type { Option } from '@/shared/components/controls/Select';
+import { getMyLlmKeys } from '@/shared/api/llm.api';
+import type { MyLlmKeyResponse, MyLlmKeyListResponse } from '@/shared/types/llm.types';
+import { useChatModelStore } from '@/shared/store/useChatModelStore';
+
+const labelCls = (isOpen: boolean) =>
+  'ml-2 whitespace-nowrap transition-[max-width,opacity,transform] duration-300 ' +
+  (isOpen
+    ? 'max-w-[8rem] opacity-100 translate-x-0'
+    : 'max-w-0 opacity-0 -translate-x-2 pointer-events-none');
 
 const linkCls = ({ isActive }: { isActive: boolean }) =>
   'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ' +
   (isActive
-    ? 'bg-[var(--color-hebees)] text-white'
-    : 'text-gray-700 hover:bg-[var(--color-hebees-bg)] hover:text-[var(--color-hebees)]');
+    ? 'bg-[var(--color-hebees-bg)] text-[var(--color-hebees)]'
+    : 'text-gray-700 hover:bg-[var(--color-hebees)] hover:text-white');
+
+const MODEL_DESCRIPTIONS: Record<string, string> = {
+  'Qwen3-vl:8B': '가볍고 빠른 멀티모달 모델',
+  'GPT-4o': '전반적인 품질·안정성 균형',
+  'Gemini 2.5 Flash': '대용량 문서·검색 작업에 최적',
+  'Claude Sonnet 4': '복잡한 분석·글쓰기·요약에 강점',
+};
 
 export default function AdminLayout() {
   const [isOpen, setIsOpen] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [q, setQ] = useState('');
+  const [sp] = useSearchParams();
+  const activeSessionNo = sp.get('session') || undefined;
+  const navigate = useNavigate();
+
+  const location = useLocation();
+  const { pathname } = location;
+  const isChatRoute = pathname.startsWith('/admin/chat/text');
+
+  const [modelOptions, setModelOptions] = useState<Option[]>([]);
+  const { selectedModel, setSelectedModel } = useChatModelStore();
+
+  useEffect(() => {
+    let active = true;
+
+    (async () => {
+      const res = await getMyLlmKeys();
+      const result = res.data.result as MyLlmKeyListResponse;
+      const list: MyLlmKeyResponse[] = result?.data ?? [];
+
+      if (!active) return;
+
+      const options = list.map((k) => ({
+        value: k.llmName,
+        label: k.llmName,
+        desc: MODEL_DESCRIPTIONS[k.llmName] ?? '모델 설명 없음',
+      }));
+      setModelOptions(options);
+
+      let final = selectedModel;
+      const found = list.find((k) => k.llmName === final);
+
+      if (!found) {
+        final = list[0]?.llmName;
+      }
+
+      if (final) {
+        const matched = list.find((k) => k.llmName === final);
+        setSelectedModel(final, matched?.llmNo);
+      } else {
+        setSelectedModel(undefined, undefined);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [selectedModel, setSelectedModel]);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-transparent">
       <aside
-        className={`flex flex-col bg-white transition-all duration-300 shadow-sm h-screen ${
-          isOpen ? 'w-60 border-r' : 'w-16 border-r'
+        className={`sticky top-0 self-start shrink-0 h-dvh flex flex-col bg-white transition-all duration-300 shadow-sm ${
+          isOpen ? 'w-64 border-r' : 'w-[64px] border-r'
         }`}
       >
-        <div className="flex items-center justify-between h-16 py-4 px-6">
+        <div className="flex items-center justify-between px-4 py-5">
           {isOpen ? (
-            <div className="text-lg font-semibold">
-              <img src={HebeesLogo} alt="Hebees" className="w-24 h-8 object-contain" />
+            <div className="text-base font-semibold">
+              <img src={HebeesLogo} alt="Hebees" className="w-28 h-9 object-contain" />
             </div>
           ) : (
             <div className="w-full flex justify-center">
-              <Tooltip content="사이드바 열기" side="bottom" shiftX={15}>
+              <Tooltip content="사이드바 열기" side="right" shiftX={12} portal={true}>
                 <button
-                  onClick={() => setIsOpen(prev => !prev)}
+                  onClick={() => setIsOpen((prev) => !prev)}
                   className="text-[var(--color-hebees)] hover:text-[var(--color-hebees-dark)]"
                 >
-                  <Menu size={24} />
+                  <Menu size={22} />
                 </button>
               </Tooltip>
             </div>
           )}
 
           {isOpen && (
-            <Tooltip content="사이드바 닫기" side="bottom" shiftX={15}>
+            <Tooltip content="사이드바 닫기" side="right" shiftX={12} portal={true}>
               <button
                 onClick={() => setIsOpen(false)}
                 className="text-[var(--color-hebees)] hover:text-[var(--color-hebees-dark)]"
               >
-                <Menu size={24} />
+                <Menu size={22} />
               </button>
             </Tooltip>
           )}
         </div>
 
-        <nav className="flex flex-col gap-1 px-2 mt-2 overflow-hidden whitespace-nowrap">
+        <nav className="flex flex-col gap-1 px-2 mt-1 shrink-0">
           <NavLink to="/admin/dashboard" className={linkCls}>
-            <Monitor size={18} className="flex-shrink-0" />
-            <div
-              className={`transition-[width] duration-300 overflow-hidden ${
-                isOpen ? 'w-32' : 'w-0'
-              }`}
-            >
-              <span className="pl-2 inline-block">대시보드</span>
-            </div>
-          </NavLink>
-
-          <NavLink to="/admin/documents" className={linkCls}>
-            <FolderCog size={18} className="flex-shrink-0" />
-            <div
-              className={`transition-[width] duration-300 overflow-hidden ${
-                isOpen ? 'w-32' : 'w-0'
-              }`}
-            >
-              <span className="pl-2 inline-block">문서 관리</span>
-            </div>
-          </NavLink>
-
-          <NavLink to="/admin/chat" className={linkCls}>
-            <MessageCirclePlus size={18} className="flex-shrink-0" />
-            <div
-              className={`transition-[width] duration-300 overflow-hidden ${
-                isOpen ? 'w-32' : 'w-0'
-              }`}
-            >
-              <span className="pl-2 inline-block">새 채팅 시작하기</span>
+            {!isOpen ? (
+              <Tooltip content="대시보드" side="right" shiftX={12}>
+                <span>
+                  <Monitor size={18} className="flex-shrink-0" />
+                </span>
+              </Tooltip>
+            ) : (
+              <Monitor size={18} className="flex-shrink-0" />
+            )}
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">대시보드</span>
             </div>
           </NavLink>
 
           <NavLink to="/admin/rag/settings" className={linkCls}>
-            <Settings size={18} className="flex-shrink-0" />
-            <div
-              className={`transition-[width] duration-300 overflow-hidden ${
-                isOpen ? 'w-32' : 'w-0'
-              }`}
-            >
-              <span className="pl-2 inline-block">RAG 모델 설정</span>
+            {!isOpen ? (
+              <Tooltip content="RAG 모델 설정" side="right" shiftX={12}>
+                <span>
+                  <Settings size={18} className="flex-shrink-0" />
+                </span>
+              </Tooltip>
+            ) : (
+              <Settings size={18} className="flex-shrink-0" />
+            )}
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">RAG 모델 설정</span>
             </div>
           </NavLink>
 
-          <NavLink to="/admin/rag/test" className={linkCls}>
+          {/* <NavLink to="/admin/rag/test" className={linkCls}>
             <Bot size={18} className="flex-shrink-0" />
-            <div
-              className={`transition-[width] duration-300 overflow-hidden ${
-                isOpen ? 'w-32' : 'w-0'
-              }`}
-            >
-              <span className="pl-2 inline-block">RAG 모델 테스트</span>
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">RAG 모델 테스트</span>
+            </div>
+          </NavLink> */}
+
+          <NavLink to="/admin/chat/text" className={linkCls}>
+            {!isOpen ? (
+              <Tooltip content="RAG 채팅" side="right" shiftX={12}>
+                <span>
+                  <MessageSquare size={18} className="flex-shrink-0" />
+                </span>
+              </Tooltip>
+            ) : (
+              <MessageSquare size={18} className="flex-shrink-0" />
+            )}
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">RAG 채팅</span>
             </div>
           </NavLink>
+
+          <NavLink to="/admin/chat/image" className={linkCls}>
+            {!isOpen ? (
+              <Tooltip content="이미지 생성" side="right" shiftX={12}>
+                <span>
+                  <Image size={18} className="flex-shrink-0" />
+                </span>
+              </Tooltip>
+            ) : (
+              <Image size={18} className="flex-shrink-0" />
+            )}
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">이미지 생성</span>
+            </div>
+          </NavLink>
+
+          <NavLink to="/admin/documents" className={linkCls}>
+            {!isOpen ? (
+              <Tooltip content="문서 관리" side="right" shiftX={12}>
+                <span>
+                  <FolderCog size={18} className="flex-shrink-0" />
+                </span>
+              </Tooltip>
+            ) : (
+              <FolderCog size={18} className="flex-shrink-0" />
+            )}
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">문서 관리</span>
+            </div>
+          </NavLink>
+
+          <button
+            type="button"
+            className={
+              'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors ' +
+              'text-gray-700 hover:bg-[var(--color-hebees)] hover:text-white'
+            }
+            onClick={() => setOpen(true)}
+          >
+            {!isOpen ? (
+              <Tooltip content="채팅 검색" side="right" shiftX={12}>
+                <span>
+                  <Search size={18} className="flex-shrink-0" />
+                </span>
+              </Tooltip>
+            ) : (
+              <Search size={18} className="flex-shrink-0" />
+            )}
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">채팅 검색</span>
+            </div>
+          </button>
         </nav>
+
+        {isOpen && (
+          <div className="mt-6 mb-10 px-2 flex-1 min-h-0 overflow-y-auto overflow-x-visible overscroll-contain no-scrollbar">
+            <ChatList
+              activeSessionNo={activeSessionNo}
+              onSelect={(s) => navigate(`/admin/chat/text/${s.sessionNo}`)}
+              pageSize={20}
+              brand="hebees"
+            />
+          </div>
+        )}
+
+        <div className="mt-auto px-2 pb-4 shrink-0">
+          <NavLink
+            to="/admin/users"
+            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors text-gray-700 hover:bg-[var(--color-hebees-bg)] hover:text-[var(--color-hebees)]"
+          >
+            {!isOpen ? (
+              <Tooltip content="사용자 관리" side="right" shiftX={12}>
+                <span>
+                  <Users size={18} className="flex-shrink-0" />
+                </span>
+              </Tooltip>
+            ) : (
+              <Users size={18} className="flex-shrink-0" />
+            )}
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">사용자 관리</span>
+            </div>
+          </NavLink>
+
+          <NavLink
+            to="/admin/profile"
+            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors text-gray-700 hover:bg-[var(--color-hebees-bg)] hover:text-[var(--color-hebees)]"
+          >
+            {!isOpen ? (
+              <Tooltip content="내 정보 관리" side="right" shiftX={12}>
+                <span>
+                  <UserCog size={18} className="flex-shrink-0" />
+                </span>
+              </Tooltip>
+            ) : (
+              <UserCog size={18} className="flex-shrink-0" />
+            )}
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">내 정보 관리</span>
+            </div>
+          </NavLink>
+
+          <NavLink
+            to="/logout"
+            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors text-gray-700 hover:bg-[var(--color-hebees-bg)] hover:text-[var(--color-hebees)]"
+          >
+            {!isOpen ? (
+              <Tooltip content="로그아웃" side="right" shiftX={12}>
+                <span>
+                  <LogOut size={18} className="flex-shrink-0" />
+                </span>
+              </Tooltip>
+            ) : (
+              <LogOut size={18} className="flex-shrink-0" />
+            )}
+            <div className={labelCls(isOpen)}>
+              <span className="inline-block">로그아웃</span>
+            </div>
+          </NavLink>
+        </div>
       </aside>
 
-      <main className="flex-1 transition-all duration-300">
-        <div className="flex flex-col gap-4 px-32">
+      <main className="flex-1 min-w-0">
+        <div
+          className={`sticky z-30 top-0 flex px-8 py-5 ${
+            isChatRoute ? 'justify-between' : 'justify-end'
+          }`}
+        >
+          {isChatRoute && modelOptions.length > 0 && (
+            <Select
+              options={modelOptions}
+              value={selectedModel}
+              onChange={(v) => setSelectedModel(v)}
+              className="w-[190px]"
+              placeholder="모델 선택"
+            />
+          )}
+
           <Bell
-            size={24}
-            className="self-end text-gray-600 hover:text-gray-800 cursor-pointer transition-colors shake-hover mt-10"
+            size={22}
+            className="text-gray-600 hover:text-gray-800 cursor-pointer transition-colors shake-hover"
           />
-          <Outlet />
+        </div>
+
+        <div className="flex w-full flex-col gap-3 px-8">
+          <Outlet key={pathname + location.search} />
         </div>
       </main>
+
+      <ChatSearchModal
+        open={open}
+        value={q}
+        onValueChange={setQ}
+        onClose={() => setOpen(false)}
+        onSelect={(s) => navigate(`/admin/chat/text?session=${s.sessionNo}`)}
+      />
     </div>
   );
 }

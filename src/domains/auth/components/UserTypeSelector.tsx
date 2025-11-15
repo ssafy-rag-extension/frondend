@@ -1,18 +1,18 @@
 const USER_TYPES = [
-  { value: 'personal', label: '개인 안경원' },
-  { value: 'chain', label: '체인 안경원' },
-  { value: 'manufacturer', label: '제조 유통사' },
+  { value: 0, label: '개인 안경원' },
+  { value: 1, label: '체인 안경원' },
+  { value: 2, label: '제조 유통사' },
 ];
 
 interface UserTypeSelectorProps {
-  userType: string;
-  setUserType: React.Dispatch<React.SetStateAction<string>>;
+  userType: number;
+  setUserType: React.Dispatch<React.SetStateAction<number>>;
 }
 
 export default function UserTypeSelector({ userType, setUserType }: UserTypeSelectorProps) {
   return (
     <div className="flex justify-between space-x-2 text-sm">
-      {USER_TYPES.map(type => (
+      {USER_TYPES.map((type) => (
         <button
           key={type.value}
           type="button"
