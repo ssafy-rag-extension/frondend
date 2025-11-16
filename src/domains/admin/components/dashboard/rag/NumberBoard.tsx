@@ -16,7 +16,10 @@ import {
   getErrorChangeTrend,
 } from '@/domains/admin/api/rag.dashboard.api';
 import type { TrendGroup, TotalGroup } from '@/domains/admin/types/rag.dashboard.types';
-import { useNumberBoardStreams } from '@/domains/admin/hooks/useNumberBoardStreams';
+import {
+  useNumberBoardStreams,
+  useRealtimeUserStream,
+} from '@/domains/admin/hooks/useNumberBoardStreams';
 import {
   StatusPill,
   TimeRight,
@@ -24,7 +27,7 @@ import {
 
 export default function NumberBoard() {
   const { currentData, connected, errors } = useNumberBoardStreams();
-
+  const { realtimeUserData } = useRealtimeUserStream();
   const [totalData, setTotalData] = useState<TotalGroup | null>(null);
   const [trendData, setTrendData] = useState<TrendGroup | null>(null);
 
@@ -97,7 +100,24 @@ export default function NumberBoard() {
   ) : (
     <StatusPill text="대기" />
   );
-
+  const LiveBadge = () => (
+    <span
+      className="inline-flex items-center gap-1
+               px-1 py-[2px] text-[10px] font-semibold rounded-md
+               bg-red-100 text-red-600 border border-red-200"
+    >
+      <span>LIVE</span>
+      <span
+        className="ml-1 px-1.5 py-[1px] rounded-md 
+             bg-white/80 backdrop-blur-sm
+             text-[10px] font-bold text-red-600 
+             border border-red-200/70 shadow-[0_1px_2px_rgba(0,0,0,0.06)]
+             tracking-tight tabular-nums"
+      >
+        {realtimeUserData?.result?.activeUserCount?.toLocaleString() ?? 0}
+      </span>
+    </span>
+  );
   const renderCard = (
     key: keyof TrendGroup,
     title: string,
@@ -142,6 +162,7 @@ export default function NumberBoard() {
               <span className="text-[11px] text-slate-400">{subtitle}</span>
             </div>
           </div>
+          {key === 'user' && <LiveBadge />}
         </header>
 
         <div className="flex flex-1 flex-col gap-2">
@@ -201,6 +222,7 @@ export default function NumberBoard() {
         <p className="text-sm text-gray-500">
           현재 접속, 문서 업로드, 오류 발생 현황을 한눈에 확인하세요.
         </p>
+        <p></p>
       </header>
 
       <div className="mt-2 grid flex-1 grid-cols-1 gap-3 md:grid-cols-3">
