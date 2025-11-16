@@ -66,61 +66,67 @@ export default function AdminLayout() {
   const [modelOptions, setModelOptions] = useState<Option[]>([]);
   const { selectedModel, setSelectedModel } = useChatModelStore();
 
-  useEffect(() => {
-    let active = true;
+  // 모델 목록 불러오기 함수
+  const loadLlmKeys = async () => {
+    try {
+      const res = await getMyLlmKeys();
+      const result = res.data.result as MyLlmKeyListResponse;
+      const list: MyLlmKeyResponse[] = result?.data ?? [];
 
-    (async () => {
-      try {
-        const res = await getMyLlmKeys();
-        const result = res.data.result as MyLlmKeyListResponse;
+      // qwen 모델 체크 함수
+      const isQwen = (llmName: string | null | undefined): boolean => {
+        if (!llmName) return false;
+        const name = llmName.toLowerCase();
+        return name.includes('qwen');
+      };
 
-        if (!active) return;
+      // qwen은 항상 표시, 다른 모델은 hasKey=true인 것만 표시
+      const filteredList = list.filter((k) => isQwen(k.llmName) || k.hasKey);
+      
+      const options = filteredList
+        .map((k) => ({
+          value: k.llmName ?? '',
+          label: k.llmName ?? '',
+          desc: k.llmName
+            ? (MODEL_DESCRIPTIONS[k.llmName] ?? '모델 설명 없음')
+            : '모델 정보 없음',
+        }))
+        .filter((o) => o.value);
 
-        const list: MyLlmKeyResponse[] = result?.data ?? [];
+      setModelOptions(options);
 
-        const hasAnyKey = list.some((k) => k.hasKey);
-        if (!hasAnyKey || list.length === 0) {
-          setModelOptions([]);
-          setSelectedModel(undefined, undefined);
-          return;
-        }
+      // 필터링된 리스트를 기준으로 모델 선택
+      let final = selectedModel;
+      const found = filteredList.find((k) => k.llmName === final);
 
-        const options = list
-          .map((k) => ({
-            value: k.llmName ?? '',
-            label: k.llmName ?? '',
-            desc: k.llmName
-              ? (MODEL_DESCRIPTIONS[k.llmName] ?? '모델 설명 없음')
-              : '모델 정보 없음',
-          }))
-          .filter((o) => o.value);
+      if (!found) {
+        final = filteredList[0]?.llmName;
+      }
 
-        setModelOptions(options);
-
-        let final = selectedModel;
-        const found = list.find((k) => k.llmName === final);
-
-        if (!found) {
-          final = list[0]?.llmName;
-        }
-
-        if (final) {
-          const matched = list.find((k) => k.llmName === final);
-          setSelectedModel(final, matched?.llmNo);
-        } else {
-          setSelectedModel(undefined, undefined);
-        }
-      } catch (err) {
-        console.error(err);
-        setModelOptions([]);
+      if (final) {
+        const matched = filteredList.find((k) => k.llmName === final);
+        setSelectedModel(final, matched?.llmNo);
+      } else {
         setSelectedModel(undefined, undefined);
       }
-    })();
+    } catch (err) {
+      console.error(err);
+      setModelOptions([]);
+      setSelectedModel(undefined, undefined);
+    }
+  };
 
-    return () => {
-      active = false;
-    };
-  }, [selectedModel, setSelectedModel]);
+  // 초기 로드 시 모델 목록 불러오기
+  useEffect(() => {
+    loadLlmKeys();
+  }, []); // 컴포넌트 마운트 시 한 번만 실행
+
+  // 채팅 화면으로 돌아올 때 모델 목록 갱신
+  useEffect(() => {
+    if (isChatRoute) {
+      loadLlmKeys();
+    }
+  }, [isChatRoute]);
 
   return (
     <div className="flex min-h-screen bg-transparent">
