@@ -65,7 +65,6 @@ export default function AdminLayout() {
       try {
         const res = await getMyLlmKeys();
         const result = res.data.result as MyLlmKeyListResponse;
-        console.log(result);
 
         if (!active) return;
 
@@ -87,8 +86,6 @@ export default function AdminLayout() {
               : '모델 정보 없음',
           }))
           .filter((o) => o.value);
-
-        console.log(options);
 
         setModelOptions(options);
 
