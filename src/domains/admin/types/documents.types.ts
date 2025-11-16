@@ -110,7 +110,7 @@ export type VectorizationItem = {
   bucket: string;
   size: number;
 
-  status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
   currentStep: 'UPLOAD' | 'EXTRACTION' | 'EMBEDDING' | 'VECTOR_STORE';
 
   progressPct: number;

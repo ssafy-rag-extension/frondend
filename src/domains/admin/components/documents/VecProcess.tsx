@@ -202,7 +202,6 @@ export default function VecProcess({
         if (payload.status === 'COMPLETED' && isValidStep(payload.currentStep)) {
           newSteps[payload.currentStep] = 100;
         }
-        // console.log(payload);
         return {
           ...prev,
           [fileNo]: {

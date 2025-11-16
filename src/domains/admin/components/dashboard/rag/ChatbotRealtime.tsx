@@ -1,12 +1,7 @@
 import { useEffect, useRef } from 'react';
 import Highcharts from 'highcharts';
 import { MessageSquare } from 'lucide-react';
-import type {
-  chatbotRealtimeInit,
-  chatbotRealtimeLive,
-  initData,
-  updateData,
-} from '@/domains/admin/types/rag.dashboard.types';
+import type { initData, updateData } from '@/domains/admin/types/rag.dashboard.types';
 import { EventSourcePolyfill } from 'event-source-polyfill';
 import { useAuthStore } from '@/domains/auth/store/auth.store';
 

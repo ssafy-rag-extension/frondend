@@ -62,7 +62,7 @@ export default function SelectVectorization({
       );
 
       // 그룹별로 업로드 요청
-      const uploadPromises = Object.entries(groupedByCategoryAndCollection).map(([key, files]) => {
+      const uploadPromises = Object.entries(groupedByCategoryAndCollection).map(([, files]) => {
         const categoryNo = files[0].categoryNo;
         const bucket = files[0].collectionNo;
 
