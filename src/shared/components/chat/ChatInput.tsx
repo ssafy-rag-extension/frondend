@@ -10,9 +10,9 @@ type Props = {
   mode?: ChatMode;
   onChangeMode?: (mode: ChatMode) => void;
   watch?: number;
-  disabled?: boolean; // 완전 비활성 (ex. 권한 등)
-  loading?: boolean; // 응답 생성 중
-  onStop?: () => void; // 응답 중지
+  disabled?: boolean;
+  loading?: boolean;
+  onStop?: () => void;
 };
 
 export default function ChatInput({
@@ -35,17 +35,8 @@ export default function ChatInput({
 
   const trimmed = text.trim();
 
-  /** 전송 가능한 상태인지 (입력 + 로딩 아님 + disabled 아님) */
   const canSend = !disabled && !loading && trimmed.length > 0;
-
-  /** 버튼이 stop 모드인지(응답 중지 역할인지) */
   const isStopMode = !!onStop && loading;
-
-  /** 실제 버튼 disable 여부
-   *  - disabled가 true면 항상 비활성
-   *  - stop 모드면 항상 활성 (중지 눌러야 하니까)
-   *  - 그 외에는 canSend 따라감
-   */
   const isButtonDisabled = disabled || (!isStopMode && !canSend);
 
   const send = () => {
@@ -63,7 +54,7 @@ export default function ChatInput({
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (disabled || loading) return; // 응답 중엔 Enter 전송 막기
+    if (disabled || loading) return;
 
     if (e.key !== 'Enter') return;
 
@@ -93,7 +84,7 @@ export default function ChatInput({
     el.style.height = 'auto';
     el.style.height = `${el.scrollHeight}px`;
 
-    setIsTall(el.scrollHeight > 60);
+    setIsTall(el.scrollHeight > 40);
   }, [text]);
 
   const isAtBottom = () => {
@@ -252,7 +243,7 @@ export default function ChatInput({
               {isStopMode ? (
                 <Square size={16} strokeWidth={3} className="text-white" />
               ) : (
-                <ArrowUp size={20} strokeWidth={3} className="text-white" />
+                <ArrowUp size={20} strokeWidth={2} className="text-white" />
               )}
             </button>
           </div>
