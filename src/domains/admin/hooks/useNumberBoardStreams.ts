@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { EventSourcePolyfill } from 'event-source-polyfill';
 import { useAuthStore } from '@/domains/auth/store/auth.store';
-import type { CurrentGroup } from '@/domains/admin/types/rag.dashboard.types';
+import type { CurrentGroup, realtimeUserData } from '@/domains/admin/types/rag.dashboard.types';
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null;
@@ -157,4 +157,56 @@ export function useNumberBoardStreams() {
   }, [token, base]);
 
   return { currentData, connected, errors };
+}
+
+export function useRealtimeUserStream() {
+  const token = useAuthStore.getState().accessToken;
+  const base = import.meta.env.VITE_SPRING_BASE_URL;
+  const [errors, setErrors] = useState<NumberBoardErrors>({});
+  const [realtimeUserData, setRealtimeUserData] = useState<realtimeUserData | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const headers: Record<string, string> = {
+      Authorization: `Bearer ${token}`,
+      Accept: 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    };
+    const url = `${base}/api/v1/user/active/realtime`;
+
+    const es = new EventSourcePolyfill(url, {
+      headers,
+      withCredentials: true,
+      heartbeatTimeout: 3600000,
+    });
+    const payloadListener: ESListener = {
+      handleEvent(evt: Event) {
+        if (!isMessageEventString(evt)) return;
+        const parsed = parseData<realtimeUserData>(evt.data);
+        if (!parsed) return;
+        console.log('🔥 realtimeUserData SSE onmessage RAW:', evt);
+        setRealtimeUserData(parsed);
+      },
+    };
+
+    const errorListener: ESListener = {
+      handleEvent() {
+        setErrors({ user: 'SSE 연결 오류' });
+      },
+    };
+
+    es.addEventListener('init', payloadListener);
+    es.addEventListener('update', payloadListener);
+    es.addEventListener('error', errorListener);
+
+    return () => {
+      es.removeEventListener('init', payloadListener);
+      es.removeEventListener('update', payloadListener);
+      es.removeEventListener('error', errorListener);
+      es.close();
+    };
+  }, [token, base]);
+  return { realtimeUserData, errors };
 }

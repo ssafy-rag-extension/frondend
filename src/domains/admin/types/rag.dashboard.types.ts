@@ -197,3 +197,14 @@ export type updateData = {
   timestamp: string;
   requestCount: number;
 };
+
+export type realtimeUserData = {
+  status: number;
+  code: string;
+  message: string;
+  isSuccess: boolean;
+  result: {
+    activeUserCount: number;
+    timestamp: string;
+  };
+};
