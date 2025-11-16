@@ -92,9 +92,15 @@ export default function ApiKey({
         const llmName = NAME_TO_ID[selectedName].toLowerCase();
         const res = await getMyLlmKeyByName(llmName);
         if (controller.signal.aborted) return;
-        const record = (res.data.result as MyLlmKeyResponse) ?? null;
-        setCurrent(record);
-        setTempKey(record?.apiKey ?? '');
+        const record = res.data.result as MyLlmKeyResponse | null;
+
+        if (!record || !record.hasKey) {
+          setCurrent(null);
+          setTempKey('');
+        } else {
+          setCurrent(record);
+          setTempKey(record.apiKey ?? '');
+        }
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
       }
@@ -201,9 +207,9 @@ export default function ApiKey({
             <div className="flex items-center justify-between">
               <div
                 className="
-    text-base font-semibold text-gray-900 tabular-nums min-h-[28px]
-    min-w-[160px] truncate
-  "
+                  text-base font-semibold text-gray-900 tabular-nums min-h-[28px]
+                  min-w-[160px] truncate
+                "
               >
                 {isLoading ? (
                   <span className="text-gray-400">-</span>

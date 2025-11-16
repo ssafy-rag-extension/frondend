@@ -21,7 +21,7 @@ import HebeesLogo from '@/assets/hebees-logo.png';
 import Select from '@/shared/components/controls/Select';
 import type { Option } from '@/shared/components/controls/Select';
 import { getMyLlmKeys } from '@/shared/api/llm.api';
-import type { MyLlmKeyResponse, MyLlmKeyListResponse } from '@/shared/types/llm.types';
+import type { MyLlmKeyResponse } from '@/shared/types/llm.types';
 import { useChatModelStore } from '@/shared/store/useChatModelStore';
 
 const labelCls = (isOpen: boolean) =>
@@ -56,6 +56,8 @@ export default function AdminLayout() {
   const isChatRoute = pathname.startsWith('/admin/chat/text');
 
   const [modelOptions, setModelOptions] = useState<Option[]>([]);
+  const [hasKey, setHasKey] = useState<boolean | null>(null);
+
   const { selectedModel, setSelectedModel } = useChatModelStore();
 
   useEffect(() => {
@@ -63,16 +65,29 @@ export default function AdminLayout() {
 
     (async () => {
       const res = await getMyLlmKeys();
-      const result = res.data.result as MyLlmKeyListResponse;
-      const list: MyLlmKeyResponse[] = result?.data ?? [];
+      const result = res.data.result as MyLlmKeyResponse;
 
       if (!active) return;
 
-      const options = list.map((k) => ({
-        value: k.llmName,
-        label: k.llmName,
-        desc: MODEL_DESCRIPTIONS[k.llmName] ?? '모델 설명 없음',
-      }));
+      if (!result.hasKey) {
+        setHasKey(false);
+        setModelOptions([]);
+        setSelectedModel(undefined, undefined);
+        return;
+      }
+
+      setHasKey(true);
+
+      const list: MyLlmKeyResponse[] = [result];
+
+      const options = list
+        .map((k) => ({
+          value: k.llmName ?? '',
+          label: k.llmName ?? '',
+          desc: k.llmName ? (MODEL_DESCRIPTIONS[k.llmName] ?? '모델 설명 없음') : '모델 정보 없음',
+        }))
+        .filter((o) => o.value);
+
       setModelOptions(options);
 
       let final = selectedModel;
@@ -308,7 +323,7 @@ export default function AdminLayout() {
 
       <main className="flex-1 min-w-0">
         <div
-          className={`sticky z-30 top-0 flex px-8 py-5 ${
+          className={`sticky z-[9999] top-0 flex px-8 py-5 ${
             isChatRoute ? 'justify-between' : 'justify-end'
           }`}
         >
