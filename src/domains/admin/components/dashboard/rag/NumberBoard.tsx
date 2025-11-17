@@ -145,7 +145,7 @@ export default function NumberBoard() {
 
     const subtitle =
       key === 'user'
-        ? '접속한 전체 사용자'
+        ? 'RAG 챗봇 사용자'
         : key === 'document'
           ? '업로드된 전체 문서'
           : '발생한 전체 오류';
@@ -159,10 +159,10 @@ export default function NumberBoard() {
             {icon}
             <div className="flex flex-col">
               <span className="text-lg font-medium text-gray-900">{title}</span>
-              <span className="text-[11px] text-slate-400">{subtitle}</span>
+              {/* <span className="text-[11px] text-slate-400">{subtitle}</span> */}
             </div>
           </div>
-          {key === 'user' && <LiveBadge />}
+          {/* {key === 'user' && <LiveBadge />} */}
         </header>
 
         <div className="flex flex-1 flex-col gap-2">
@@ -217,7 +217,10 @@ export default function NumberBoard() {
             <h3 className="text-xl font-semibold text-gray-900">오늘의 실시간 로그</h3>
           </div>
 
-          <div>{headerStatusPill}</div>
+          <div className="flex items-center gap-2">
+            {headerStatusPill}
+            <LiveBadge />
+          </div>
         </div>
         <p className="text-sm text-gray-500">
           현재 접속, 문서 업로드, 오류 발생 현황을 한눈에 확인하세요.
@@ -228,7 +231,7 @@ export default function NumberBoard() {
       <div className="mt-2 grid flex-1 grid-cols-1 gap-3 md:grid-cols-3">
         {renderCard(
           'user',
-          '현재 사용자 수',
+          '사용자 수',
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--color-hebees-blue-bg)] shadow-sm">
             <Users size={20} className="text-[var(--color-hebees-blue)]" />
           </div>,
