@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import Tooltip from '@/shared/components/controls/Tooltip';
 import clsx from 'clsx';
+import { Loader2 } from 'lucide-react';
 
 type Props = {
   sessionNo: string;
@@ -125,7 +126,10 @@ export default function ReferencedDocsPanel({
               </button>
             </div>
           ) : isFetching && !data ? (
-            <div className="rounded-md border bg-white p-3 text-sm text-gray-500">불러오는 중…</div>
+            <div className="flex items-center justify-center py-8 text-gray-500">
+              <Loader2 size={18} className="mr-2 animate-spin" />
+              불러오는 중…
+            </div>
           ) : (
             <ul className="space-y-2">
               {docs.map((d) => {

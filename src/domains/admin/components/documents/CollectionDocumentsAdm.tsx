@@ -80,6 +80,7 @@ export default function CollectionDocumentsAdm({
 
       <UploadedFileList
         docs={docs}
+        pageSize={20}
         onDownload={onDownload}
         onDelete={onDelete}
         brand="hebees"
