@@ -85,8 +85,6 @@ export default function ChatbotUsageRealtime() {
     };
 
     sources.realtimeUsage.addEventListener('init', (event) => {
-      console.log('🔥 SSE onmessage RAW:', event);
-
       const e = event as MessageEvent;
       const InitData = JSON.parse(e.data) as initData;
       const initBuckets = InitData.buckets.map((bucket) => [
@@ -102,8 +100,6 @@ export default function ChatbotUsageRealtime() {
     });
 
     sources.realtimeUsage.addEventListener('update', (event) => {
-      console.log('🔥 SSE onmessage RAW:', event);
-
       const e = event as MessageEvent;
       const LiveData = JSON.parse(e.data) as updateData;
       const updateBuckets = new Date(LiveData.timestamp).getTime();
