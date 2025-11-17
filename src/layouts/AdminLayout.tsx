@@ -16,6 +16,7 @@ import {
 import Tooltip from '@/shared/components/controls/Tooltip';
 import ChatList from '@/shared/components/chat/list/ChatList';
 import ChatSearchModal from '@/shared/components/chat/layout/ChatSearchModal';
+import { AlertModal } from '@/layouts/AlertModal';
 import HebeesLogo from '@/assets/hebees-logo.png';
 import Select from '@/shared/components/controls/Select';
 import type { Option } from '@/shared/components/controls/Select';
@@ -72,6 +73,7 @@ export default function AdminLayout() {
 
   const [modelOptions, setModelOptions] = useState<Option[]>([]);
   const { selectedModel, setSelectedModel } = useChatModelStore();
+  const [alertModal, setAlertModal] = useState(false);
 
   const accessToken = useAuthStore((s) => s.accessToken);
   const addIngestNotification = useNotificationStore((s) => s.addIngestNotification);
@@ -87,7 +89,7 @@ export default function AdminLayout() {
     }
     // 완료 뱃지 초기화
     setCompletedCount(0);
-    // TODO: Admin용 알림 리스트 열기 등
+    setAlertModal((prev) => !prev);
   };
 
   function extractCompleted(data: IngestSummaryResponse): number | null {
@@ -403,7 +405,6 @@ export default function AdminLayout() {
                   size={22}
                   className="text-gray-600 hover:text-gray-800 cursor-pointer transition-colors shake-hover"
                 />
-
                 {completedCount > 0 && (
                   <span
                     className="
@@ -417,6 +418,10 @@ export default function AdminLayout() {
                     {completedCount}
                   </span>
                 )}
+                <AlertModal isOpen={alertModal} onClose={() => setAlertModal(false)}>
+                  {/* 여기 children(데이터) prop해주면 됨ㅋ  */}
+                  <div className="p-4 text-sm text-gray-600">알림이 없습니다.</div>
+                </AlertModal>{' '}
               </div>
             </button>
           </Tooltip>

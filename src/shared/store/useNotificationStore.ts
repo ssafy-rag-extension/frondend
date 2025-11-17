@@ -1,5 +1,12 @@
 import { create } from 'zustand';
 import type { IngestSummaryResponse } from '@/shared/types/ingest.types';
+// import type {
+//   GetAlertRequest,
+//   NotificationItem,
+//   NotificationPagination,
+// } from '@/shared/types/alert.types';
+
+// import { fetchNotifications, markNotificationAsRead } from '@/shared/api/alert.api';
 
 export type NotificationType = 'INGEST_SUMMARY';
 
