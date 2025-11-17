@@ -14,7 +14,9 @@ export default function CollectionTab() {
 
   // 문서 다운로드
   const handleDownload = async (fileNo: string) => {
+    console.log('Downloading fileNo:', fileNo);
     const doc = selectedDocs.find((m) => m.id === fileNo);
+    console.log('Document found:', doc);
     const fallbackName = doc?.name || `${fileNo}.bin`;
 
     try {
@@ -72,11 +74,8 @@ export default function CollectionTab() {
   };
 
   // ColList에서 선택된 컬렉션 정보 받기
-  const handleCollectionSelect = (collection: Collection | null, docs: DocItem[]) => {
+  const handleCollectionSelect = (collection: Collection | null) => {
     setSelectedCollection(collection);
-    console.log('선택된 컬렉션:', collection);
-    console.log('선택된 문서들:', docs);
-    setSelectedDocs(docs);
   };
 
   return (
@@ -89,10 +88,10 @@ export default function CollectionTab() {
         {selectedCollection ? (
           <CollectionDocumentsAdm
             collection={selectedCollection}
-            docs={selectedDocs}
             onDownload={handleDownload}
             onDelete={handleDelete}
             onRefresh={handleRefresh}
+            setSelectedDocs={setSelectedDocs}
           />
         ) : (
           <div className="rounded-2xl border bg-white p-8 shadow-sm flex items-center justify-center h-full min-h-[400px]">

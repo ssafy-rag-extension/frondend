@@ -80,6 +80,7 @@ export default function MyDocsTab() {
   );
 
   const handleDownload = async (fileNo: string) => {
+    console.log('Downloading fileNo:', fileNo);
     const doc = myDocs.find((m) => m.fileNo === fileNo);
     const fallbackName = doc?.name || `${fileNo}.bin`;
 
