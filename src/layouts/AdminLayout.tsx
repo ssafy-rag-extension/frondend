@@ -47,53 +47,86 @@ export default function AdminLayout() {
   const [isOpen, setIsOpen] = useState(true);
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
-  const [sp] = useSearchParams();
-  const activeSessionNo = sp.get('session') || undefined;
   const navigate = useNavigate();
 
+  const [sp] = useSearchParams();
   const location = useLocation();
   const { pathname } = location;
+
+  const sessionFromPath = pathname.startsWith('/admin/chat/text/')
+    ? pathname.replace('/admin/chat/text/', '')
+    : undefined;
+
+  const sessionFromQuery = sp.get('session') || undefined;
+
+  const activeSessionNo = sessionFromPath ?? sessionFromQuery;
+
   const isChatRoute = pathname.startsWith('/admin/chat/text');
 
   const [modelOptions, setModelOptions] = useState<Option[]>([]);
   const { selectedModel, setSelectedModel } = useChatModelStore();
 
-  useEffect(() => {
-    let active = true;
-
-    (async () => {
+  // 모델 목록 불러오기 함수
+  const loadLlmKeys = async () => {
+    try {
       const res = await getMyLlmKeys();
       const result = res.data.result as MyLlmKeyListResponse;
       const list: MyLlmKeyResponse[] = result?.data ?? [];
 
-      if (!active) return;
+      // qwen 모델 체크 함수
+      const isQwen = (llmName: string | null | undefined): boolean => {
+        if (!llmName) return false;
+        const name = llmName.toLowerCase();
+        return name.includes('qwen');
+      };
 
-      const options = list.map((k) => ({
-        value: k.llmName,
-        label: k.llmName,
-        desc: MODEL_DESCRIPTIONS[k.llmName] ?? '모델 설명 없음',
-      }));
+      // qwen은 항상 표시, 다른 모델은 hasKey=true인 것만 표시
+      const filteredList = list.filter((k) => isQwen(k.llmName) || k.hasKey);
+      
+      const options = filteredList
+        .map((k) => ({
+          value: k.llmName ?? '',
+          label: k.llmName ?? '',
+          desc: k.llmName
+            ? (MODEL_DESCRIPTIONS[k.llmName] ?? '모델 설명 없음')
+            : '모델 정보 없음',
+        }))
+        .filter((o) => o.value);
+
       setModelOptions(options);
 
+      // 필터링된 리스트를 기준으로 모델 선택
       let final = selectedModel;
-      const found = list.find((k) => k.llmName === final);
+      const found = filteredList.find((k) => k.llmName === final);
 
       if (!found) {
-        final = list[0]?.llmName;
+        final = filteredList[0]?.llmName;
       }
 
       if (final) {
-        const matched = list.find((k) => k.llmName === final);
+        const matched = filteredList.find((k) => k.llmName === final);
         setSelectedModel(final, matched?.llmNo);
       } else {
         setSelectedModel(undefined, undefined);
       }
-    })();
+    } catch (err) {
+      console.error(err);
+      setModelOptions([]);
+      setSelectedModel(undefined, undefined);
+    }
+  };
 
-    return () => {
-      active = false;
-    };
-  }, [selectedModel, setSelectedModel]);
+  // 초기 로드 시 모델 목록 불러오기
+  useEffect(() => {
+    loadLlmKeys();
+  }, []); // 컴포넌트 마운트 시 한 번만 실행
+
+  // 채팅 화면으로 돌아올 때 모델 목록 갱신
+  useEffect(() => {
+    if (isChatRoute) {
+      loadLlmKeys();
+    }
+  }, [isChatRoute]);
 
   return (
     <div className="flex min-h-screen bg-transparent">
@@ -308,7 +341,7 @@ export default function AdminLayout() {
 
       <main className="flex-1 min-w-0">
         <div
-          className={`sticky z-30 top-0 flex px-8 py-5 ${
+          className={`sticky z-[9999] top-0 flex px-8 py-5 ${
             isChatRoute ? 'justify-between' : 'justify-end'
           }`}
         >
