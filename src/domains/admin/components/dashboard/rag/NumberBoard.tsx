@@ -108,9 +108,9 @@ export default function NumberBoard() {
     >
       <span>LIVE</span>
       <span
-        className="ml-1 px-1.5 py-[1px] rounded-md 
+        className="ml-2 px-1.5 py-[1px] rounded-md 
              bg-white/80 backdrop-blur-sm
-             text-[10px] font-bold text-red-600 
+             text-[13px] font-bold text-red-600 
              border border-red-200/70 shadow-[0_1px_2px_rgba(0,0,0,0.06)]
              tracking-tight tabular-nums"
       >
@@ -143,12 +143,12 @@ export default function NumberBoard() {
           ? 'text-rose-600 bg-rose-50 border-rose-100'
           : 'text-slate-500 bg-slate-50 border-slate-100';
 
-    const subtitle =
-      key === 'user'
-        ? '접속한 전체 사용자'
-        : key === 'document'
-          ? '업로드된 전체 문서'
-          : '발생한 전체 오류';
+    // const subtitle =
+    //   key === 'user'
+    //     ? '접속한 전체 사용자'
+    //     : key === 'document'
+    //       ? '업로드된 전체 문서'
+    //       : '발생한 전체 오류';
 
     const asOf = trend?.asOf ?? total?.asOf;
 
@@ -159,7 +159,7 @@ export default function NumberBoard() {
             {icon}
             <div className="flex flex-col">
               <span className="text-lg font-medium text-gray-900">{title}</span>
-              <span className="text-[11px] text-slate-400">{subtitle}</span>
+              {/* <span className="text-[11px] text-slate-400">{subtitle}</span> */}
             </div>
           </div>
           {key === 'user' && <LiveBadge />}
@@ -228,7 +228,7 @@ export default function NumberBoard() {
       <div className="mt-2 grid flex-1 grid-cols-1 gap-3 md:grid-cols-3">
         {renderCard(
           'user',
-          '현재 사용자 수',
+          '사용자 수',
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[var(--color-hebees-blue-bg)] shadow-sm">
             <Users size={20} className="text-[var(--color-hebees-blue)]" />
           </div>,
