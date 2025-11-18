@@ -75,7 +75,7 @@ export default function UserLayout() {
 
       const filteredList = list.filter((k) => isQwen(k.llmName) || k.hasKey);
 
-      const options = filteredList
+      const options: Option[] = filteredList
         .map((k) => ({
           value: k.llmName ?? '',
           label: k.llmName ?? '',
@@ -85,7 +85,10 @@ export default function UserLayout() {
 
       setModelOptions(options);
 
-      let final = selectedModel;
+      const { selectedModel: currentSelectedModel, setSelectedModel: setModel } =
+        useChatModelStore.getState();
+
+      let final = currentSelectedModel;
       const found = filteredList.find((k) => k.llmName === final);
 
       if (!found) {
@@ -94,29 +97,26 @@ export default function UserLayout() {
 
       if (final) {
         const matched = filteredList.find((k) => k.llmName === final);
-        setSelectedModel(final, matched?.llmNo);
+        setModel(final, matched?.llmNo);
       } else {
-        setSelectedModel(undefined, undefined);
+        setModel(undefined, undefined);
       }
     } catch (err) {
       console.error(err);
       setModelOptions([]);
-      setSelectedModel(undefined, undefined);
+      const { setSelectedModel: setModel } = useChatModelStore.getState();
+      setModel(undefined, undefined);
     }
-  }, [selectedModel, setSelectedModel]);
+  }, []);
 
   const accessToken = useAuthStore((s) => s.accessToken);
   const addIngestNotification = useNotificationStore((s) => s.addIngestNotification);
   const hasUnread = useNotificationStore((s) => s.hasUnread);
-  const markAllRead = useNotificationStore((s) => s.markAllRead);
 
   const enabled = useIngestStreamStore((s) => s.enabled);
   const setEnabled = useIngestStreamStore((s) => s.setEnabled);
 
   const handleBellClick = () => {
-    if (hasUnread) {
-      markAllRead();
-    }
     // 완료 뱃지도 초기화
     setCompletedCount(0);
     // TODO: 알림 리스트 열기 등
@@ -147,13 +147,8 @@ export default function UserLayout() {
   });
 
   useEffect(() => {
-    loadLlmKeys();
-  }, [loadLlmKeys]);
-
-  useEffect(() => {
-    if (isChatRoute) {
-      loadLlmKeys();
-    }
+    if (!isChatRoute) return;
+    void loadLlmKeys();
   }, [isChatRoute, loadLlmKeys]);
 
   return (

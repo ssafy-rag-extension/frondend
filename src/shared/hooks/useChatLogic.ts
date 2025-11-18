@@ -18,6 +18,7 @@ import { useChatModelStore } from '@/shared/store/useChatModelStore';
 import type { RagQueryProcessResult } from '@/shared/types/chat.rag.types';
 import { postRagQuery } from '@/shared/api/chat.rag.api';
 import { toast } from 'react-toastify';
+import { useChatAskStream } from '@/shared/hooks/useChatAskStream';
 
 const mapRole = (r: ChatRole): UiRole => (r === 'human' ? 'user' : r === 'ai' ? 'assistant' : r);
 
@@ -41,6 +42,70 @@ export function useChatLogic() {
   const [llmNo, setLlmNo] = useState<string | null>(null);
 
   const [mode, setMode] = useState<ChatMode>('llm');
+
+  // 🔹 SSE 훅: 세션 기반 스트림 사용 (llm 모드에서 사용)
+  const {
+    isStreaming,
+    answer,
+    meta,
+    errorText: streamError,
+    startStream,
+    stopStream,
+  } = useChatAskStream({ urlType: 'session' });
+
+  // 🔹 SSE answer → pending assistant 메시지에 반영
+  // useEffect(() => {
+  //   if (!awaitingAssistant) return;
+  //   if (!answer) return;
+
+  //   setList((prev: UiMsg[]) =>
+  //     prev.map(
+  //       (m: UiMsg): UiMsg =>
+  //         m.messageNo === '__pending__' && m.role === 'assistant' ? { ...m, content: answer } : m
+  //     )
+  //   );
+  // }, [answer, awaitingAssistant, setList]);
+
+  // 🔹 SSE answer → pending assistant 메시지에 반영
+  useEffect(() => {
+    // if (mode !== 'llm') return;
+    if (!isStreaming) return;
+    if (!answer) return;
+
+    setList((prev: UiMsg[]) =>
+      prev.map(
+        (m: UiMsg): UiMsg =>
+          m.messageNo === '__pending__' && m.role === 'assistant' ? { ...m, content: answer } : m
+      )
+    );
+  }, [answer, isStreaming, mode, setList]);
+
+  // 🔹 스트림 종료 시 meta 정보로 최종 메시지 확정
+  useEffect(() => {
+    if (isStreaming) return;
+    if (!meta) return;
+    if (!answer) return;
+
+    setList((prev: UiMsg[]) =>
+      prev.map(
+        (m: UiMsg): UiMsg =>
+          m.messageNo === '__pending__' && m.role === 'assistant'
+            ? {
+                ...m,
+                content: answer,
+                createdAt: meta.createdAt ?? m.createdAt,
+                messageNo: meta.messageNo ?? m.messageNo,
+              }
+            : m
+      )
+    );
+  }, [isStreaming, meta, answer, setList]);
+
+  // 🔹 LLM 모드일 때는 SSE 상태에 맞춰 awaitingAssistant 동기화
+  useEffect(() => {
+    if (mode !== 'llm') return;
+    setAwaitingAssistant(isStreaming);
+  }, [isStreaming, mode]);
 
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editingDraft, setEditingDraft] = useState<string>('');
@@ -141,6 +206,8 @@ export function useChatLogic() {
     requestIdRef.current = null;
     setAwaitingAssistant(false);
 
+    stopStream();
+
     setList((prev: UiMsg[]) => prev.filter((m: UiMsg) => m.messageNo !== '__pending__'));
   };
 
@@ -184,17 +251,21 @@ export function useChatLogic() {
           result.messageNo
         );
       } else {
-        const body: SendMessageRequest = { content: msg, model: llmName };
-        const res = await sendMessage(sessionNo, body);
-        const result = res.data.result as SendMessageResult;
+        // const body: SendMessageRequest = { content: msg, model: llmName };
+        // const res = await sendMessage(sessionNo, body);
+        // const result = res.data.result as SendMessageResult;
 
-        if (requestIdRef.current !== myRequestId) return;
+        // if (requestIdRef.current !== myRequestId) return;
 
-        const content = result.content ?? '(응답이 없습니다)';
-        const createdAt = result?.createdAt ?? undefined;
-        const messageNo = result?.messageNo ?? undefined;
+        // const content = result.content ?? '(응답이 없습니다)';
+        // const createdAt = result?.createdAt ?? undefined;
+        // const messageNo = result?.messageNo ?? undefined;
 
-        fillPendingAssistant(content, createdAt, messageNo);
+        // fillPendingAssistant(content, createdAt, messageNo);
+        // 🔹 LLM 모드: SSE 스트림으로 전환
+        const body: SendMessageRequest = { content: msg, model: llmName, sessionNo };
+        startStream(body);
+        // 나머지 응답 채우기는 위에서 만든 useEffect(answer/meta)에서 처리
       }
     } catch (e) {
       console.error(e);

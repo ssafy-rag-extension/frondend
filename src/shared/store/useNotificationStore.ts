@@ -17,8 +17,6 @@ interface NotificationState {
   notifications: NotificationItem[];
   hasUnread: boolean;
   addIngestNotification: (data: IngestSummaryResponse) => void;
-  markAllRead: () => void;
-  clearAll: () => void;
 }
 
 export const useNotificationStore = create<NotificationState>((set, _get) => ({
@@ -45,20 +43,6 @@ export const useNotificationStore = create<NotificationState>((set, _get) => ({
     set((state) => ({
       notifications: [item, ...state.notifications],
       hasUnread: true,
-    }));
-  },
-
-  markAllRead: () => {
-    set((state) => ({
-      notifications: state.notifications.map((n) => ({ ...n, read: true })),
-      hasUnread: false,
-    }));
-  },
-
-  clearAll: () => {
-    set(() => ({
-      notifications: [],
-      hasUnread: false,
     }));
   },
 }));

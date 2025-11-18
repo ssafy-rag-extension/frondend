@@ -75,6 +75,9 @@ export interface CreateSessionResult {
 export interface SendMessageRequest {
   content: string;
   model?: string;
+  llmNo?: string;
+  query?: string;
+  sessionNo?: string;
 }
 
 export interface SendMessageResult {
