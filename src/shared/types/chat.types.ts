@@ -42,7 +42,7 @@ export interface MessageItem {
   role: ChatRole;
   content: string;
   createdAt: string;
-  referencedDocuments?: ReferencedDocument[];
+  references?: ReferencedDocument[];
 }
 
 export interface MessagePage {

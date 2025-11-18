@@ -112,14 +112,18 @@ export default function UserLayout() {
   const accessToken = useAuthStore((s) => s.accessToken);
   const addIngestNotification = useNotificationStore((s) => s.addIngestNotification);
   const hasUnread = useNotificationStore((s) => s.hasUnread);
+  const markAllRead = useNotificationStore((s) => s.markAllRead);
 
   const enabled = useIngestStreamStore((s) => s.enabled);
   const setEnabled = useIngestStreamStore((s) => s.setEnabled);
 
   const handleBellClick = () => {
-    // 완료 뱃지도 초기화
+    if (hasUnread) {
+      markAllRead();
+    }
+    // 완료 뱃지 초기화
     setCompletedCount(0);
-    // TODO: 알림 리스트 열기 등
+    // TODO: Admin용 알림 리스트 열기 등
   };
 
   function extractCompleted(data: IngestSummaryResponse): number | null {

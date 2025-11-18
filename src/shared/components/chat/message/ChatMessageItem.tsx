@@ -15,7 +15,7 @@ export type UiMsg = {
   content: string;
   createdAt?: string;
   messageNo?: string;
-  referencedDocuments?: ReferencedDocument[];
+  references?: ReferencedDocument[];
 };
 
 type Props = {

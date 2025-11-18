@@ -16,13 +16,14 @@ export interface NotificationItem {
 interface NotificationState {
   notifications: NotificationItem[];
   hasUnread: boolean;
+  markAllRead: () => void;
   addIngestNotification: (data: IngestSummaryResponse) => void;
 }
 
 export const useNotificationStore = create<NotificationState>((set, _get) => ({
   notifications: [],
   hasUnread: false,
-
+  markAllRead: () => set({ hasUnread: false }),
   addIngestNotification: (data) => {
     const { result } = data;
     const now = new Date().toISOString();

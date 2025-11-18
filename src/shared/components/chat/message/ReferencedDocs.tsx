@@ -38,8 +38,7 @@ export default function ReferencedDocsPanel({
 }: Props) {
   const { getState, setState } = useReferencedDocsStore();
   const storedState = getState(messageNo);
-  
-  // 초기 상태: 저장된 상태가 있으면 사용, 없으면 collapsedByDefault 사용
+
   const getInitialOpenState = (): boolean => {
     if (storedState?.open !== undefined) return storedState.open;
     return !collapsedByDefault;
@@ -51,7 +50,6 @@ export default function ReferencedDocsPanel({
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // messageNo가 변경되면 저장된 상태를 읽어옴
   useEffect(() => {
     if (messageNo) {
       const state = getState(messageNo);
@@ -169,9 +167,9 @@ export default function ReferencedDocsPanel({
             </div>
           ) : (
             <ul className="space-y-2">
-              {docs.map((d) => {
+              {docs.map((d, idx) => {
                 const title = d.title?.trim() || d.name || `문서 #${d.index}`;
-                const docKey = `${d.fileNo}-${d.index}`;
+                const docKey = `${d.fileNo ?? 'nofile'}-${d.index ?? idx}-${idx}`;
                 const isExpanded = expandedId === docKey;
 
                 return (
