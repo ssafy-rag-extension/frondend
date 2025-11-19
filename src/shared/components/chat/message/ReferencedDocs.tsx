@@ -41,7 +41,6 @@ const getFileMeta = (type?: string) => {
     chipLabel = 'PNG';
     chipClass = 'border-amber-100 bg-amber-50 text-amber-700';
   }
-
   return { icon, chipLabel, chipClass };
 };
 
@@ -107,7 +106,6 @@ export default function ReferencedDocsPanel({
     return (data ?? []) as ReferencedDocument[];
   }, [hasInlineReferences, references, data]);
 
-  // 실제 존재하는 타입만 추출해서 카테고리 필터용으로 사용
   const availableTypes = useMemo(() => {
     const set = new Set<string>();
     docs.forEach((d) => {
@@ -118,7 +116,6 @@ export default function ReferencedDocsPanel({
     return Array.from(set);
   }, [docs]);
 
-  // 필터링된 문서 목록
   const filteredDocs = useMemo(() => {
     if (activeType === 'all') return docs;
     return docs.filter((d) => (d.type || '').toLowerCase() === activeType);
@@ -200,63 +197,17 @@ export default function ReferencedDocsPanel({
         </div>
       </div>
 
-      {/* pdf / png 탭 */}
-      {open && (pdfCount > 0 || pngCount > 0) && (
-        <div className="flex items-center gap-1 px-3 pb-2 pt-1 text-[11px]">
-          <button
-            type="button"
-            onClick={() => setActiveTab('all')}
-            className={clsx(
-              'rounded-full px-2.5 py-1 border',
-              activeTab === 'all'
-                ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
-                : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200'
-            )}
-          >
-            전체 <span className="ml-0.5 text-[10px] text-gray-400">{docs.length}</span>
-          </button>
-          {pdfCount > 0 && (
-            <button
-              type="button"
-              onClick={() => setActiveTab('pdf')}
-              className={clsx(
-                'rounded-full px-2.5 py-1 border',
-                activeTab === 'pdf'
-                  ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
-                  : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200'
-              )}
-            >
-              PDF <span className="ml-0.5 text-[10px] text-gray-400">{pdfCount}</span>
-            </button>
-          )}
-          {pngCount > 0 && (
-            <button
-              type="button"
-              onClick={() => setActiveTab('png')}
-              className={clsx(
-                'rounded-full px-2.5 py-1 border',
-                activeTab === 'png'
-                  ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
-                  : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200'
-              )}
-            >
-              PNG <span className="ml-0.5 text-[10px] text-gray-400">{pngCount}</span>
-            </button>
-          )}
-        </div>
-      )}
-
       {open && (
         <div className="px-3 pb-3">
           {availableTypes.length > 0 && (
-            <div className="mb-2 flex items-center gap-1 overflow-x-autov py-1 -mx-1 px-1">
+            <div className="mb-2 flex items-center gap-1 overflow-x-auto pb-1 -mx-1 px-1">
               <button
                 type="button"
                 onClick={() => setActiveType('all')}
                 className={clsx(
-                  'inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors',
+                  'inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium whitespace-nowrap transition-colors',
                   activeType === 'all'
-                    ? 'border-gray-300 bg-white text-gray-900'
+                    ? 'border-gray-300 bg-white text-gray-900 shadow-sm'
                     : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-white'
                 )}
               >
