@@ -26,7 +26,6 @@ export default function TextChatBase({ brand }: TextChatProps) {
     cancelReask,
     submitReask,
     setList,
-    stopCurrentResponse,
   } = useChatLogic();
 
   const { scrollRef, bottomRef, historyLoading } = useChatScroll({
