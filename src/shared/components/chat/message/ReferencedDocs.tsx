@@ -200,6 +200,52 @@ export default function ReferencedDocsPanel({
         </div>
       </div>
 
+      {/* pdf / png 탭 */}
+      {open && (pdfCount > 0 || pngCount > 0) && (
+        <div className="flex items-center gap-1 px-3 pb-2 pt-1 text-[11px]">
+          <button
+            type="button"
+            onClick={() => setActiveTab('all')}
+            className={clsx(
+              'rounded-full px-2.5 py-1 border',
+              activeTab === 'all'
+                ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
+                : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200'
+            )}
+          >
+            전체 <span className="ml-0.5 text-[10px] text-gray-400">{docs.length}</span>
+          </button>
+          {pdfCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('pdf')}
+              className={clsx(
+                'rounded-full px-2.5 py-1 border',
+                activeTab === 'pdf'
+                  ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
+                  : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200'
+              )}
+            >
+              PDF <span className="ml-0.5 text-[10px] text-gray-400">{pdfCount}</span>
+            </button>
+          )}
+          {pngCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setActiveTab('png')}
+              className={clsx(
+                'rounded-full px-2.5 py-1 border',
+                activeTab === 'png'
+                  ? 'bg-white text-gray-900 border-gray-300 shadow-sm'
+                  : 'bg-gray-100 text-gray-600 border-transparent hover:bg-gray-200'
+              )}
+            >
+              PNG <span className="ml-0.5 text-[10px] text-gray-400">{pngCount}</span>
+            </button>
+          )}
+        </div>
+      )}
+
       {open && (
         <div className="px-3 pb-3">
           {availableTypes.length > 0 && (
