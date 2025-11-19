@@ -82,6 +82,8 @@ export default function ChatMessageItem({
     }
   };
 
+  const hasInlineReferences = !!msg.references && msg.references.length > 0;
+
   return (
     <div
       className={`
@@ -167,12 +169,18 @@ export default function ChatMessageItem({
           </Tooltip>
         )}
       </div>
-      {!isUser && msg.messageNo && currentSessionNo && !isPendingAssistant && enableDocuments && (
-        <ReferencedDocsPanel
-          sessionNo={currentSessionNo}
-          messageNo={msg.messageNo}
-          collapsedByDefault={false}
-        />
+      {!isUser && enableDocuments && (
+        <>
+          {hasInlineReferences ? (
+            <ReferencedDocsPanel references={msg.references} collapsedByDefault={false} />
+          ) : msg.messageNo && currentSessionNo ? (
+            <ReferencedDocsPanel
+              sessionNo={currentSessionNo}
+              messageNo={msg.messageNo}
+              collapsedByDefault={false}
+            />
+          ) : null}
+        </>
       )}
     </div>
   );

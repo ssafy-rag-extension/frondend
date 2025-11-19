@@ -92,7 +92,6 @@ export function useChatAskStream(opts: UseChatAskStreamOptions = {}) {
         return;
       }
 
-      // payload 구성
       const payload: Record<string, unknown> = {};
       if (body.query != null) payload.query = body.query;
       if (body.content != null) payload.content = body.content;
