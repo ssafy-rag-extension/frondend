@@ -36,6 +36,7 @@ export default function SelectVectorization({
 
   useEffect(() => {
     setLocalFiles(finalSelectedFiles);
+    console.log('@%%%%', finalSelectedFiles);
   }, [finalSelectedFiles]);
 
   // 업로드

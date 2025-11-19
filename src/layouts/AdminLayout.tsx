@@ -151,6 +151,7 @@ export default function AdminLayout() {
 
       setModelOptions(options);
 
+      // 필터링된 리스트를 기준으로 모델 선택
       let final = selectedModel;
       const found = filteredList.find((k) => k.llmName === final);
 
