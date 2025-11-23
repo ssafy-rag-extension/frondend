@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FolderOpen } from 'lucide-react';
+import { Folder } from 'lucide-react';
 import { getCollections } from '@/domains/admin/api/documents.api';
 import type { Collection } from '@/domains/admin/components/rag-test/types';
 
@@ -69,7 +69,6 @@ export default function ColList({ onCollectionSelect }: ColListProps) {
           <div className="h-12 bg-gray-200 rounded-lg"></div>
         </div>
       )}
-      {/* 컬렉션 목록 */}
       {collections.map((col) => {
         const colNo = col.collectionNo;
         return (
@@ -78,15 +77,14 @@ export default function ColList({ onCollectionSelect }: ColListProps) {
             onClick={() => handleCollectionClick(colNo)}
             className={`border rounded-lg p-3 transition cursor-pointer ${
               selectedCollectionForView === colNo
-                ? 'bg-[var(--color-hebees-bg)] ring-2 ring-[var(--color-hebees)]'
+                ? 'bg-[var(--color-hebees-bg)] ring-1 ring-[var(--color-hebees)]'
                 : 'hover:bg-[var(--color-hebees-bg)]/50 hover:ring-1 hover:ring-[var(--color-hebees)]'
             }`}
           >
-            {/* 헤더 */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 font-medium text-gray-800">
                 <div className="w-8 h-8 bg-[var(--color-hebees)] rounded-md flex items-center justify-center">
-                  <FolderOpen className="text-[var(--color-white)] w-5 h-5" />
+                  <Folder className="text-[var(--color-white)] w-5 h-5" />
                 </div>
                 {col.name}
               </div>

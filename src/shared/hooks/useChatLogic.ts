@@ -257,6 +257,8 @@ export function useChatLogic() {
           sessionNo,
         } as SendMessageRequest;
 
+        console.log('body', body);
+
         // RAG 스트리밍 시작
         startRagStream(body);
       } else {

@@ -32,7 +32,7 @@ export default function CollectionTab() {
       a.click();
       a.remove();
       URL.revokeObjectURL(blobUrl);
-    } catch (error) {
+    } catch {
       const signedUrl = await getPresignedUrl(fileNo, { inline: false });
       window.open(signedUrl, '_blank');
     }

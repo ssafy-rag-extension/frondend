@@ -70,7 +70,7 @@ export default function CollectionDocuments({
   return (
     <div className="rounded-2xl border bg-white p-8 shadow-sm">
       <header className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="text-xl font-bold text-gray-900 mb-2 sm:mb-0">Collection 문서 목록</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-2 sm:mb-0">컬렉션 문서 목록</h3>
         <div className="flex items-center gap-2 flex-wrap">
           <Select
             value={fileType}
