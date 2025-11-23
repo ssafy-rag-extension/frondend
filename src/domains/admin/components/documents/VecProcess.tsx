@@ -2,27 +2,24 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { EventSourcePolyfill } from 'event-source-polyfill';
 import { FileText, CloudUpload, Zap, Database, CircleCheck } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+
 import type { VectorizationItem } from '@/domains/admin/types/documents.types';
-import { getVectorizationProgress } from '@/domains/admin/api/documents.api';
-import Pagination from '@/shared/components/Pagination';
-import { useAuthStore } from '@/domains/auth/store/auth.store';
 import type {
   IngestStreamProgress,
   IngestStreamSummary,
 } from '@/domains/admin/components/rag-test/types';
+
+import { getVectorizationProgress } from '@/domains/admin/api/documents.api';
+import { useAuthStore } from '@/domains/auth/store/auth.store';
+import Pagination from '@/shared/components/Pagination';
 import { toast } from 'react-toastify';
 
-// 단계별 progress 포함한 확장 구조
-type FileState = {
-  overall: number;
-  status: VectorizationItem['status'];
-  step: VectorizationItem['currentStep'];
-  steps: {
-    UPLOAD: number;
-    EXTRACTION: number;
-    EMBEDDING: number;
-    VECTOR_STORE: number;
-  };
+const validSteps = ['UPLOAD', 'EXTRACTION', 'EMBEDDING', 'VECTOR_STORE'] as const;
+type StepKey = (typeof validSteps)[number];
+
+const isValidStep = (step: unknown): step is StepKey => {
+  return typeof step === 'string' && validSteps.includes(step as StepKey);
 };
 
 export default function VecProcess({
@@ -33,86 +30,58 @@ export default function VecProcess({
   setIsUploadDone: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
   const [pageNum, setPageNum] = useState(1);
-
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
-  const [fileStates, setFileStates] = useState<Record<string, FileState>>({});
-  const [overallStatus, setOverallStatus] = useState<'IDLE' | 'RUNNING' | 'DONE' | 'ERROR'>('IDLE');
-  const validSteps = ['UPLOAD', 'EXTRACTION', 'EMBEDDING', 'VECTOR_STORE'] as const;
-  const [summary, setSummary] = useState<{ completed: number; total: number } | null>(null);
+
+  const [fileStates, setFileStates] = useState<
+    Record<
+      string,
+      {
+        overall: number;
+        status: VectorizationItem['status'];
+        step: VectorizationItem['currentStep'];
+        steps: Record<StepKey, number>;
+      }
+    >
+  >({});
 
   const SPRING_API_BASE_URL = import.meta.env.VITE_SPRING_BASE_URL;
   const token = useAuthStore((s) => s.accessToken);
   const queryClient = useQueryClient();
 
-  // 타입 가드
-  const isValidStep = (step: unknown): step is keyof FileState['steps'] => {
-    if (typeof step !== 'string') return false;
-
-    return (validSteps as readonly string[]).includes(step);
-  };
+  const { data: progressData, refetch } = useQuery({
+    queryKey: ['vectorization-progress', pageNum],
+    queryFn: () => getVectorizationProgress(pageNum - 1, 5),
+    enabled: false,
+    staleTime: 0,
+  });
 
   useEffect(() => {
     if (!isUploadDone) return;
 
-    // 상태 초기화
     setFileStates({});
-    setSummary(null);
     setSelectedFile(null);
-    setOverallStatus('RUNNING');
 
-    // 캐싱된 벡터화 진행률 삭제
-    queryClient.removeQueries({
-      queryKey: ['vectorization-progress'],
-      exact: false,
-    });
-  }, [isUploadDone]);
-
-  // 초기 데이터 조회
-  const { data: progressData, refetch } = useQuery({
-    queryKey: ['vectorization-progress', pageNum],
-    queryFn: () => getVectorizationProgress(pageNum - 1, pageSize),
-    staleTime: 0,
-    enabled: false,
-    refetchOnWindowFocus: false,
-  });
-
-  // useEffect(() => {
-  //   if (isUploadDone) refetch();
-  // }, [isUploadDone]);
-
-  useEffect(() => {
-    if (isUploadDone) {
-      queryClient.removeQueries({
-        queryKey: ['vectorization-progress'],
-        exact: false,
-      });
-
-      refetch();
-    }
-  }, [isUploadDone]);
+    queryClient.removeQueries({ queryKey: ['vectorization-progress'] });
+    refetch();
+  }, [isUploadDone, queryClient, refetch]);
 
   const items = progressData?.data ?? [];
 
-  //fileNo → fileName 매핑
   const fileNameMap = useMemo(() => {
     const map: Record<string, string> = {};
-    items.forEach((it: VectorizationItem) => (map[it.fileNo] = it.fileName));
+    items.forEach((it) => (map[it.fileNo] = it.fileName));
     return map;
   }, [items]);
 
-  // 초기 상태 설정
   useEffect(() => {
-    if (!progressData) return;
-    if (!isUploadDone) return;
+    if (!progressData || !isUploadDone) return;
 
-    const initial: Record<string, FileState> = {};
+    const initial: typeof fileStates = {};
 
-    items.forEach((item: VectorizationItem) => {
-      if (item.status === 'COMPLETED') return; // 완료 제외
+    items.forEach((item) => {
+      if (item.status === 'COMPLETED') return;
 
-      const idx = validSteps.indexOf(item.currentStep);
-
-      const stepState = {
+      const steps: Record<StepKey, number> = {
         UPLOAD: 0,
         EXTRACTION: 0,
         EMBEDDING: 0,
@@ -120,52 +89,43 @@ export default function VecProcess({
       };
 
       if (isValidStep(item.currentStep)) {
-        stepState[item.currentStep] = item.progressPct ?? 0;
-      }
+        const idx = validSteps.indexOf(item.currentStep);
 
-      for (let i = 0; i < idx; i++) {
-        stepState[validSteps[i]] = 100;
+        // 이전 단계 자동 완료
+        validSteps.slice(0, idx).forEach((s) => (steps[s] = 100));
+
+        // 현재 단계 진행률 반영
+        steps[item.currentStep] = item.progressPct ?? 0;
       }
 
       initial[item.fileNo] = {
         overall: item.overallPct ?? 0,
         status: item.status,
         step: item.currentStep,
-        steps: stepState,
+        steps,
       };
     });
 
-    // 프론트 상태를 완전히 progressData 기반으로 재설정
     setFileStates(initial);
-
     if (!selectedFile && items.length > 0) {
       setSelectedFile(items[0].fileNo);
     }
+  }, [progressData, isUploadDone, items, selectedFile]);
 
-    setOverallStatus('RUNNING');
-  }, [progressData]);
-
-  // SSE 연결
   useEffect(() => {
     if (!isUploadDone) return;
-    // if (!progressData) return;
-    const eventSource = new EventSourcePolyfill(
-      `${SPRING_API_BASE_URL}/api/v1/ingest/progress/stream`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
 
-    const updateState = (payload: IngestStreamProgress) => {
-      if (!payload || typeof payload !== 'object') return;
-      if (!payload.fileNo) return;
+    const es = new EventSourcePolyfill(`${SPRING_API_BASE_URL}/api/v1/ingest/progress/stream`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
-      const fileNo = payload.fileNo;
+    const update = (payload: IngestStreamProgress) => {
+      if (!payload || !payload.fileNo) return;
 
-      setFileStates((prev: Record<string, FileState>): Record<string, FileState> => {
-        const prevState = prev[fileNo] ?? {
+      setFileStates((prev) => {
+        const existing = prev[payload.fileNo] ?? {
           overall: 0,
-          status: 'PENDING',
+          status: 'PENDING' as VectorizationItem['status'],
           step: null,
           steps: {
             UPLOAD: 0,
@@ -175,272 +135,196 @@ export default function VecProcess({
           },
         };
 
-        const newSteps = { ...prevState.steps };
+        const steps = { ...existing.steps };
 
-        // 현재 단계 갱신
         if (isValidStep(payload.currentStep)) {
-          newSteps[payload.currentStep] = payload.progressPct ?? 0;
+          const step = payload.currentStep;
+
+          const idx = validSteps.indexOf(step);
+          validSteps.slice(0, idx).forEach((s) => (steps[s] = 100));
+
+          steps[step] = payload.progressPct ?? steps[step];
         }
 
-        // 현재 단계 갱신 이전 단계들은 자동 100%
-        if (isValidStep(payload.currentStep)) {
-          const currentIndex = validSteps.indexOf(payload.currentStep);
-
-          for (let i = 0; i < currentIndex; i++) {
-            const prevStep = validSteps[i];
-            newSteps[prevStep] = 100; // 자동 100%
-          }
-        }
-
-        // 단계가 COMPLETED 상태라면 → 100%로 강제 설정
-        if (payload.status === 'COMPLETED' && isValidStep(payload.currentStep)) {
-          newSteps[payload.currentStep] = 100;
-        }
         return {
           ...prev,
-          [fileNo]: {
-            overall: payload.overallPct ?? prevState.overall,
+          [payload.fileNo]: {
+            overall: payload.overallPct ?? existing.overall,
             status: payload.status,
             step: payload.currentStep,
-            steps: newSteps,
+            steps,
           },
         };
       });
     };
 
-    eventSource.addEventListener('heartbeat', () => {});
+    es.addEventListener('progress', (e) => update(JSON.parse((e as MessageEvent).data)));
 
-    eventSource.addEventListener('initial', (event) => {
-      const msg = event as MessageEvent<string>;
-      if (!msg.data) return;
+    es.addEventListener('summary', (e) => {
+      const payload: IngestStreamSummary = JSON.parse((e as MessageEvent).data);
 
-      const payload: IngestStreamProgress = JSON.parse(msg.data);
-      updateState(payload);
-    });
+      if (payload.completed === payload.total) {
+        toast.success('모든 파일 벡터화 완료!');
+        es.close();
 
-    eventSource.addEventListener('progress', (event) => {
-      const msg = event as MessageEvent<string>;
-      if (!msg.data) return;
-
-      const payload: IngestStreamProgress = JSON.parse(msg.data);
-      updateState(payload);
-    });
-
-    eventSource.addEventListener('summary', (event) => {
-      const msg = event as MessageEvent<string>;
-      if (!msg.data) return;
-
-      try {
-        const payload: IngestStreamSummary = JSON.parse(msg.data);
-        setSummary(payload);
-        if (payload.completed === payload.total) {
-          toast.success('모든 파일이 업로드 되었습니다!');
-
-          eventSource.close();
-          setFileStates({}); // 초기화
-          setSelectedFile(null);
-          setIsUploadDone(false);
-          setOverallStatus('DONE');
-        }
-      } catch (error) {
-        console.error('Error parsing summary event data:', error);
+        setFileStates({});
+        setSelectedFile(null);
+        setIsUploadDone(false);
       }
     });
 
-    eventSource.onerror = () => {
-      console.error('SSE ERROR');
-      setOverallStatus('ERROR');
-      eventSource.close();
+    es.onerror = () => {
+      es.close();
     };
 
-    return () => eventSource.close();
-  }, [isUploadDone, token]);
+    return () => es.close();
+  }, [isUploadDone, SPRING_API_BASE_URL, token, setIsUploadDone]);
 
-  // 완료된 파일 제거
-  // useEffect(() => {
-  //   setFileStates((prev) => {
-  //     const newState: Record<string, FileState> = {};
-
-  //     Object.keys(prev).forEach((fileNo) => {
-  //       const state = prev[fileNo];
-  //       if (state.status !== 'COMPLETED') {
-  //         newState[fileNo] = state;
-  //       }
-  //     });
-
-  //     return newState;
-  //   });
-  // }, [
-  //   Object.values(fileStates)
-  //     .map((s) => s.status)
-  //     .join(','),
-  // ]);
-
-  // 완료된 파일 제외, fileStates기반으로 보여줌
   const activeItems = Object.keys(fileStates)
     .map((fileNo) => ({
       fileNo,
       fileName: fileNameMap[fileNo],
       ...fileStates[fileNo],
     }))
-    .filter((item) => item.status !== 'COMPLETED');
+    .filter((it) => it.status !== 'COMPLETED');
 
-  const pageSize = 5;
-  const totalItems = activeItems.length;
-  const totalPages = Math.ceil(totalItems / pageSize);
-  const paginatedItems = activeItems.slice((pageNum - 1) * pageSize, pageNum * pageSize);
+  const totalPages = Math.ceil(activeItems.length / 5);
+  const visibleItems = activeItems.slice((pageNum - 1) * 5, pageNum * 5);
 
   const current = selectedFile ? fileStates[selectedFile] : null;
 
+  const STEP_ITEMS: { icon: LucideIcon; label: string; key: StepKey }[] = [
+    { icon: CloudUpload, label: '업로드', key: 'UPLOAD' },
+    { icon: Zap, label: '데이터 정제', key: 'EXTRACTION' },
+    { icon: Database, label: '임베딩', key: 'EMBEDDING' },
+    { icon: CircleCheck, label: 'Vector 저장', key: 'VECTOR_STORE' },
+  ];
+
   return (
-    <section className="grid grid-cols-[3fr_7fr] gap-6 mt-6 p-5 border rounded-xl bg-white">
-      {/* ---------------- 왼쪽 목록 ---------------- */}
-      <div className=" rounded-lg p-4">
-        <h3 className="font-bold mb-3 text-gray-800">진행 중인 파일 목록</h3>
+    <section className="grid grid-cols-[1fr_2fr] gap-6 p-6 border rounded-2xl bg-white shadow-sm">
+      {/* -------- 좌측 박스 -------- */}
+      <div className="bg-white border rounded-2xl p-5 min-h-[340px] flex flex-col">
+        <div className="flex items-center gap-2 mb-5">
+          <FileText className="w-5 h-5 text-[var(--color-hebees)]" />
+          <h3 className="text-xl font-semibold text-gray-900">진행 중인 파일</h3>
+        </div>
 
         {activeItems.length === 0 ? (
-          <div className="text-gray-400 py-10 text-sm text-center">진행중인 파일이 없습니다.</div>
+          <div className="flex flex-col flex-1 items-center justify-center text-gray-400 text-sm">
+            진행 중인 파일이 없습니다.
+          </div>
         ) : (
-          <div className="space-y-2 max-h-[320px] overflow-y-auto">
-            {paginatedItems.map((item) => {
-              const state = fileStates[item.fileNo];
-              const percent = state?.overall ?? 0;
-
-              return (
-                <div
+          <>
+            <div className="flex-1 space-y-3.5 overflow-y-auto pr-2">
+              {visibleItems.map((item) => (
+                <button
                   key={item.fileNo}
-                  className={`p-3 border rounded-lg cursor-pointer ${
-                    selectedFile === item.fileNo
-                      ? 'bg-[var(--color-hebees-bg)]/40 border-[var(--color-hebees)]'
-                      : 'hover:bg-gray-50'
-                  }`}
                   onClick={() => setSelectedFile(item.fileNo)}
+                  className={`w-full text-left p-3 rounded-xl border transition ${
+                    selectedFile === item.fileNo
+                      ? 'bg-[var(--color-hebees-bg)]/60 border-[var(--color-hebees)]'
+                      : 'bg-white border-gray-200 hover:bg-gray-50'
+                  }`}
                 >
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium truncate">{item.fileName}</span>
-                    <span className="text-xs text-gray-600">{percent.toFixed(1)}%</span>
+                  <div className="flex justify-between items-center mb-1.5">
+                    <span className="text-sm font-medium truncate max-w-[200px]">
+                      {item.fileName}
+                    </span>
+                    <span className="text-xs text-gray-600">{item.overall.toFixed(1)}%</span>
                   </div>
 
-                  <div className="mt-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="mt-2.5 h-2 bg-gray-200 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[var(--color-retina)] transition-all"
-                      style={{ width: `${percent}%` }}
+                      className="h-full transition-all"
+                      style={{
+                        width: `${item.overall}%`,
+                        background: 'linear-gradient(90deg,#BE7DB1,#81BAFF)',
+                      }}
+                    />
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-4 flex justify-center">
+              <Pagination pageNum={pageNum} totalPages={totalPages} onPageChange={setPageNum} />
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* -------- 우측 박스 -------- */}
+      <div className="bg-white border rounded-2xl p-6 min-h-[380px] flex flex-col">
+        {/* 헤더 */}
+        <div className="flex items-center gap-2 mb-6">
+          <Zap className="w-5 h-5 text-[var(--color-hebees)]" />
+          <h3 className="text-xl font-semibold text-gray-900">상세 진행률</h3>
+        </div>
+
+        {!current ? (
+          <div className="flex flex-1 items-center justify-center text-gray-400 text-sm">
+            파일을 선택하세요.
+          </div>
+        ) : (
+          <>
+            {/* 파일명 카드 */}
+            <div className="flex items-center gap-3 mb-10 px-4 py-3 bg-gray-50 border rounded-xl">
+              <div className="w-9 h-9 bg-[var(--color-hebees)] rounded-lg flex items-center justify-center">
+                <FileText className="text-white" size={18} />
+              </div>
+
+              <span className="text-sm font-semibold text-gray-900 truncate max-w-[600px]">
+                {selectedFile ? fileNameMap[selectedFile] : ''}
+              </span>
+            </div>
+
+            {/* 스텝 진행률 */}
+            <div className="grid grid-cols-4 gap-4 mb-8">
+              {STEP_ITEMS.map(({ icon: Icon, label, key }) => (
+                <div
+                  key={key}
+                  className="
+        flex flex-col items-center justify-between
+        w-full p-4 rounded-xl border
+        bg-white hover:bg-gray-50 transition
+      "
+                >
+                  <Icon className="w-7 h-7 text-[var(--color-hebees)] mb-2" />
+
+                  <span className="text-sm font-medium text-gray-700">{label}</span>
+                  <span className="text-xs text-gray-500 mt-0.5">
+                    {current.steps[key].toFixed(1)}%
+                  </span>
+
+                  <div className="w-full h-2 bg-gray-200 rounded-full mt-3 overflow-hidden">
+                    <div
+                      className="h-full transition-all"
+                      style={{
+                        width: `${current.steps[key]}%`,
+                        background: 'linear-gradient(90deg,#BE7DB1,#81BAFF)',
+                      }}
                     />
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        )}
-
-        <div className="mt-3 flex justify-center">
-          <Pagination pageNum={pageNum} totalPages={totalPages} onPageChange={setPageNum} />
-        </div>
-      </div>
-
-      {/* ---------------- 오른쪽 상세 ---------------- */}
-      <div className="rounded-lg p-4">
-        <h3 className="font-bold mb-4 text-gray-800">상세 진행률</h3>
-
-        {!current ? (
-          <div className="text-gray-400 text-center py-20">파일을 선택하세요.</div>
-        ) : (
-          <>
-            {/* 파일명 */}
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <div className="w-7 h-7 bg-[var(--color-hebees)] rounded-md flex items-center justify-center">
-                <FileText size={17} className="text-white" />
-              </div>
-              <h3 className="text-sm font-semibold">{fileNameMap[selectedFile!]}</h3>
-            </div>
-
-            {/* 단계별 아이콘 + 퍼센트 + 바 */}
-            <div className="grid grid-cols-4 gap-6 mb-6">
-              {/* 1. 업로드 */}
-              <div className="flex flex-col items-center">
-                <CloudUpload className="w-12 h-12 text-[var(--color-hebees-blue)]" />
-
-                <span className="text-sm font-medium text-gray-700 mt-1">업로드</span>
-                <span className="text-xs text-gray-500">{current.steps.UPLOAD.toFixed(1)}%</span>
-
-                <div className="w-full h-2 bg-gray-200 rounded-full mt-2 overflow-hidden">
-                  <div
-                    className="h-full bg-[var(--color-hebees)] transition-all"
-                    style={{ width: `${current.steps.UPLOAD}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* 2. 데이터 정제 */}
-              <div className="flex flex-col items-center">
-                <Zap className="w-12 h-12 text-[var(--color-hebees-blue)]" />
-                <span className="text-sm font-medium text-gray-700 mt-1">데이터 정제</span>
-                <span className="text-xs text-gray-500">
-                  {current.steps.EXTRACTION.toFixed(1)}%
-                </span>
-
-                <div className="w-full h-2 bg-gray-200 rounded-full mt-2 overflow-hidden">
-                  <div
-                    className="h-full bg-[var(--color-hebees)] transition-all"
-                    style={{ width: `${current.steps.EXTRACTION}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* 3. 임베딩 생성 */}
-              <div className="flex flex-col items-center">
-                <Database className="w-12 h-12 text-[var(--color-hebees-blue)]" />
-                <span className="text-sm font-medium text-gray-700 mt-1">임베딩 생성</span>
-                <span className="text-xs text-gray-500">{current.steps.EMBEDDING.toFixed(1)}%</span>
-
-                <div className="w-full h-2 bg-gray-200 rounded-full mt-2 overflow-hidden">
-                  <div
-                    className="h-full bg-[var(--color-hebees)] transition-all"
-                    style={{ width: `${current.steps.EMBEDDING}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* 4. Vector DB 저장 */}
-              <div className="flex flex-col items-center">
-                <CircleCheck className="w-12 h-12 text-[var(--color-hebees-blue)]" />
-                <span className="text-sm font-medium text-gray-700 mt-1">Vector 저장</span>
-                <span className="text-xs text-gray-500">
-                  {current.steps.VECTOR_STORE.toFixed(1)}%
-                </span>
-
-                <div className="w-full h-2 bg-gray-200 rounded-full mt-2 overflow-hidden">
-                  <div
-                    className="h-full bg-[var(--color-hebees)] transition-all"
-                    style={{ width: `${current.steps.VECTOR_STORE}%` }}
-                  />
-                </div>
-              </div>
+              ))}
             </div>
 
             {/* 전체 진행률 */}
-            <div>
-              <p className="text-xs text-gray-700 mb-1">전체 진행률</p>
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="mt-auto">
+              <span className="text-sm font-medium text-gray-700">전체 진행률</span>
+
+              <div className="h-2.5 bg-gray-200 rounded-full mt-3 overflow-hidden">
                 <div
-                  className="h-full bg-[var(--color-retina)] transition-all"
-                  style={{ width: `${current.overall}%` }}
+                  className="h-full transition-all"
+                  style={{
+                    width: `${current.overall}%`,
+                    background: 'linear-gradient(90deg,#BE7DB1,#81BAFF)',
+                  }}
                 />
-                {summary && (
-                  <div className="text-xs text-gray-700 mt-1">
-                    {summary.completed} / {summary.total} 완료
-                  </div>
-                )}
               </div>
             </div>
           </>
         )}
-
-        <div className="mt-4 text-center text-sm text-gray-600">
-          {overallStatus === 'RUNNING' && '벡터화가 진행 중입니다...'}
-          {overallStatus === 'DONE' && '벡터화가 모두 완료되었습니다!'}
-          {overallStatus === 'ERROR' && '진행 중 오류가 발생했습니다.'}
-        </div>
       </div>
     </section>
   );

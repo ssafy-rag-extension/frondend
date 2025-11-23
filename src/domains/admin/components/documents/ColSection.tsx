@@ -1,9 +1,10 @@
-import { FolderOpen, FileText, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Folder, FileText, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { RawMyDoc } from '@/shared/types/file.types';
 import type { documentDatatype } from '@/domains/admin/types/documents.types';
 import { getDocInCollections, getCollections } from '@/domains/admin/api/documents.api';
+import Checkbox from '@/shared/components/controls/Checkbox';
 
 type ColSectionProps = {
   selectedCollection: string | null;
@@ -17,7 +18,6 @@ export default function ColSection({ selectedCollection, onCollectionSelect }: C
   const [docsByCollection, setDocsByCollection] = useState<Record<string, documentDatatype[]>>({});
   const FILES_PER_PAGE = 5;
 
-  // 컬렉션 목록 조회 (useQuery는 여기 1개만)
   const { data: collectionsResult } = useQuery({
     queryKey: ['collections', { filter: true }],
     queryFn: () => getCollections({ filter: true }),
@@ -26,7 +26,6 @@ export default function ColSection({ selectedCollection, onCollectionSelect }: C
 
   const collections = collectionsResult?.data ?? [];
 
-  // 컬렉션 클릭 시 문서 가져오기
   const handleToggleOpen = (collectionNo: string) => {
     setOpenCollection((prev) => ({
       ...prev,
@@ -38,21 +37,15 @@ export default function ColSection({ selectedCollection, onCollectionSelect }: C
   const { data: docs, isLoading } = useQuery({
     queryKey: ['docs', selectedCollection],
     queryFn: () => getDocInCollections(selectedCollection!).then((res) => res.data),
-    enabled: !!selectedCollection && !!openCollection[selectedCollection], // 열렸을 때만 실행
-    staleTime: 1000 * 60 * 10, // 3분 캐싱
+    enabled: !!selectedCollection && !!openCollection[selectedCollection],
+    staleTime: 1000 * 60 * 10,
   });
-
-  useEffect(() => {
-    if (collectionsResult) {
-      // console.log('📌 Collections Response:', collectionsResult);
-    }
-  }, [collectionsResult]);
 
   useEffect(() => {
     if (docs && selectedCollection) {
       setDocsByCollection((prev) => ({
         ...prev,
-        [selectedCollection]: docs, // 쿼리 결과 저장
+        [selectedCollection]: docs,
       }));
     }
   }, [docs, selectedCollection]);
@@ -63,10 +56,11 @@ export default function ColSection({ selectedCollection, onCollectionSelect }: C
   };
 
   return (
-    <section className="flex flex-col min-h-[475px] w-full h-full p-4 border border-gray-200 rounded-xl bg-white">
-      <h3 className="text-xl mb-3 font-bold bg-[linear-gradient(90deg,#BE7DB1_10%,#81BAFF_100%)] bg-clip-text text-transparent w-fit">
-        저장할 컬렉션 선택
-      </h3>
+    <section className="flex flex-col min-h-[475px] w-full h-full p-6 border border-gray-200 rounded-xl bg-white shadow-sm">
+      <div className="flex items-center gap-2 mb-5">
+        <Folder className="w-5 h-5 text-[var(--color-hebees)]" />
+        <h3 className="text-xl font-semibold text-gray-900">저장할 컬렉션 선택</h3>
+      </div>
 
       <div className="space-y-4">
         {collections.map((col) => {
@@ -82,30 +76,29 @@ export default function ColSection({ selectedCollection, onCollectionSelect }: C
           return (
             <div
               key={col.collectionNo}
-              className={`border rounded-lg p-3 transition cursor-pointer ${
-                selectedCollection === col.collectionNo
+              className={`border rounded-lg px-4 py-3 transition cursor-pointer ${
+                selectedCollection === col.name
                   ? 'bg-[var(--color-hebees-bg)]/40 ring-1 ring-[var(--color-hebees)]'
-                  : 'hover:bg-[var(--color-hebees-bg)]/40 hover:ring-1 hover:ring-[var(--color-hebees)]'
+                  : 'hover:bg-[var(--color-hebees-bg)] hover:ring-1 hover:ring-[var(--color-hebees)]'
               }`}
               onClick={() => handleSelectCollection(col.name)}
             >
-              {/* 헤더 */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 font-medium text-gray-800">
+                <div className="flex items-center gap-3 font-medium text-gray-800">
                   <div className="w-8 h-8 bg-[var(--color-hebees)] rounded-md flex items-center justify-center">
-                    <FolderOpen className="text-[var(--color-white)] w-5 h-5" />
+                    <Folder size={18} className="text-white" />
                   </div>
                   {col.name}
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    className="accent-[var(--color-hebees)] cursor-pointer"
-                    checked={selectedCollection === col.name}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={() => handleSelectCollection(col.name)}
-                  />
+                  <div onClick={(e) => e.stopPropagation()} className="flex items-center">
+                    <Checkbox
+                      checked={selectedCollection === col.name}
+                      onChange={() => handleSelectCollection(col.name)}
+                      brand="hebees"
+                    />
+                  </div>
 
                   <button
                     onClick={(e) => {
@@ -129,28 +122,27 @@ export default function ColSection({ selectedCollection, onCollectionSelect }: C
                 </div>
               </div>
 
-              {/* 파일 목록 */}
               {openCollection[col.collectionNo] && (
                 <>
-                  <ul className="pl-4 text-sm text-gray-700 space-y-1 mt-2">
-                    {/* 🔹 로딩 중 표시 */}
+                  <ul className="pl-4 text-sm text-gray-700 space-y-2 mt-3">
                     {isLoading && selectedCollection === col.collectionNo ? (
-                      <li className="text-gray-400 text-xs animate-pulse">
+                      <li className="text-gray-400 text-sm animate-pulse py-2">
                         문서 목록을 불러오는 중...
                       </li>
                     ) : visibleFiles.length === 0 ? (
-                      <li className="text-gray-400 text-xs">등록된 문서가 없습니다.</li>
+                      <li className="text-gray-400 text-sm py-2">등록된 문서가 없습니다.</li>
                     ) : (
                       visibleFiles.map((file) => (
                         <li
                           key={file.fileNo}
-                          className="flex items-center justify-between border-b border-gray-100 pb-1 last:border-none"
+                          className="flex items-center justify-between border-b border-gray-100 py-3 pr-3 last:border-none group"
                         >
-                          <div className="flex items-center gap-2">
-                            <div className="w-5 h-5 bg-[var(--color-hebees)] rounded-md flex items-center justify-center">
-                              <FileText size={14} className="text-[var(--color-white)]" />
+                          <div className="relative flex items-center gap-3">
+                            <div className="w-7 h-7 rounded-md bg-[var(--color-hebees-bg)] flex items-center justify-center">
+                              <FileText size={16} className="text-[var(--color-hebees)]" />
                             </div>
-                            <span className="truncate max-w-[220px] text-center text-xs font-regular">
+
+                            <span className="truncate max-w-[260px] text-[14px] font-medium text-gray-800">
                               {file.name}
                             </span>
                           </div>
@@ -159,9 +151,8 @@ export default function ColSection({ selectedCollection, onCollectionSelect }: C
                     )}
                   </ul>
 
-                  {/* 페이지네이션 */}
                   {totalPages > 1 && (
-                    <div className="flex justify-center gap-2 items-center mt-2">
+                    <div className="flex justify-center gap-2 items-center mt-3">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -174,7 +165,7 @@ export default function ColSection({ selectedCollection, onCollectionSelect }: C
                         className="flex items-center gap-1 px-2 py-1 text-gray-600 text-xs hover:text-[var(--color-hebees)] disabled:opacity-40"
                       >
                         <ChevronLeft size={10} />
-                        <span>이전</span>
+                        이전
                       </button>
 
                       <span className="text-xs font-medium">
@@ -195,7 +186,7 @@ export default function ColSection({ selectedCollection, onCollectionSelect }: C
                         disabled={currentPage === totalPages}
                         className="flex items-center gap-1 px-2 py-1 text-gray-600 text-xs hover:text-[var(--color-hebees)] disabled:opacity-40"
                       >
-                        <span>다음</span>
+                        다음
                         <ChevronRight size={10} />
                       </button>
                     </div>
