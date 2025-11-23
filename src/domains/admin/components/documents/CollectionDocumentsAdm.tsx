@@ -4,7 +4,7 @@ import clsx from 'clsx';
 import type { Collection } from '@/domains/admin/components/rag-test/types';
 import { getDocInCollections } from '@/domains/admin/api/documents.api';
 import type { documentDatatype } from '@/domains/admin/types/documents.types';
-import { FolderOpen, RefreshCw } from 'lucide-react';
+import { Folder, RefreshCw } from 'lucide-react';
 import UploadedFileList from '@/shared/components/file/UploadedFileList';
 import { formatCreatedAt } from '@/shared/utils/date';
 
@@ -73,7 +73,7 @@ export default function CollectionDocumentsAdm({
   return (
     <div className="rounded-2xl border bg-white p-8 shadow-sm">
       <header className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="text-xl font-bold text-gray-900 mb-2 sm:mb-0">Collection 문서 목록</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-2 sm:mb-0">컬렉션 문서 목록</h3>
         <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
@@ -102,7 +102,7 @@ export default function CollectionDocumentsAdm({
       <div className="flex items-center justify-between border border-gray-200 p-4 rounded-lg">
         <div className="flex items-center gap-4">
           <div className="flex p-4 items-center justify-center rounded-lg bg-[var(--color-hebees)] text-white">
-            <FolderOpen size={24} />
+            <Folder size={24} />
           </div>
           <span className="text-xl font-semibold text-gray-900">{collection.name}</span>
         </div>
