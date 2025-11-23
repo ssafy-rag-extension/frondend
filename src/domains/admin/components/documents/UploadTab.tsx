@@ -64,7 +64,7 @@ export default function UploadTab() {
           (f) => !existingKeys.has(`${f.fileNo}::${selectedCollection}`)
         );
         if (newOnes.length === 0) {
-          toast('⚠️ 해당 파일은 이미 선택 목록에 존재합니다.');
+          toast.error('해당 파일은 이미 선택 목록에 존재합니다.');
           return prev;
         }
         return [...prev, ...newOnes];
@@ -103,7 +103,7 @@ export default function UploadTab() {
         </div>
 
         {/* 화살표 ① */}
-        <ArrowRight className="w-6 h-6 text-[var(--color-retina-dark)]" />
+        <ArrowRight className="w-6 h-6 text-[var(--color-hebees)]" />
 
         {/* 가운데: 컬렉션 선택 */}
         <div className="flex-1">
@@ -115,7 +115,7 @@ export default function UploadTab() {
         </div>
 
         {/* 화살표 ② */}
-        <ArrowRight className="w-6 h-6 text-[var(--color-retina-dark)]" />
+        <ArrowRight className="w-6 h-6 text-[var(--color-hebees)]" />
 
         {/* 오른쪽: 벡터화 대상 목록 */}
         <div className="flex-1">
