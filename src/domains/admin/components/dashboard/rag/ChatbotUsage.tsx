@@ -28,11 +28,12 @@ export default function ChatbotUsage() {
         enabled: false,
       },
       chart: {
+        shadow: false,
         type: 'line',
         backgroundColor: 'transparent',
         height: 320,
         marginRight: 10,
-        animation: true,
+        animation: false,
       },
       title: { text: '' },
       credits: { enabled: false },
@@ -56,7 +57,7 @@ export default function ChatbotUsage() {
         line: {
           color: '#EE5B01',
           lineWidth: 2,
-          marker: { enabled: true, radius: 3 },
+          marker: { enabled: false },
         },
       },
       series: [

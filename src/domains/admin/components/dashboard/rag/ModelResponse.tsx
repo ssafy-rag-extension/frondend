@@ -31,8 +31,10 @@ export default function ModelResponseTimeChart() {
         type: 'line',
         backgroundColor: 'transparent',
         height: 300,
-        animation: true,
+        animation: false,
+        shadow: false,
       },
+      exporting: { enabled: false },
       title: { text: '' },
       credits: { enabled: false },
       xAxis: {
@@ -57,9 +59,13 @@ export default function ModelResponseTimeChart() {
         itemStyle: { color: '#374151', fontSize: '10px' },
       },
       plotOptions: {
+        series: {
+          animation: false,
+          shadow: false,
+        },
         line: {
           lineWidth: 2,
-          marker: { enabled: true, radius: 3 },
+          marker: { enabled: false },
         },
       },
       series: [],

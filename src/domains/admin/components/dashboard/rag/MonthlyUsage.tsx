@@ -48,9 +48,6 @@ export default function WeeklyTimeHeatmap() {
       return Math.max(0, Math.min(4, level));
     };
 
-    // 색상 단계 (밝은 파랑 → 진한 파랑)
-    // const colorLevels = ['#F0F7FF', '#D6E8FF', '#A9D0FF', '#72B0FF', '#3A83E0'];
-
     const heatmapData: [number, number, number][] = [];
     for (let d = 0; d < label.days.length; d++) {
       for (let h = 0; h < label.slots.length; h++) {
@@ -73,7 +70,11 @@ export default function WeeklyTimeHeatmap() {
         height: 420,
         spacing: [20, 10, 10, 10],
         style: { fontFamily: 'Pretendard, sans-serif' },
+        animation: false,
+        shadow: false,
       },
+      exporting: { enabled: false },
+
       title: { text: '' },
       credits: { enabled: false },
       xAxis: {

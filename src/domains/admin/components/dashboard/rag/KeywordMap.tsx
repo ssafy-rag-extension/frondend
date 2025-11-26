@@ -41,7 +41,17 @@ export default function KeywordMap() {
       },
       chart: {
         backgroundColor: 'transparent',
+        animation: false,
       },
+      plotOptions: {
+        series: {
+          animation: false,
+          shadow: false,
+        },
+      },
+      exporting: { enabled: false },
+      boost: { enabled: true },
+
       title: { text: '' },
       credits: { enabled: false },
       tooltip: {

@@ -22,8 +22,9 @@ export default function ChatbotUsageRealtime() {
         animation: true,
         marginRight: 10,
         height: 320,
+        shadow: false,
       },
-
+      exporting: { enabled: false },
       title: { text: undefined },
       subtitle: { text: undefined },
 

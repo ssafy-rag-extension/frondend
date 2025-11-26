@@ -31,8 +31,11 @@ export default function ModelUsageChart() {
         type: 'areaspline',
         backgroundColor: 'transparent',
         height: 300,
-        animation: true,
+        animation: false,
+        shadow: false,
       },
+      exporting: { enabled: false },
+
       title: { text: '' },
       credits: { enabled: false },
       xAxis: {
@@ -59,6 +62,8 @@ export default function ModelUsageChart() {
       plotOptions: {
         series: {
           stacking: 'normal',
+          animation: false,
+          shadow: false,
         },
         areaspline: {
           fillOpacity: 0.6,
