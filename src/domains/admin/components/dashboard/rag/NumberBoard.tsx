@@ -118,22 +118,34 @@ export default function NumberBoard() {
   );
   const LiveBadge = () => (
     <span
-      className="inline-flex items-center gap-1
-               px-1 py-[2px] text-[10px] font-semibold rounded-md
-               bg-red-100 text-red-600 border border-red-200 "
+      className="
+      inline-flex items-center gap-2
+      pl-2.5 pr-1.5 py-1
+      text-xs font-semibold
+      rounded-full
+      bg-red-50 text-red-600 border border-red-200
+      shadow-sm
+      leading-none
+    "
     >
-      <span>LIVE</span>
+      <span className="tracking-tight">LIVE</span>
+
       <span
-        className="ml-2 px-1.5 py-[1px] rounded-md 
-             bg-white/80
-             text-[13px] font-bold text-red-600 
-             border border-red-200/70 shadow-[0_1px_2px_rgba(0,0,0,0.06)]
-             tracking-tight tabular-nums"
+        className="
+        px-1.5 py-[2px]
+        rounded-full
+        bg-white
+        text-[11px] font-bold text-red-600
+        border border-red-200
+        tabular-nums
+        leading-none
+      "
       >
         {realtimeUserData?.result?.activeUserCount?.toLocaleString() ?? 0}
       </span>
     </span>
   );
+
   const renderCard = (
     key: keyof TrendGroup,
     title: string,
