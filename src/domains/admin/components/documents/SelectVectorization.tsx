@@ -114,12 +114,12 @@ export default function SelectVectorization({
       </div>
 
       <div className="flex-1 flex flex-col">
-        <div className="grid grid-cols-8 text-sm font-medium text-gray-500 px-2 pb-2 border-b border-gray-100">
+        {/* <div className="grid grid-cols-8 text-sm font-medium text-gray-500 pb-2 border-b border-gray-100">
           <span className="col-span-3">파일명</span>
           <span className="col-span-2 text-center">크기</span>
           <span className="col-span-2 text-center">카테고리</span>
           <span className="col-span-1 text-center">저장위치</span>
-        </div>
+        </div> */}
 
         <div
           className={`flex-1 ${
@@ -142,50 +142,51 @@ export default function SelectVectorization({
                   selectedFile.name === file.name &&
                   selectedFile.collectionNo === file.collectionNo;
 
+                const collectionName =
+                  collections.find((c) => c.name === file.collectionNo)?.name || '-';
+
                 return (
                   <li
                     key={`${file.name}::${file.collectionNo}`}
                     onClick={() => isUploading && setSelectedFile(file)}
                     className={`
-                  grid grid-cols-8 items-center px-4 py-3 rounded-xl border 
-                  transition
-                  ${
-                    isSelected
-                      ? 'border-[var(--color-hebees)] bg-[var(--color-hebees-bg)]/50'
-                      : 'border-gray-100 bg-white hover:bg-gray-50'
-                  }
-                  ${isUploading ? 'cursor-pointer' : 'cursor-default'}
-                `}
+          flex items-center justify-between px-4 py-3 rounded-xl border transition
+          ${
+            isSelected
+              ? 'border-[var(--color-hebees)] bg-[var(--color-hebees-bg)]/50'
+              : 'border-gray-100 bg-white hover:bg-[var(--color-hebees-bg)]/60'
+          }
+          ${isUploading ? 'cursor-pointer' : 'cursor-default'}
+        `}
                   >
-                    <div className="col-span-3 flex items-center gap-3">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleRemove(file);
-                        }}
-                        className="hover:opacity-80 transition"
-                      >
-                        <X size={16} className="text-[var(--color-hebees)]" />
-                      </button>
-
-                      <div className="w-8 h-8 bg-[var(--color-hebees-bg)] rounded-lg flex items-center justify-center">
-                        <FileText size={18} className="text-[var(--color-hebees)]" />
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-[var(--color-hebees-bg)] flex items-center justify-center">
+                        <FileText size={20} className="text-[var(--color-hebees)]" />
                       </div>
 
-                      <span className="truncate max-w-[200px] text-[14px] font-medium text-gray-800">
-                        {file.name}
-                      </span>
+                      <div className="flex flex-col leading-tight">
+                        <span className="text-[13px] font-medium text-gray-900 truncate max-w-[200px]">
+                          {file.name}
+                        </span>
+
+                        <span className="text-[11px] text-gray-500 truncate">
+                          {categoryName} · {(file.size / 1024).toFixed(1)} KB ·
+                          <span className="ml-1 text-[12px] font-medium text-[var(--color-hebees)] text-">
+                            {collectionName}
+                          </span>
+                        </span>
+                      </div>
                     </div>
 
-                    <span className="col-span-2 text-center text-[12px] text-gray-600">
-                      {(file.size / 1024).toFixed(1)} KB
-                    </span>
-                    <span className="col-span-2 text-center text-[12px] text-gray-600">
-                      {categoryName}
-                    </span>
-                    <span className="col-span-1 text-center text-[12px] text-gray-600">
-                      {collections.find((c) => c.name === file.collectionNo)?.name || '-'}
-                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRemove(file);
+                      }}
+                      className="p-1 rounded-md transition hover:bg-[var(--color-hebees-bg)]"
+                    >
+                      <X size={16} className="text-gray-400 hover:text-[var(--color-hebees)]" />
+                    </button>
                   </li>
                 );
               })}
