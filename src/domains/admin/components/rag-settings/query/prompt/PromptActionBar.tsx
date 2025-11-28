@@ -41,6 +41,7 @@ export default function PromptActionBar({
         type="button"
         onClick={onAddNew}
         disabled={detailLoading || saving}
+        style={{ display: 'none' }}
         className={[
           'inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-all',
           'border-gray-200 bg-white text-gray-800 hover:bg-gray-50',
@@ -71,6 +72,7 @@ export default function PromptActionBar({
         type="button"
         onClick={onOpenDelete}
         disabled={!canDelete}
+        style={{ display: 'none' }}
         className={[
           'inline-flex items-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition-all',
           canDelete
