@@ -235,7 +235,7 @@ export function useChatLogic() {
 
     setAwaitingAssistant(true);
 
-    setList((prev) => [
+    setList((prev: UiMsg[]) => [
       ...prev,
       { role: 'user', content: msg },
       { role: 'assistant', content: '', messageNo: '__pending__' },
@@ -244,6 +244,11 @@ export function useChatLogic() {
     try {
       const llmName: string = selectedModel ?? 'Qwen3-vl:8B';
       const sessionNo: string = await getOrCreateSessionNo(llmName, msg);
+
+      // 개발 환경에서 qwen 모델이 선택되었을 때 GPT-4o로 강제 변경
+      const isQwen = llmName?.toLowerCase().includes('qwen') ?? false;
+      const isDev = (import.meta as { env?: { MODE?: string } }).env?.MODE === 'development';
+      const effectiveModel = isDev && isQwen ? 'GPT-4o' : llmName;
 
       if (mode === 'rag') {
         const effectiveLlmNo = selectedLlmNo;
@@ -279,7 +284,7 @@ export function useChatLogic() {
         // LLM 모드: SSE 스트림으로 전환
         const body: SendMessageRequest = {
           content: msg,
-          model: llmName,
+          model: effectiveModel,
           llmNo: selectedLlmNo,
           sessionNo,
         };
