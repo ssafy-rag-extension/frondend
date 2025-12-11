@@ -17,7 +17,7 @@ type Props = {
 export default function ChatInput({
   onSend,
   variant = 'retina',
-  mode = 'llm',
+  mode = 'rag',
   onChangeMode,
   watch,
   disabled = false,
@@ -166,27 +166,25 @@ export default function ChatInput({
         <div className="inline-flex items-center gap-1 rounded-full bg-gray-100 p-1 text-sm">
           <button
             type="button"
-            onClick={() => onChangeMode?.('llm')}
-            className={`px-4 py-1 rounded-full transition ${
-              mode === 'llm'
-                ? 'bg-white shadow-sm text-gray-900'
-                : 'text-gray-500 hover:text-gray-800'
-            }`}
-            disabled={disabled || loading}
-          >
-            일반 LLM
-          </button>
-          <button
-            type="button"
             onClick={() => onChangeMode?.('rag')}
-            className={`px-3 py-1 rounded-full transition ${
-              mode === 'rag'
+            className={`px-3 py-1 rounded-full transition ${mode === 'rag'
                 ? 'bg-white shadow-sm text-gray-900'
                 : 'text-gray-500 hover:text-gray-800'
-            }`}
+              }`}
             disabled={disabled || loading}
           >
             RAG 모드
+          </button>
+          <button
+            type="button"
+            onClick={() => onChangeMode?.('llm')}
+            className={`px-4 py-1 rounded-full transition ${mode === 'llm'
+                ? 'bg-white shadow-sm text-gray-900'
+                : 'text-gray-500 hover:text-gray-800'
+              }`}
+            disabled={disabled || loading}
+          >
+            일반 LLM
           </button>
         </div>
       </div>

@@ -30,7 +30,7 @@ export function useChatLogic() {
   const { sessionNo: paramsSessionNo } = useParams<{ sessionNo: string }>();
   const location = useLocation();
   const [searchParams] = useSearchParams();
-  
+
   // 현재 경로를 기반으로 owner 결정
   const owner = location.pathname.startsWith('/admin') ? 'admin' : 'user';
   const derivedSessionNo = useDerivedSessionNo(location, searchParams, paramsSessionNo, owner);
@@ -45,7 +45,7 @@ export function useChatLogic() {
 
   const { selectedModel, selectedLlmNo, setSelectedModel } = useChatModelStore();
 
-  const [mode, setMode] = useState<ChatMode>('llm');
+  const [mode, setMode] = useState<ChatMode>('rag');
 
   // LLM 스트림
   const {
@@ -115,12 +115,12 @@ export function useChatLogic() {
         (m: UiMsg): UiMsg =>
           m.messageNo === '__pending__' && m.role === 'assistant'
             ? {
-                ...m,
-                content: answer,
-                createdAt: meta.createdAt ?? m.createdAt,
-                messageNo: meta.messageNo ?? m.messageNo,
-                references: meta.references ?? m.references,
-              }
+              ...m,
+              content: answer,
+              createdAt: meta.createdAt ?? m.createdAt,
+              messageNo: meta.messageNo ?? m.messageNo,
+              references: meta.references ?? m.references,
+            }
             : m
       );
 
